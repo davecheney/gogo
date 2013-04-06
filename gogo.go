@@ -60,7 +60,7 @@ func (e *execution) Execute() {
 		e.setError(err)
 		return
 	}
-	log.Printf("%s successful", e)
+	log.Printf("%d %s successful", len(e.deps), e)
 }
 
 func (e *execution) Wait() error {

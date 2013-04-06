@@ -51,14 +51,14 @@ func (t *buildTarget) Execute(*gogo.Context) error {
 
 func (t *buildTarget) String() string { return t.Path() }
 
-func getTarget(targets map[*gogo.Package]gogo.Target, pkg *gogo.Package) *buildTarget {
+func getTarget(targets map[*gogo.Package]gogo.Target, pkg *gogo.Package) gogo.Target {
 	if pkg == nil {
 		panic("nil package")
 	}
 	if _, ok := targets[pkg]; !ok {
 		targets[pkg] = &buildTarget{Package: pkg}
 	}
-	return targets[pkg].(*buildTarget)
+	return targets[pkg]
 }
 
 func main() {
@@ -72,7 +72,7 @@ func main() {
 	targets := make(map[*gogo.Package]gogo.Target)
 	for _, pkg := range tobuild {
 		log.Printf("%s imports %v", pkg, pkg.Imports())
-		t := getTarget(targets, pkg)
+		t := getTarget(targets, pkg).(*buildTarget)
 		for _, i := range pkg.Imports() {
 			if pkg, ok := tobuild[i]; ok {
 				t.deps = append(t.deps, getTarget(targets, pkg))
