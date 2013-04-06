@@ -24,18 +24,12 @@ func mustResolvePackage(project *gogo.Project, path string) *gogo.Package {
 	return pkg
 }
 
-func pushImports(m map[string]*gogo.Package, root *gogo.Package) {
-	for _, path := range root.Imports() {
-		if stdlib[path] {
-			// skip
-			continue
-		}
-		if _, ok := m[path]; !ok {
-			pkg := mustResolvePackage(root.Project(), path)
-			m[pkg.Path()] = pkg
-			pushImports(m, pkg)
-		}
+func mustDependantPackages(packages *gogo.Package) map[string]*gogo.Package {
+	deps, err := packages.DependantPackages()
+	if err != nil {
+		log.Fatalf("failed to resolve dependant packages: %v", err)
 	}
+	return deps
 }
 
 type buildTarget struct {
@@ -65,16 +59,13 @@ func main() {
 	flag.Parse()
 	project := gogo.NewProject(mustGetwd())
 	root := mustResolvePackage(project, flag.Arg(0))
-	tobuild := map[string]*gogo.Package{
-		root.Path(): root,
-	}
-	pushImports(tobuild, root)
+	deps := mustDependantPackages(root)
 	targets := make(map[*gogo.Package]gogo.Target)
-	for _, pkg := range tobuild {
+	for _, pkg := range deps {
 		log.Printf("%s imports %v", pkg, pkg.Imports())
 		t := getTarget(targets, pkg).(*buildTarget)
 		for _, i := range pkg.Imports() {
-			if pkg, ok := tobuild[i]; ok {
+			if pkg, ok := deps[i]; ok {
 				t.deps = append(t.deps, getTarget(targets, pkg))
 			}
 		}
