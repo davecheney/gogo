@@ -2,6 +2,7 @@ package main
 
 import (
 	"flag"
+	"fmt"
 	"log"
 	"os"
 
@@ -24,20 +25,13 @@ func mustResolvePackage(project *gogo.Project, path string) *gogo.Package {
 	return pkg
 }
 
-func mustDependantPackages(packages *gogo.Package) map[string]*gogo.Package {
-	deps, err := packages.DependantPackages()
-	if err != nil {
-		log.Fatalf("failed to resolve dependant packages: %v", err)
-	}
-	return deps
-}
-
 type buildTarget struct {
 	*gogo.Package
 	deps []gogo.Target
 }
 
-func (t *buildTarget) Deps() []gogo.Target { return t.deps }
+func (t *buildTarget) Deps() []gogo.Target                   { return t.deps }
+func (t *buildTarget) AddDependantTarget(target gogo.Target) { t.deps = append(t.deps, target) }
 func (t *buildTarget) Execute(*gogo.Context) error {
 	log.Printf("building package %q", t.Path())
 	return nil
@@ -45,34 +39,65 @@ func (t *buildTarget) Execute(*gogo.Context) error {
 
 func (t *buildTarget) String() string { return t.Path() }
 
+type bridgeTarget struct {
+	deps []gogo.Target
+}
+
+func (t *bridgeTarget) Deps() []gogo.Target                   { return t.deps }
+func (t *bridgeTarget) AddDependantTarget(target gogo.Target) { t.deps = append(t.deps, target) }
+func (t *bridgeTarget) Execute(*gogo.Context) error {
+	log.Printf("bridge %s", t)
+	return nil
+}
+
+func (t *bridgeTarget) String() string { return fmt.Sprintf("%v", t.deps) }
+
 func getTarget(targets map[*gogo.Package]gogo.Target, pkg *gogo.Package) gogo.Target {
-	if pkg == nil {
-		panic("nil package")
-	}
 	if _, ok := targets[pkg]; !ok {
 		targets[pkg] = &buildTarget{Package: pkg}
 	}
 	return targets[pkg]
 }
 
+func pushPackages(pkgs map[*gogo.Package][]*gogo.Package, root *gogo.Package) error {
+	var deps []*gogo.Package
+	for _, dep := range root.Imports() {
+		if stdlib[dep] {
+			// skip
+			continue
+		}
+		pkg, err := root.Project().ResolvePackage(dep)
+		if err != nil {
+			return err
+		}
+		if err := pushPackages(pkgs, pkg); err != nil {
+			return err
+		}
+		deps = append(deps, pkg)
+	}
+	pkgs[root] = deps
+	return nil
+}
+
 func main() {
 	flag.Parse()
 	project := gogo.NewProject(mustGetwd())
 	root := mustResolvePackage(project, flag.Arg(0))
-	deps := mustDependantPackages(root)
-	targets := make(map[*gogo.Package]gogo.Target)
-	for _, pkg := range deps {
-		log.Printf("%s imports %v", pkg, pkg.Imports())
-		t := getTarget(targets, pkg).(*buildTarget)
-		for _, i := range pkg.Imports() {
-			if pkg, ok := deps[i]; ok {
-				t.deps = append(t.deps, getTarget(targets, pkg))
-			}
-		}
+	pkgs := make(map[*gogo.Package][]*gogo.Package)
+	if err := pushPackages(pkgs, root); err != nil {
+		log.Fatal(err)
 	}
+	targets := make(map[*gogo.Package]gogo.Target)
+	for pkg, deps := range pkgs {
+		log.Printf("%s imports %v", pkg, deps)
+		t := getTarget(targets, pkg)
+		for _, dep := range deps {
+			t.AddDependantTarget(getTarget(targets, dep))
+		}
+	} 
 	if err := gogo.ExecuteTargets(toTargets(targets)); err != nil {
 		log.Fatalf("%v", err)
-	}
+	} 
 }
 
 func toTargets(m map[*gogo.Package]gogo.Target) []gogo.Target {

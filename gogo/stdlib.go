@@ -1,4 +1,4 @@
-package gogo
+package main
 
 var stdlib = map[string]bool{
 	"archive/tar":         true,

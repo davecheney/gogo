@@ -127,31 +127,3 @@ func (p *Package) readImports() error {
 	}
 	return nil
 }
-
-func (p *Package) DependantPackages() (map[string]*Package, error) {
-        tobuild := map[string]*Package{
-                p.Path(): p,
-        }
-        if err := pushImports(tobuild, p); err != nil {
-		return nil, err 
-	}
-	return tobuild, nil
-	
-}
-
-func pushImports(m map[string]*Package, root *Package) error {
-        for _, path := range root.Imports() {
-                if stdlib[path] {
-                        // skip
-                        continue
-                }
-                if _, ok := m[path]; !ok {
-			pkg, err := root.project.ResolvePackage(path)
-			if err != nil { return err }
-                        m[pkg.Path()] = pkg
-                        pushImports(m, pkg)
-                }
-        }
-	return nil
-}
-

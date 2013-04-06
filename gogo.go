@@ -12,6 +12,7 @@ type Context struct {
 type Target interface {
 	Execute(*Context) error
 	Deps() []Target
+	AddDependantTarget(Target)
 }
 
 type execution struct {
