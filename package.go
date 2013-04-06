@@ -1,6 +1,7 @@
 package gogo
 
 import (
+	"fmt"
 	"go/ast"
 	"go/parser"
 	"go/token"
@@ -8,7 +9,6 @@ import (
 	"io/ioutil"
 	"log"
 	"os"
-	"fmt"
 	"path/filepath"
 	"strconv"
 	"strings"
@@ -18,18 +18,19 @@ type Package struct {
 	project    *Project
 	name, path string
 	goFiles    []string
-	cFiles		[]string
-	hFiles		[]string
+	cFiles     []string
+	hFiles     []string
 	sFiles     []string
 
 	imports []string
 
-	testGoFiles	[]string
+	testGoFiles []string
 }
 
-func (p *Package) Path() string { return p.path }
+func (p *Package) Path() string      { return p.path }
 func (p *Package) Project() *Project { return p.project }
 func (p *Package) Imports() []string { return p.imports }
+func (p *Package) String() string    { return fmt.Sprintf("package %q", p.Path()) }
 
 func (p *Package) srcdir() string {
 	return filepath.Join(p.project.root, "src", p.path)
@@ -47,9 +48,9 @@ func (p *Package) readFiles() error {
 			continue
 		}
 		name := file.Name()
-                if strings.HasPrefix(name, "_") || strings.HasPrefix(name, ".") {
-                        continue
-                }
+		if strings.HasPrefix(name, "_") || strings.HasPrefix(name, ".") {
+			continue
+		}
 		switch ext := filepath.Ext(name); ext {
 		case ".go":
 			if strings.HasSuffix(name, "_test.go") {
@@ -101,12 +102,15 @@ func (p *Package) readImports() error {
 							return err
 						}
 						if path == "C" {
-							// skip 
+							// skip
 							continue
 						}
-						if path == "" { return fmt.Errorf("package %q imported blank path: %s", spec.Pos()) }
-						if path == "." { return fmt.Errorf("package %q imported dot path: %s", spec.Pos()) }
-						log.Printf("file %q imports %q", file, path)
+						if path == "" {
+							return fmt.Errorf("package %q imported blank path: %s", spec.Pos())
+						}
+						if path == "." {
+							return fmt.Errorf("package %q imported dot path: %s", spec.Pos())
+						}
 						imports[path] = struct{}{}
 					default:
 						// skip

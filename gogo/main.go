@@ -71,7 +71,7 @@ func main() {
 	pushImports(tobuild, root)
 	targets := make(map[*gogo.Package]gogo.Target)
 	for _, pkg := range tobuild {
-		log.Printf("package %q imports %v", pkg.Path(), pkg.Imports())
+		log.Printf("%s imports %v", pkg, pkg.Imports())
 		t := getTarget(targets, pkg)
 		for _, i := range pkg.Imports() {
 			if pkg, ok := tobuild[i]; ok {
@@ -79,21 +79,24 @@ func main() {
 			}
 		}
 	}
-	executions := make(map[*buildTarget]*gogo.Execution)
+	executions := make(map[gogo.Target]*gogo.Execution)
 	for _, t := range targets {
-		log.Printf("package %q depends on %v", t.(*buildTarget).Path(), t.Deps())
-		e := buildExecution(executions, t.(*buildTarget))
+		e := buildExecution(executions, t)
 		go e.Execute()
 	}
-	result := executions[targets[root].(*buildTarget)]
-	log.Println(result.Wait())
+	result := executions[targets[root]]
+	if err := result.Wait(); err != nil {
+		log.Fatalf("%s failed: %v", result, err)
+	}
 }
 
-func buildExecution(m map[*buildTarget]*gogo.Execution, t *buildTarget) *gogo.Execution {
+func buildExecution(m map[gogo.Target]*gogo.Execution, t gogo.Target) *gogo.Execution {
 	var deps []*gogo.Execution
 	for _, d := range t.Deps() {
-		deps = append(deps, buildExecution(m, d.(*buildTarget)))
+		deps = append(deps, buildExecution(m, d))
 	}
-	m[t] = gogo.NewExecution(t, nil, deps...)
+	if _, ok := m[t]; !ok {
+		m[t] = gogo.NewExecution(t, nil, deps...)
+	}
 	return m[t]
 }
