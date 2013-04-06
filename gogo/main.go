@@ -79,24 +79,15 @@ func main() {
 			}
 		}
 	}
-	executions := make(map[gogo.Target]*gogo.Execution)
-	for _, t := range targets {
-		e := buildExecution(executions, t)
-		go e.Execute()
-	}
-	result := executions[targets[root]]
-	if err := result.Wait(); err != nil {
-		log.Fatalf("%s failed: %v", result, err)
+	if err := gogo.ExecuteTargets(toTargets(targets)); err != nil {
+		log.Fatalf("%v", err)
 	}
 }
 
-func buildExecution(m map[gogo.Target]*gogo.Execution, t gogo.Target) *gogo.Execution {
-	var deps []*gogo.Execution
-	for _, d := range t.Deps() {
-		deps = append(deps, buildExecution(m, d))
+func toTargets(m map[*gogo.Package]gogo.Target) []gogo.Target {
+	var targets []gogo.Target
+	for _, t := range m {
+		targets = append(targets, t)
 	}
-	if _, ok := m[t]; !ok {
-		m[t] = gogo.NewExecution(t, nil, deps...)
-	}
-	return m[t]
+	return targets
 }

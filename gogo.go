@@ -14,9 +14,9 @@ type Target interface {
 	Deps() []Target
 }
 
-type Execution struct {
+type execution struct {
 	target        Target
-	deps          []*Execution
+	deps          []*execution
 	ctx           *Context
 	started, done chan struct{}
 	err           struct {
@@ -25,8 +25,8 @@ type Execution struct {
 	}
 }
 
-func NewExecution(target Target, ctx *Context, deps ...*Execution) *Execution {
-	return &Execution{
+func newExecution(target Target, ctx *Context, deps ...*execution) *execution {
+	return &execution{
 		target:  target,
 		deps:    deps,
 		ctx:     ctx,
@@ -35,15 +35,15 @@ func NewExecution(target Target, ctx *Context, deps ...*Execution) *Execution {
 	}
 }
 
-func (e *Execution) Deps() []*Execution { return e.deps }
+func (e *execution) Deps() []*execution { return e.deps }
 
-func (e *Execution) setError(err error) {
+func (e *execution) setError(err error) {
 	e.err.Lock()
 	e.err.val = err
 	e.err.Unlock()
 }
 
-func (e *Execution) Execute() {
+func (e *execution) Execute() {
 	close(e.started) // will panic if executed twice
 	defer close(e.done)
 
@@ -63,7 +63,7 @@ func (e *Execution) Execute() {
 	log.Printf("%s successful", e)
 }
 
-func (e *Execution) Wait() error {
+func (e *execution) Wait() error {
 	<-e.done
 
 	e.err.Lock()
@@ -71,4 +71,31 @@ func (e *Execution) Wait() error {
 	return e.err.val
 }
 
-func (e *Execution) String() string { return fmt.Sprintf("execution %q", e.target) }
+func (e *execution) String() string { return fmt.Sprintf("execution %q", e.target) }
+
+func ExecuteTargets(targets []Target) error {
+        executions := make(map[Target]*execution)
+        for _, t := range targets {
+                e := buildExecution(executions, t)
+                go e.Execute()
+        }
+	var err error 
+	for _, e := range executions {
+		if err1 := e.Wait(); err1 != nil && err != nil {
+			err = err1
+		}	
+	}
+	return err
+}
+
+func buildExecution(m map[Target]*execution, t Target) *execution {
+        var deps []*execution
+        for _, d := range t.Deps() {
+                deps = append(deps, buildExecution(m, d))
+        }
+        if _, ok := m[t]; !ok {
+                m[t] = newExecution(t, nil, deps...)
+        }
+        return m[t]
+}
+
