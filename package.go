@@ -22,15 +22,15 @@ type Package struct {
 	hFiles     []string
 	sFiles     []string
 
-	imports []string
+	imports []*Package
 
 	testGoFiles []string
 }
 
-func (p *Package) Path() string      { return p.path }
-func (p *Package) Project() *Project { return p.project }
-func (p *Package) Imports() []string { return p.imports }
-func (p *Package) String() string    { return fmt.Sprintf("package %q", p.Path()) }
+func (p *Package) Path() string        { return p.path }
+func (p *Package) Project() *Project   { return p.project }
+func (p *Package) Imports() []*Package { return p.imports }
+func (p *Package) String() string      { return fmt.Sprintf("package %q", p.Path()) }
 
 func (p *Package) srcdir() string {
 	return filepath.Join(p.project.root, "src", p.path)
@@ -123,7 +123,15 @@ func (p *Package) readImports() error {
 		}
 	}
 	for i, _ := range imports {
-		p.imports = append(p.imports, i)
+		if stdlib[i] {
+			// skip
+			continue
+		}
+		pkg, err := p.project.ResolvePackage(i)
+		if err != nil {
+			return err
+		}
+		p.imports = append(p.imports, pkg)
 	}
 	return nil
 }
