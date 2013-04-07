@@ -9,14 +9,26 @@ type Target interface {
 	Wait() error
 }
 
-type buildPackageTarget struct {
-	deps []Target
+type baseTarget struct {
 	done chan struct{}
 	err  struct {
 		sync.Mutex
 		val error
 	}
+}
+
+func (t *baseTarget) Wait() error {
+	<-t.done
+	t.err.Lock()
+	defer t.err.Unlock()
+	return t.err.val
+}
+
+type buildPackageTarget struct {
+	baseTarget
+	deps []Target
 	*Package
+	*Context
 }
 
 func (t *buildPackageTarget) execute() {
@@ -36,44 +48,69 @@ func (t *buildPackageTarget) execute() {
 	}
 }
 
-func (t *buildPackageTarget) Wait() error {
-	<-t.done
-	t.err.Lock()
-	defer t.err.Unlock()
-	return t.err.val
-}
-
 func (t *buildPackageTarget) build() error {
 	log.Printf("%T %q", t, t.Package.Path())
 	return nil
 }
 
-func BuildPackages(pkgs ...*Package) error {
-	targets := make(map[*Package]Target)
-	for _, pkg := range pkgs {
-		tt := buildPackage(targets, pkg)
-		for _, t := range tt {
-			if err := t.Wait(); err != nil {
-				return err
-			}
-		}
-	}
-	return nil
+type gcTarget struct {
+	baseTarget
+	deps []Target
+	*Package
+	*Context
 }
 
-func buildPackage(targets map[*Package]Target, pkg *Package) []Target {
-	var tt []Target
-	for _, dep := range pkg.Imports() {
-		tt = append(tt, buildPackage(targets, dep)...)
-	}
-	if _, ok := targets[pkg]; !ok {
-		t := &buildPackageTarget{
-			deps:    tt,
-			done:    make(chan struct{}),
-			Package: pkg,
+func (t *gcTarget) execute() {
+	defer close(t.done)
+	for _, dep := range t.deps {
+		if err := dep.Wait(); err != nil {
+			t.err.Lock()
+			t.err.val = err
+			t.err.Unlock()
+			return
 		}
-		targets[pkg] = t
-		go t.execute()
 	}
-	return []Target{targets[pkg]}
+	if err := t.build(); err != nil {
+		t.err.Lock()
+		t.err.val = err
+		t.err.Unlock()
+	}
+}
+
+func newGcTarget(ctx *Context, pkg *Package, deps []Target) *gcTarget {
+	return &gcTarget{
+		baseTarget: baseTarget{
+			done: make(chan struct{}),
+		},
+		deps:    deps,
+		Package: pkg,
+		Context: ctx,
+	}
+}
+
+func (t *gcTarget) build() error {
+	return t.Project.Toolchain().gc(t.Context, t.Package)
+}
+
+func buildPackage(ctx *Context, pkg *Package) []Target {
+	var deps []Target
+	for _, dep := range pkg.Imports() {
+		deps = append(deps, buildPackage(ctx, dep)...)
+	}
+	if _, ok := ctx.targets[pkg]; !ok {
+		// gc target
+		gc := newGcTarget(ctx, pkg, deps)
+		go gc.execute()
+		t := &buildPackageTarget{
+			baseTarget: baseTarget{
+				done: make(chan struct{}),
+			},
+			deps:    []Target{gc},
+			Package: pkg,
+			Context: ctx,
+		}
+		go t.execute()
+		ctx.targets[pkg] = t
+	}
+	return []Target{ctx.targets[pkg]}
 }

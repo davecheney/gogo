@@ -21,7 +21,7 @@ func (p *Project) ResolvePackage(pp string) (*Package, error) {
 		return pkg, nil
 	}
 	pkg := &Package{
-		project: p,
+		Project: p,
 		name:    path.Base(pp),
 		path:    pp,
 	}
@@ -36,3 +36,5 @@ func (p *Project) ResolvePackage(pp string) (*Package, error) {
 	p.pkgs[pp] = pkg
 	return pkg, nil
 }
+
+func (p *Project) Toolchain() Toolchain { return new(gcToolchain) }

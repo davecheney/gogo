@@ -15,7 +15,7 @@ import (
 )
 
 type Package struct {
-	project    *Project
+	*Project
 	name, path string
 	goFiles    []string
 	cFiles     []string
@@ -28,12 +28,12 @@ type Package struct {
 }
 
 func (p *Package) Path() string        { return p.path }
-func (p *Package) Project() *Project   { return p.project }
 func (p *Package) Imports() []*Package { return p.imports }
+func (p *Package) GoFiles() []string   { return p.goFiles }
 func (p *Package) String() string      { return fmt.Sprintf("package %q", p.Path()) }
 
 func (p *Package) srcdir() string {
-	return filepath.Join(p.project.root, "src", p.path)
+	return filepath.Join(p.Project.root, "src", p.path)
 }
 
 // readFiles populates the various package file lists
@@ -127,7 +127,7 @@ func (p *Package) readImports() error {
 			// skip
 			continue
 		}
-		pkg, err := p.project.ResolvePackage(i)
+		pkg, err := p.Project.ResolvePackage(i)
 		if err != nil {
 			return err
 		}

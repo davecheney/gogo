@@ -29,6 +29,6 @@ func main() {
 	project := gogo.NewProject(mustGetwd())
 	pkg := mustResolvePackage(project, flag.Arg(0))
 	if err := gogo.BuildPackages(pkg); err != nil {
-		log.Fatalf("%v", err)
+		log.Fatal(err)
 	}
 }
