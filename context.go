@@ -2,7 +2,9 @@ package gogo
 
 import (
 	"io/ioutil"
+	"log"
 	"runtime"
+	"path/filepath"
 )
 
 type Context struct {
@@ -34,7 +36,13 @@ func BuildPackages(pkgs ...*Package) error {
 
 func (ctx *Context) BuildPackages(pkgs ...*Package) error {
 	for _, pkg := range pkgs {
-		tt := buildPackage(ctx, pkg)
+		var tt []Target
+		log.Printf("building: %v", pkg.name)
+		if pkg.name == "main" {
+			tt = buildCommand(ctx, pkg)
+		} else {
+			tt = buildPackage(ctx, pkg)
+		}
 		for _, t := range tt {
 			if err := t.Wait(); err != nil {
 				return err
@@ -43,3 +51,8 @@ func (ctx *Context) BuildPackages(pkgs ...*Package) error {
 	}
 	return nil
 }
+
+func (ctx *Context) objdir(pkg *Package) string { return filepath.Join(ctx.basedir, pkg.path, "_obj") }
+func (ctx *Context) tooldir() string { return filepath.Join(runtime.GOROOT(), "pkg", "tool", ctx.goos+"_"+ctx.goarch) }
+func (ctx *Context) stdlib() string { return filepath.Join(runtime.GOROOT(), "pkg", ctx.goos+"_"+ctx.goarch) }
+

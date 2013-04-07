@@ -1,7 +1,7 @@
 package gogo
 
 import (
-	"path"
+	"path/filepath"
 )
 
 type Project struct {
@@ -22,7 +22,6 @@ func (p *Project) ResolvePackage(pp string) (*Package, error) {
 	}
 	pkg := &Package{
 		Project: p,
-		name:    path.Base(pp),
 		path:    pp,
 	}
 
@@ -38,3 +37,6 @@ func (p *Project) ResolvePackage(pp string) (*Package, error) {
 }
 
 func (p *Project) Toolchain() Toolchain { return new(gcToolchain) }
+
+func (p *Project) srcdir() string { return filepath.Join(p.root, "src") }
+func (p *Project) pkgdir(ctx *Context) string { return filepath.Join(p.root, "pkg", ctx.goos, ctx.goarch) }

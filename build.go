@@ -1,7 +1,6 @@
 package gogo
 
 import (
-	"log"
 	"sync"
 )
 
@@ -24,14 +23,25 @@ func (t *baseTarget) Wait() error {
 	return t.err.val
 }
 
-type buildPackageTarget struct {
+type packPackageTarget struct {
 	baseTarget
 	deps []Target
 	*Package
 	*Context
 }
 
-func (t *buildPackageTarget) execute() {
+func newPackTarget(ctx *Context, pkg *Package, deps ...Target) *packPackageTarget {
+         return &packPackageTarget{   
+                        baseTarget: baseTarget{
+                                done: make(chan struct{}),
+                        },
+                        deps:    deps,
+                        Package: pkg,
+                        Context: ctx,
+                }
+}
+
+func (t *packPackageTarget) execute() {
 	defer close(t.done)
 	for _, dep := range t.deps {
 		if err := dep.Wait(); err != nil {
@@ -48,9 +58,8 @@ func (t *buildPackageTarget) execute() {
 	}
 }
 
-func (t *buildPackageTarget) build() error {
-	log.Printf("%T %q", t, t.Package.Path())
-	return nil
+func (t *packPackageTarget) build() error {
+	return t.Project.Toolchain().pack(t.Context, t.Package)
 }
 
 type gcTarget struct {
@@ -77,7 +86,7 @@ func (t *gcTarget) execute() {
 	}
 }
 
-func newGcTarget(ctx *Context, pkg *Package, deps []Target) *gcTarget {
+func newGcTarget(ctx *Context, pkg *Package, deps ...Target) *gcTarget {
 	return &gcTarget{
 		baseTarget: baseTarget{
 			done: make(chan struct{}),
@@ -92,6 +101,45 @@ func (t *gcTarget) build() error {
 	return t.Project.Toolchain().gc(t.Context, t.Package)
 }
 
+type ldTarget struct {
+        baseTarget
+        deps []Target
+        *Package
+        *Context
+}
+
+func (t *ldTarget) execute() {
+        defer close(t.done)
+        for _, dep := range t.deps {
+                if err := dep.Wait(); err != nil {
+                        t.err.Lock()
+                        t.err.val = err
+                        t.err.Unlock()
+                        return
+                }
+        }
+        if err := t.build(); err != nil {
+                t.err.Lock()
+                t.err.val = err
+                t.err.Unlock()
+        }
+}
+
+func newLdTarget(ctx *Context, pkg *Package, deps ...Target) *ldTarget {
+        return &ldTarget{
+                baseTarget: baseTarget{
+                        done: make(chan struct{}),
+                },
+                deps:    deps,
+                Package: pkg,
+                Context: ctx,
+        }
+}
+
+func (t *ldTarget) build() error {
+        return t.Project.Toolchain().ld(t.Context, t.Package)
+}
+
 func buildPackage(ctx *Context, pkg *Package) []Target {
 	var deps []Target
 	for _, dep := range pkg.Imports() {
@@ -99,18 +147,29 @@ func buildPackage(ctx *Context, pkg *Package) []Target {
 	}
 	if _, ok := ctx.targets[pkg]; !ok {
 		// gc target
-		gc := newGcTarget(ctx, pkg, deps)
+		gc := newGcTarget(ctx, pkg, deps...)
 		go gc.execute()
-		t := &buildPackageTarget{
-			baseTarget: baseTarget{
-				done: make(chan struct{}),
-			},
-			deps:    []Target{gc},
-			Package: pkg,
-			Context: ctx,
-		}
-		go t.execute()
-		ctx.targets[pkg] = t
+		pack := newPackTarget(ctx, pkg, gc)
+		go pack.execute()
+		ctx.targets[pkg] = pack
+	}
+	return []Target{ctx.targets[pkg]}
+}
+
+func buildCommand(ctx *Context, pkg *Package) []Target {
+	var deps []Target
+	for _, dep := range pkg.Imports() {
+		deps = append(deps, buildPackage(ctx, dep)...)
+	}
+	if _, ok := ctx.targets[pkg]; !ok {
+		// gc target
+		gc := newGcTarget(ctx, pkg, deps...)
+		go gc.execute()
+		pack := newPackTarget(ctx, pkg, gc)
+		go pack.execute()
+		ld := newLdTarget(ctx, pkg, pack)
+		go ld.execute()
+		ctx.targets[pkg] = ld
 	}
 	return []Target{ctx.targets[pkg]}
 }

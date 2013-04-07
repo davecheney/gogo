@@ -33,7 +33,11 @@ func (p *Package) GoFiles() []string   { return p.goFiles }
 func (p *Package) String() string      { return fmt.Sprintf("package %q", p.Path()) }
 
 func (p *Package) srcdir() string {
-	return filepath.Join(p.Project.root, "src", p.path)
+	return filepath.Join(p.Project.srcdir(), p.path)
+}
+
+func (p *Package) pkgfile(ctx *Context) string {
+	return filepath.Join(p.Project.pkgdir(ctx), p.path+".a")
 }
 
 // readFiles populates the various package file lists
@@ -90,6 +94,7 @@ func (p *Package) readImports() error {
 		if err != nil {
 			return err
 		}
+		p.name = pf.Name.Name
 		for _, decl := range pf.Decls {
 			switch decl := decl.(type) {
 			case *ast.GenDecl:
