@@ -19,4 +19,4 @@ usage
 licence
 -------
 
-
+`gogo` is licenced under a BSD licence.
