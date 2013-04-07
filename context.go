@@ -37,7 +37,7 @@ func BuildPackages(pkgs ...*Package) error {
 func (ctx *Context) BuildPackages(pkgs ...*Package) error {
 	for _, pkg := range pkgs {
 		var tt []Target
-		log.Printf("building: %v", pkg.name)
+		log.Printf("building: %v", pkg.path)
 		if pkg.name == "main" {
 			tt = buildCommand(ctx, pkg)
 		} else {

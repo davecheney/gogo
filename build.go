@@ -23,15 +23,15 @@ func (t *baseTarget) Wait() error {
 	return t.err.val
 }
 
-type packPackageTarget struct {
+type packTarget struct {
 	baseTarget
 	deps []Target
 	*Package
 	*Context
 }
 
-func newPackTarget(ctx *Context, pkg *Package, deps ...Target) *packPackageTarget {
-         return &packPackageTarget{   
+func newPackTarget(ctx *Context, pkg *Package, deps ...Target) *packTarget {
+         return &packTarget{   
                         baseTarget: baseTarget{
                                 done: make(chan struct{}),
                         },
@@ -41,7 +41,7 @@ func newPackTarget(ctx *Context, pkg *Package, deps ...Target) *packPackageTarge
                 }
 }
 
-func (t *packPackageTarget) execute() {
+func (t *packTarget) execute() {
 	defer close(t.done)
 	for _, dep := range t.deps {
 		if err := dep.Wait(); err != nil {
@@ -58,7 +58,7 @@ func (t *packPackageTarget) execute() {
 	}
 }
 
-func (t *packPackageTarget) build() error {
+func (t *packTarget) build() error {
 	return t.Project.Toolchain().pack(t.Context, t.Package)
 }
 
