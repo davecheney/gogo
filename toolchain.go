@@ -6,47 +6,62 @@ import (
 	"os/exec"
 	"path/filepath"
 	"strings"
+
+	"go/build"
 )
 
 type Toolchain interface {
-	Gc(*Context, *Package) error
-	Pack(*Context, *Package) error
-	Ld(*Context, *Package) error
+	Gc(importpath, srcdir, outfile string, files []string) error
+	Pack(string, string, []string) error
+	Ld(infile, outfile string) error
 }
 
 type gcToolchain struct {
+	gc, ld, as, pack string
+	*Context
 }
 
-func (tc *gcToolchain) Gc(ctx *Context, pkg *Package) error {
-	objdir := ctx.objdir(pkg)
-	if err := os.MkdirAll(objdir, 0777); err != nil {
-		return err
+func newGcToolchain(c *Context) (Toolchain, error) {
+	tooldir := filepath.Join(c.goroot, "pkg", "tool", c.goos+"_"+c.goarch)
+	archchar, err := build.ArchChar(c.goarch)
+	if err != nil {
+		return nil, err
 	}
-	args := []string{"-p", pkg.path, "-I", pkg.Project.pkgdir(ctx), "-o", filepath.Join(objdir, "_go_.6")}
-	for _, f := range pkg.GoFiles() {
-		args = append(args, f)
-	}
-	tooldir := ctx.tooldir()
-	return run(pkg.srcdir(), filepath.Join(tooldir, "6g"), args...)
+	return &gcToolchain{
+		gc:      filepath.Join(tooldir, archchar+"g"),
+		ld:      filepath.Join(tooldir, archchar+"l"),
+		as:      filepath.Join(tooldir, archchar+"a"),
+		pack:    filepath.Join(tooldir, "pack"),
+		Context: c,
+	}, nil
 }
 
-func (tc *gcToolchain) Pack(ctx *Context, pkg *Package) error {
-	objdir := ctx.objdir(pkg)
-	tooldir := ctx.tooldir()
-	pkgfile := pkg.pkgfile(ctx)
-	pkgdir := filepath.Dir(pkgfile)
-	if err := os.MkdirAll(pkgdir, 0777); err != nil {
-		return err
+func (t *gcToolchain) Gc(importpath, srcdir, outfile string, files []string) error {
+	args := []string{"-p", importpath}
+	for _, d := range t.SearchPaths {
+		args = append(args, "-I", d)
 	}
-	args := []string{"grcP", ctx.basedir, pkgfile, filepath.Join(objdir, "_go_.6")}
-	return run(pkgdir, filepath.Join(tooldir, "pack"), args...)
+	args = append(args, "-o", outfile)
+	args = append(args, files...)
+	return run(srcdir, t.gc, args...)
 }
 
-func (tc *gcToolchain) Ld(ctx *Context, pkg *Package) error {
-	objdir := ctx.objdir(pkg)
-	tooldir := ctx.tooldir()
-	args := []string{"-o", filepath.Join(objdir, "a.out"), "-L", pkg.Project.pkgdir(ctx), "-L", ctx.stdlib(), pkg.pkgfile(ctx)}
-	return run(objdir, filepath.Join(tooldir, "6l"), args...)
+func (t *gcToolchain) Pack(afile, objdir string, ofiles []string) error {
+	args := []string{"grcP", t.basedir, afile}
+	args = append(args, ofiles...)
+	return run(objdir, t.pack, args...)
+}
+
+func (tc *gcToolchain) Asm(ctx *Context, pkg *Package) error {
+	return nil
+}
+
+func (t *gcToolchain) Ld(outfile, infile string) error {
+	args := []string{"-o", outfile}
+	for _, d := range t.SearchPaths {
+		args = append(args, "-L", d)
+	}
+	return run(t.basedir, t.ld, args...)
 }
 
 func run(dir, command string, args ...string) error {
@@ -54,6 +69,6 @@ func run(dir, command string, args ...string) error {
 	cmd.Dir = dir
 	cmd.Stdout = os.Stdout
 	cmd.Stderr = os.Stderr
-	log.Printf("[%s] %s %s", dir, command, strings.Join(args, " "))
+	log.Printf("cd %s; %s %s", dir, command, strings.Join(args, " "))
 	return cmd.Run()
 }

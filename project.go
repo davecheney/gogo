@@ -2,6 +2,7 @@ package gogo
 
 import (
 	"path/filepath"
+	"runtime"
 )
 
 type Project struct {
@@ -36,9 +37,9 @@ func (p *Project) ResolvePackage(pp string) (*Package, error) {
 	return pkg, nil
 }
 
-func (p *Project) Toolchain() Toolchain { return new(gcToolchain) }
-
-func (p *Project) NewContext() (*Context, error) { return newContext() }
+func (p *Project) NewContext() (*Context, error) {
+	return newContext(runtime.GOROOT(), runtime.GOOS, runtime.GOARCH)
+}
 
 func (p *Project) srcdir() string { return filepath.Join(p.root, "src") }
 func (p *Project) pkgdir(ctx *Context) string {

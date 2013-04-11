@@ -3,6 +3,8 @@ package build
 import (
 	"fmt"
 	"log"
+	"os"
+	"path/filepath"
 	"sync"
 
 	"github.com/davecheney/gogo"
@@ -21,25 +23,24 @@ func run(project *gogo.Project, args []string) error {
 		}
 		pkgs = append(pkgs, pkg)
 	}
-        ctx, err := project.NewContext()
-        if err != nil {
-                return err
-        }
-        for _, pkg := range pkgs {
-                var tt []gogo.Target
-                log.Printf("building: %v", pkg.ImportPath())
-                if pkg.Name() == "main" {
-                        tt = buildCommand(ctx, pkg)
-                } else {
-                        tt = buildPackage(ctx, pkg)
-                }
-                for _, t := range tt {
-                        if err := t.Wait(); err != nil {
-                                return err
-                        }
-                }
-        }
-        return nil
+	ctx, err := project.NewContext()
+	if err != nil {
+		return err
+	}
+	for _, pkg := range pkgs {
+		var tt []gogo.Target
+		if pkg.Name() == "main" {
+			tt = buildCommand(ctx, pkg)
+		} else {
+			tt = buildPackage(ctx, pkg)
+		}
+		for _, t := range tt {
+			if err := t.Wait(); err != nil {
+				return err
+			}
+		}
+	}
+	return nil
 }
 
 type baseTarget struct {
@@ -93,7 +94,7 @@ func (t *packTarget) execute() {
 }
 
 func (t *packTarget) build() error {
-	return t.Project.Toolchain().Pack(t.Context, t.Package)
+	return nil // t.Pack(t.Context, t.Package)
 }
 
 type gcTarget struct {
@@ -131,8 +132,57 @@ func newGcTarget(ctx *gogo.Context, pkg *gogo.Package, deps ...gogo.Target) *gcT
 	}
 }
 
+func (t *gcTarget) objdir() string { return t.Context.Objdir(t.Package) }
+
 func (t *gcTarget) build() error {
-	return t.Project.Toolchain().Gc(t.Context, t.Package)
+	gofiles := t.GoFiles()
+	if len(gofiles) < 1 {
+		return nil
+	}
+	objdir := t.objdir()
+	if err := os.MkdirAll(objdir, 0777); err != nil {
+		return err
+	}
+	return t.Gc(t.ImportPath(), t.Srcdir(), filepath.Join(objdir, "_go_.6"), gofiles)
+}
+
+type asmTarget struct {
+	baseTarget
+	deps []gogo.Target
+	*gogo.Package
+	*gogo.Context
+}
+
+func (t *asmTarget) execute() {
+	defer close(t.done)
+	for _, dep := range t.deps {
+		if err := dep.Wait(); err != nil {
+			t.err.Lock()
+			t.err.val = err
+			t.err.Unlock()
+			return
+		}
+	}
+	if err := t.build(); err != nil {
+		t.err.Lock()
+		t.err.val = err
+		t.err.Unlock()
+	}
+}
+
+func newAsmTarget(ctx *gogo.Context, pkg *gogo.Package, deps ...gogo.Target) *gcTarget {
+	return &gcTarget{
+		baseTarget: baseTarget{
+			done: make(chan struct{}),
+		},
+		deps:    deps,
+		Package: pkg,
+		Context: ctx,
+	}
+}
+
+func (t *asmTarget) build() error {
+	return nil // t.Project.Toolchain().Asm(t.Context, t.Package)
 }
 
 type ldTarget struct {
@@ -170,8 +220,15 @@ func newLdTarget(ctx *gogo.Context, pkg *gogo.Package, deps ...gogo.Target) *ldT
 	}
 }
 
+func (t *ldTarget) objdir() string  { return t.Context.Objdir(t.Package) }
+func (t *ldTarget) pkgfile() string { return t.Package.Pkgfile(t.Context) }
+
 func (t *ldTarget) build() error {
-	return t.Project.Toolchain().Ld(t.Context, t.Package)
+	objdir := t.objdir()
+	if err := os.MkdirAll(objdir, 0777); err != nil {
+		return err
+	}
+	return t.Ld(filepath.Join(objdir, "a.out"), t.pkgfile())
 }
 
 func buildPackage(ctx *gogo.Context, pkg *gogo.Package) []gogo.Target {
@@ -187,6 +244,7 @@ func buildPackage(ctx *gogo.Context, pkg *gogo.Package) []gogo.Target {
 		go pack.execute()
 		ctx.Targets[pkg] = pack
 	}
+	log.Printf("build package %q", pkg.ImportPath())
 	return []gogo.Target{ctx.Targets[pkg]}
 }
 
@@ -205,5 +263,6 @@ func buildCommand(ctx *gogo.Context, pkg *gogo.Package) []gogo.Target {
 		go ld.execute()
 		ctx.Targets[pkg] = ld
 	}
+	log.Printf("build command %q", pkg.ImportPath())
 	return []gogo.Target{ctx.Targets[pkg]}
 }
