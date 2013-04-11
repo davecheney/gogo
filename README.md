@@ -12,7 +12,7 @@ usage
     mkdir $PROJECT/.project
 
     cd $PROJECT
-    gogo $SOME_PACKAGE_OR_COMMAND
+    gogo build $SOME_PACKAGE_OR_COMMAND
 
 `gogo` expects all your source to be in $PROJECT/src in GOPATH format.
 
