@@ -27,10 +27,11 @@ type Package struct {
 	testGoFiles []string
 }
 
-func (p *Package) Path() string        { return p.path }
+func (p *Package) ImportPath() string        { return p.path }
+func (p *Package) Name() string        { return p.name }
 func (p *Package) Imports() []*Package { return p.imports }
 func (p *Package) GoFiles() []string   { return p.goFiles }
-func (p *Package) String() string      { return fmt.Sprintf("package %q", p.Path()) }
+func (p *Package) String() string      { return fmt.Sprintf("package %q", p.path) }
 
 func (p *Package) srcdir() string {
 	return filepath.Join(p.Project.srcdir(), p.path)

@@ -1,8 +1,6 @@
 package gogo
 
 import (
-	"io/ioutil"
-	"log"
 	"path/filepath"
 )
 
@@ -38,46 +36,9 @@ func (p *Project) ResolvePackage(pp string) (*Package, error) {
 	return pkg, nil
 }
 
-func (p *Project) AllPackages() ([]*Package, error) {
-	dirs, err := findAllDirs(p.srcdir())
-	if err != nil {
-		return nil, err
-	}
-	var pkgs []*Package
-	for _, dir := range dirs {
-		pkg, err := p.ResolvePackage(dir)
-		if err != nil {
-			return nil, err
-		}
-		pkgs = append(pkgs, pkg)
-	}
-	return pkgs, nil
-}
-
-func findAllDirs(dir string) ([]string, error) {
-	log.Printf("scanning directory %v", dir)
-	ents, err := ioutil.ReadDir(dir)
-	if err != nil {
-		return nil, err
-	}
-	var dirs = []string{dir}
-	for _, ent := range ents {
-		if !ent.IsDir() {
-			continue
-		}
-		if ent.Name()[0] == '.' {
-			continue
-		}
-		d, err := findAllDirs(filepath.Join(dir, ent.Name()))
-		if err != nil {
-			return nil, err
-		}
-		dirs = append(dirs, d...)
-	}
-	return dirs, nil
-}
-
 func (p *Project) Toolchain() Toolchain { return new(gcToolchain) }
+
+func (p *Project) NewContext() (*Context, error) { return newContext() }
 
 func (p *Project) srcdir() string { return filepath.Join(p.root, "src") }
 func (p *Project) pkgdir(ctx *Context) string {
