@@ -6,6 +6,7 @@ import (
 )
 
 type Context struct {
+	*Project
 	goroot, goos, goarch string
 	basedir              string
 	Targets              map[*Package]Target
@@ -13,12 +14,13 @@ type Context struct {
 	SearchPaths []string
 }
 
-func newContext(goroot, goos, goarch string) (*Context, error) {
+func newContext(p *Project, goroot, goos, goarch string) (*Context, error) {
 	basedir, err := ioutil.TempDir("", "gogo")
 	if err != nil {
 		return nil, err
 	}
 	ctx := &Context{
+		Project: p,
 		goroot:  goroot,
 		goos:    goos,
 		goarch:  goarch,
@@ -30,7 +32,7 @@ func newContext(goroot, goos, goarch string) (*Context, error) {
 		return nil, err
 	}
 	ctx.Toolchain = tc
-	ctx.SearchPaths = []string{ctx.stdlib(), ctx.basedir}
+	ctx.SearchPaths = []string{ctx.stdlib(), ctx.pkgdir(ctx)}
 	return ctx, nil
 }
 

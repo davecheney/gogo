@@ -25,7 +25,6 @@ func (p *Project) ResolvePackage(pp string) (*Package, error) {
 		Project: p,
 		path:    pp,
 	}
-
 	if err := pkg.readFiles(); err != nil {
 		return nil, err
 	}
@@ -38,7 +37,7 @@ func (p *Project) ResolvePackage(pp string) (*Package, error) {
 }
 
 func (p *Project) NewContext() (*Context, error) {
-	return newContext(runtime.GOROOT(), runtime.GOOS, runtime.GOARCH)
+	return newContext(p, runtime.GOROOT(), runtime.GOOS, runtime.GOARCH)
 }
 
 func (p *Project) srcdir() string { return filepath.Join(p.root, "src") }

@@ -17,7 +17,7 @@ import (
 type Package struct {
 	*Project
 	name, path string
-	goFiles    []string
+	GoFiles    []string
 	cFiles     []string
 	hFiles     []string
 	sFiles     []string
@@ -30,7 +30,6 @@ type Package struct {
 func (p *Package) ImportPath() string  { return p.path }
 func (p *Package) Name() string        { return p.name }
 func (p *Package) Imports() []*Package { return p.imports }
-func (p *Package) GoFiles() []string   { return p.goFiles }
 func (p *Package) String() string      { return fmt.Sprintf("package %q", p.path) }
 
 func (p *Package) Srcdir() string {
@@ -43,7 +42,7 @@ func (p *Package) Pkgfile(ctx *Context) string {
 
 // readFiles populates the various package file lists
 func (p *Package) readFiles() error {
-	files, err := ioutil.ReadDir(p.srcdir())
+	files, err := ioutil.ReadDir(p.Srcdir())
 	if err != nil {
 		return err
 	}
@@ -62,7 +61,7 @@ func (p *Package) readFiles() error {
 				p.testGoFiles = append(p.testGoFiles, name)
 				continue
 			}
-			p.goFiles = append(p.goFiles, name)
+			p.GoFiles = append(p.GoFiles, name)
 		case ".c":
 			p.cFiles = append(p.cFiles, name)
 		case ".h":
@@ -78,14 +77,14 @@ func (p *Package) readFiles() error {
 }
 
 func (p *Package) openFile(name string) (io.ReadCloser, error) {
-	return os.Open(filepath.Join(p.srcdir(), name))
+	return os.Open(filepath.Join(p.Srcdir(), name))
 }
 
 // readImports populates the import paths of this package
 func (p *Package) readImports() error {
 	fset := token.NewFileSet()
 	imports := make(map[string]struct{})
-	for _, file := range p.goFiles {
+	for _, file := range p.GoFiles {
 		r, err := p.openFile(file)
 		if err != nil {
 			return err
@@ -133,7 +132,7 @@ func (p *Package) readImports() error {
 			// skip
 			continue
 		}
-		pkg, err := p.Project.ResolvePackage(i)
+		pkg, err := p.ResolvePackage(i)
 		if err != nil {
 			return err
 		}
