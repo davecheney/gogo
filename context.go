@@ -3,8 +3,8 @@ package gogo
 import (
 	"io/ioutil"
 	"log"
-	"runtime"
 	"path/filepath"
+	"runtime"
 )
 
 type Context struct {
@@ -53,6 +53,9 @@ func (ctx *Context) BuildPackages(pkgs ...*Package) error {
 }
 
 func (ctx *Context) objdir(pkg *Package) string { return filepath.Join(ctx.basedir, pkg.path, "_obj") }
-func (ctx *Context) tooldir() string { return filepath.Join(runtime.GOROOT(), "pkg", "tool", ctx.goos+"_"+ctx.goarch) }
-func (ctx *Context) stdlib() string { return filepath.Join(runtime.GOROOT(), "pkg", ctx.goos+"_"+ctx.goarch) }
-
+func (ctx *Context) tooldir() string {
+	return filepath.Join(runtime.GOROOT(), "pkg", "tool", ctx.goos+"_"+ctx.goarch)
+}
+func (ctx *Context) stdlib() string {
+	return filepath.Join(runtime.GOROOT(), "pkg", ctx.goos+"_"+ctx.goarch)
+}

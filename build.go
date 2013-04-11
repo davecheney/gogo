@@ -31,14 +31,14 @@ type packTarget struct {
 }
 
 func newPackTarget(ctx *Context, pkg *Package, deps ...Target) *packTarget {
-         return &packTarget{   
-                        baseTarget: baseTarget{
-                                done: make(chan struct{}),
-                        },
-                        deps:    deps,
-                        Package: pkg,
-                        Context: ctx,
-                }
+	return &packTarget{
+		baseTarget: baseTarget{
+			done: make(chan struct{}),
+		},
+		deps:    deps,
+		Package: pkg,
+		Context: ctx,
+	}
 }
 
 func (t *packTarget) execute() {
@@ -102,42 +102,42 @@ func (t *gcTarget) build() error {
 }
 
 type ldTarget struct {
-        baseTarget
-        deps []Target
-        *Package
-        *Context
+	baseTarget
+	deps []Target
+	*Package
+	*Context
 }
 
 func (t *ldTarget) execute() {
-        defer close(t.done)
-        for _, dep := range t.deps {
-                if err := dep.Wait(); err != nil {
-                        t.err.Lock()
-                        t.err.val = err
-                        t.err.Unlock()
-                        return
-                }
-        }
-        if err := t.build(); err != nil {
-                t.err.Lock()
-                t.err.val = err
-                t.err.Unlock()
-        }
+	defer close(t.done)
+	for _, dep := range t.deps {
+		if err := dep.Wait(); err != nil {
+			t.err.Lock()
+			t.err.val = err
+			t.err.Unlock()
+			return
+		}
+	}
+	if err := t.build(); err != nil {
+		t.err.Lock()
+		t.err.val = err
+		t.err.Unlock()
+	}
 }
 
 func newLdTarget(ctx *Context, pkg *Package, deps ...Target) *ldTarget {
-        return &ldTarget{
-                baseTarget: baseTarget{
-                        done: make(chan struct{}),
-                },
-                deps:    deps,
-                Package: pkg,
-                Context: ctx,
-        }
+	return &ldTarget{
+		baseTarget: baseTarget{
+			done: make(chan struct{}),
+		},
+		deps:    deps,
+		Package: pkg,
+		Context: ctx,
+	}
 }
 
 func (t *ldTarget) build() error {
-        return t.Project.Toolchain().ld(t.Context, t.Package)
+	return t.Project.Toolchain().ld(t.Context, t.Package)
 }
 
 func buildPackage(ctx *Context, pkg *Package) []Target {

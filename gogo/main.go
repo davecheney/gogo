@@ -6,6 +6,7 @@ import (
 	"os"
 
 	"github.com/davecheney/gogo"
+	"github.com/davecheney/gogo/build"
 )
 
 func mustGetwd() string {
@@ -16,19 +17,19 @@ func mustGetwd() string {
 	return wd
 }
 
-func mustResolvePackage(project *gogo.Project, path string) *gogo.Package {
-	pkg, err := project.ResolvePackage(path)
-	if err != nil {
-		log.Fatalf("failed to resolve package %q: %v", path, err)
-	}
-	return pkg
+var commands = map[string]*gogo.Command{
+	"build": build.Build,
 }
 
 func main() {
 	flag.Parse()
 	project := gogo.NewProject(mustGetwd())
-	pkg := mustResolvePackage(project, flag.Arg(0))
-	if err := gogo.BuildPackages(pkg); err != nil {
+	first, rest := flag.Arg(0), flag.Args()[1:]
+	cmd, ok := commands[first]
+	if !ok {
+		log.Fatal("unknown command %q", first)
+	}
+	if err := cmd.Run(project, rest); err != nil {
 		log.Fatal(err)
 	}
 }
