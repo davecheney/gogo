@@ -3,6 +3,7 @@ package gogo
 import (
 	"io/ioutil"
 	"path/filepath"
+	"runtime"
 )
 
 // Context represents the execution of a series of Targets
@@ -14,6 +15,12 @@ type Context struct {
 	Targets              map[*Package]Target
 	Toolchain
 	SearchPaths []string
+}
+
+// NewDefaultContext returns a Context that represents the version
+// of Go that compiled this package.
+func NewDefaultContext(p *Project) (*Context, error) {
+	return newContext(p, runtime.GOROOT(), runtime.GOOS, runtime.GOARCH)
 }
 
 func newContext(p *Project, goroot, goos, goarch string) (*Context, error) {
@@ -38,10 +45,11 @@ func newContext(p *Project, goroot, goos, goarch string) (*Context, error) {
 	return ctx, nil
 }
 
-func (ctx *Context) Objdir(pkg *Package) string { return filepath.Join(ctx.basedir, pkg.path, "_obj") }
-func (ctx *Context) stdlib() string {
-	return filepath.Join(ctx.goroot, "pkg", ctx.goos+"_"+ctx.goarch)
-}
+func (ctx *Context) Objdir(pkg *Package) string { return filepath.Join(ctx.basedir, pkg.path) }
 func (ctx *Context) Pkgdir() string {
 	return filepath.Join(ctx.Project.root, "pkg", ctx.goos, ctx.goarch)
+}
+
+func (ctx *Context) stdlib() string {
+	return filepath.Join(ctx.goroot, "pkg", ctx.goos+"_"+ctx.goarch)
 }
