@@ -20,7 +20,7 @@ func run(project *gogo.Project, args []string) error {
 		}
 		pkgs = append(pkgs, pkg)
 	}
-	ctx, err := project.NewDefaultContext()
+	ctx, err := gogo.NewDefaultContext(project)
 	if err != nil {
 		return err
 	}
