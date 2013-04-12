@@ -36,10 +36,6 @@ func (p *Package) Srcdir() string {
 	return filepath.Join(p.Project.srcdir(), p.path)
 }
 
-func (p *Package) Pkgfile(ctx *Context) string {
-	return filepath.Join(p.Project.pkgdir(ctx), p.path+".a")
-}
-
 // readFiles populates the various package file lists
 func (p *Package) readFiles() error {
 	files, err := ioutil.ReadDir(p.Srcdir())
