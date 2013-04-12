@@ -60,9 +60,9 @@ func (t *packTarget) execute() {
 	}
 }
 
-func (t *packTarget) pkgfile() string { return t.Pkgfile(t.Context) }
 func (t *packTarget) objdir() string  { return t.Context.Objdir(t.Package) }
 func (t *packTarget) objfile() string { return filepath.Join(t.objdir(), "_go_.6") }
+func (t *packTarget) pkgfile() string { return filepath.Join(filepath.Dir(t.Pkgdir()), filepath.Base(t.Pkgdir())) }
 
 func (t *packTarget) build() error {
 	ofile := t.pkgfile()
@@ -195,7 +195,7 @@ func newLdTarget(ctx *gogo.Context, pkg *gogo.Package, deps ...gogo.Target) *ldT
 }
 
 func (t *ldTarget) objdir() string  { return t.Context.Objdir(t.Package) }
-func (t *ldTarget) pkgfile() string { return t.Package.Pkgfile(t.Context) }
+func (t *ldTarget) pkgfile() string { return filepath.Join(filepath.Dir(t.Pkgdir()), filepath.Base(t.Pkgdir())) }
 
 func (t *ldTarget) build() error {
 	objdir := t.objdir()

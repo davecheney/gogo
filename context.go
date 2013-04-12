@@ -6,7 +6,7 @@ import (
 )
 
 // Context represents the execution of a series of Targets
-// for a Project. 
+// for a Project.
 type Context struct {
 	*Project
 	goroot, goos, goarch string
@@ -34,7 +34,7 @@ func newContext(p *Project, goroot, goos, goarch string) (*Context, error) {
 		return nil, err
 	}
 	ctx.Toolchain = tc
-	ctx.SearchPaths = []string{ctx.stdlib(), ctx.pkgdir()}
+	ctx.SearchPaths = []string{ctx.stdlib(), ctx.Pkgdir()}
 	return ctx, nil
 }
 
@@ -42,6 +42,6 @@ func (ctx *Context) Objdir(pkg *Package) string { return filepath.Join(ctx.based
 func (ctx *Context) stdlib() string {
 	return filepath.Join(ctx.goroot, "pkg", ctx.goos+"_"+ctx.goarch)
 }
-func (ctx *Context) pkgdir() string {
+func (ctx *Context) Pkgdir() string {
 	return filepath.Join(ctx.Project.root, "pkg", ctx.goos, ctx.goarch)
 }

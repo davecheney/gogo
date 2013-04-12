@@ -3,7 +3,7 @@ package gogo
 import "testing"
 import "path/filepath"
 
-	const root = "testdata"
+const root = "testdata"
 
 func TestNewProject(t *testing.T) {
 	p := NewProject(root)
@@ -15,18 +15,27 @@ func TestNewProject(t *testing.T) {
 	}
 }
 
+var resolvePackageTests = []struct {
+	path, name string
+}{
+	{"a", "a"},
+	{"a/b", "b"},
+	{"a/a", "a"},
+}
+
 func TestResolvePackage(t *testing.T) {
 	proj := NewProject(root)
-	pkg, err := proj.ResolvePackage("a")
-	if err != nil {
-		t.Fatalf("Project.ResolvePackage(): %v", err)
-	}
-	if pkg.name != "a" {
-		t.Fatalf("Package.name: expected %q, got %q", "a", pkg.name)
-	}
-	expected := filepath.Join(root, "src", "a")
-	if pkg.path != expected {
-		t.Fatalf("Package.path: expected %q, got %q", expected, pkg.path)
+	for _, tt := range resolvePackageTests {
+		pkg, err := proj.ResolvePackage(tt.path)
+		if err != nil {
+			t.Fatalf("Project.ResolvePackage(): %v", err)
+		}
+		if pkg.name != tt.name {
+			t.Fatalf("Package.name: expected %q, got %q", tt.name, pkg.name)
+		}
+		if pkg.path != tt.path {
+			t.Fatalf("Package.path: expected %q, got %q", tt.path, pkg.path)
+		}
 	}
 }
 
@@ -37,5 +46,3 @@ func TestProjectSrcDir(t *testing.T) {
 		t.Fatalf("Project.srcdir(): expected %q, got %q", expected, proj.srcdir())
 	}
 }
-		
-

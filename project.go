@@ -17,13 +17,14 @@ func NewProject(root string) *Project {
 	}
 }
 
-func (p *Project) ResolvePackage(pp string) (*Package, error) {
-	if pkg, ok := p.pkgs[pp]; ok {
+func (p *Project) ResolvePackage(path string) (*Package, error) {
+	if pkg, ok := p.pkgs[path]; ok {
 		return pkg, nil
 	}
 	pkg := &Package{
 		Project: p,
-		path:    pp,
+		path:    path,
+		name:    filepath.Base(path),
 	}
 	if err := pkg.readFiles(); err != nil {
 		return nil, err
@@ -32,7 +33,7 @@ func (p *Project) ResolvePackage(pp string) (*Package, error) {
 	if err := pkg.readImports(); err != nil {
 		return nil, err
 	}
-	p.pkgs[pp] = pkg
+	p.pkgs[path] = pkg
 	return pkg, nil
 }
 
