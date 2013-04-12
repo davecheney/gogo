@@ -44,7 +44,7 @@ func TestConextPkgdir(t *testing.T) {
 	if err != nil {
 		t.Fatalf("NewDefaultContext(): %v", err)
 	}
-	if pkgdir := ctx.Pkgdir(); pkgdir != filepath.Join(proj.root, "pkg", ctx.goos, ctx.goarch) {
-		t.Fatalf("ctx.Objdir(): expected %q, got %q", filepath.Join(proj.root, "pkg", ctx.goos, ctx.goarch))
+	if pkgdir := ctx.Pkgdir(); pkgdir != filepath.Join(ctx.basedir, "pkg", ctx.goos, ctx.goarch) {
+		t.Fatalf("ctx.Objdir(): expected %q, got %q", filepath.Join(ctx.basedir, "pkg", ctx.goos, ctx.goarch), pkgdir)
 	}
 }

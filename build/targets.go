@@ -62,15 +62,15 @@ func (t *packTarget) execute() {
 
 func (t *packTarget) objdir() string  { return t.Context.Objdir(t.Package) }
 func (t *packTarget) objfile() string { return filepath.Join(t.objdir(), "_go_.6") }
-func (t *packTarget) pkgfile() string { return filepath.Join(t.Pkgdir(), t.Package.ImportPath()+".a") }
+func (t *packTarget) pkgfile() string { return t.Package.ImportPath()+".a" }
 
 func (t *packTarget) build() error {
 	ofile := t.pkgfile()
-	pkgdir := filepath.Dir(ofile)
+	pkgdir := filepath.Dir(filepath.Join(t.Pkgdir(), ofile))
 	if err := os.MkdirAll(pkgdir, 0777); err != nil {
 		return err
 	}
-	return t.Pack(ofile, t.objdir(), t.objfile())
+	return t.Pack(ofile, t.Pkgdir(), t.objfile())
 }
 
 type gcTarget struct {
