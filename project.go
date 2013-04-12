@@ -41,6 +41,3 @@ func (p *Project) NewContext() (*Context, error) {
 }
 
 func (p *Project) srcdir() string { return filepath.Join(p.root, "src") }
-func (p *Project) pkgdir(ctx *Context) string {
-	return filepath.Join(p.root, "pkg", ctx.goos, ctx.goarch)
-}
