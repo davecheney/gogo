@@ -32,7 +32,7 @@ func run(project *gogo.Project, args []string) error {
 			}
 		}
 	}
-	return nil
+	return ctx.Destroy()
 }
 
 func test(ctx *gogo.Context, pkg *gogo.Package) []gogo.Target {

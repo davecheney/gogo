@@ -36,8 +36,8 @@ type packTarget struct {
 	*gogo.Context
 }
 
-func newPackTarget(ctx *gogo.Context, pkg *gogo.Package, deps ...gogo.Target) *packTarget {
-	return &packTarget{
+func Pack(ctx *gogo.Context, pkg *gogo.Package, deps ...gogo.Target) *packTarget {
+	t := &packTarget{
 		target: target{
 			done: make(chan struct{}),
 		},
@@ -45,6 +45,8 @@ func newPackTarget(ctx *gogo.Context, pkg *gogo.Package, deps ...gogo.Target) *p
 		Package: pkg,
 		Context: ctx,
 	}
+	go t.execute()
+	return t
 }
 
 func (t *packTarget) execute() {
@@ -97,8 +99,8 @@ func (t *gcTarget) execute() {
 	}
 }
 
-func newGcTarget(ctx *gogo.Context, pkg *gogo.Package, deps ...gogo.Target) *gcTarget {
-	return &gcTarget{
+func Gc(ctx *gogo.Context, pkg *gogo.Package, deps ...gogo.Target) *gcTarget {
+	t := &gcTarget{
 		target: target{
 			done: make(chan struct{}),
 		},
@@ -106,6 +108,8 @@ func newGcTarget(ctx *gogo.Context, pkg *gogo.Package, deps ...gogo.Target) *gcT
 		Package: pkg,
 		Context: ctx,
 	}
+	go t.execute()
+	return t
 }
 
 func (t *gcTarget) objdir() string  { return t.Context.Objdir(t.Package) }
@@ -145,7 +149,7 @@ func (t *asmTarget) execute() {
 }
 
 func newAsmTarget(ctx *gogo.Context, pkg *gogo.Package, deps ...gogo.Target) *gcTarget {
-	return &gcTarget{
+	t := &gcTarget{
 		target: target{
 			done: make(chan struct{}),
 		},
@@ -153,6 +157,8 @@ func newAsmTarget(ctx *gogo.Context, pkg *gogo.Package, deps ...gogo.Target) *gc
 		Package: pkg,
 		Context: ctx,
 	}
+	go t.execute()
+	return t
 }
 
 func (t *asmTarget) build() error {
@@ -183,8 +189,8 @@ func (t *ldTarget) execute() {
 	}
 }
 
-func newLdTarget(ctx *gogo.Context, pkg *gogo.Package, deps ...gogo.Target) *ldTarget {
-	return &ldTarget{
+func Ld(ctx *gogo.Context, pkg *gogo.Package, deps ...gogo.Target) *ldTarget {
+	t := &ldTarget{
 		target: target{
 			done: make(chan struct{}),
 		},
@@ -192,15 +198,17 @@ func newLdTarget(ctx *gogo.Context, pkg *gogo.Package, deps ...gogo.Target) *ldT
 		Package: pkg,
 		Context: ctx,
 	}
+	go t.execute()
+	return t
 }
 
 func (t *ldTarget) objdir() string  { return t.Context.Objdir(t.Package) }
 func (t *ldTarget) pkgfile() string { return filepath.Join(t.Pkgdir(), t.Package.ImportPath+".a") }
 
 func (t *ldTarget) build() error {
-	objdir := t.objdir()
-	if err := os.MkdirAll(objdir, 0777); err != nil {
+	bindir := t.Context.Bindir()
+	if err := os.MkdirAll(bindir, 0777); err != nil {
 		return err
 	}
-	return t.Ld(filepath.Join(objdir, "a.out"), t.pkgfile())
+	return t.Ld(filepath.Join(bindir, "a.out"), t.pkgfile())
 }

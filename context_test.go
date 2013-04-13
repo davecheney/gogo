@@ -1,6 +1,7 @@
 package gogo
 
 import (
+	"os"
 	"path/filepath"
 	"runtime"
 	"testing"
@@ -33,12 +34,12 @@ func TestContextObjdir(t *testing.T) {
 	if err != nil {
 		t.Fatalf("project.ResolvePackage(): %v", err)
 	}
-	if objdir := ctx.Objdir(pkg); objdir != filepath.Join(ctx.basedir, pkg.ImportPath) {
-		t.Fatalf("ctx.Objdir(): expected %q, got %q", filepath.Join(ctx.basedir, pkg.ImportPath), objdir)
+	if objdir := ctx.Objdir(pkg); objdir != filepath.Join(ctx.basedir, pkg.ImportPath, "_obj") {
+		t.Fatalf("ctx.Objdir(): expected %q, got %q", filepath.Join(ctx.basedir, pkg.ImportPath, "_obj"), objdir)
 	}
 }
 
-func TestConextPkgdir(t *testing.T) {
+func TestContextPkgdir(t *testing.T) {
 	proj := NewProject(root)
 	ctx, err := NewDefaultContext(proj)
 	if err != nil {
@@ -46,5 +47,33 @@ func TestConextPkgdir(t *testing.T) {
 	}
 	if pkgdir := ctx.Pkgdir(); pkgdir != filepath.Join(ctx.basedir, "pkg", ctx.goos, ctx.goarch) {
 		t.Fatalf("ctx.Objdir(): expected %q, got %q", filepath.Join(ctx.basedir, "pkg", ctx.goos, ctx.goarch), pkgdir)
+	}
+}
+
+func TestContextBindir(t *testing.T) {
+	proj := NewProject(root)
+	ctx, err := NewDefaultContext(proj)
+	if err != nil {
+		t.Fatalf("NewDefaultContext(): %v", err)
+	}
+	if bindir := ctx.Bindir(); bindir != filepath.Join(ctx.Project.root, "bin", ctx.goos, ctx.goarch) {
+		t.Fatalf("ctx.Bindir(): expected %q, got %q", filepath.Join(ctx.Project.root, "bin", ctx.goos, ctx.goarch), bindir)
+	}
+}
+
+func TestContextDestroy(t *testing.T) {
+	proj := NewProject(root)
+	ctx, err := NewDefaultContext(proj)
+	if err != nil {
+		t.Fatalf("NewDefaultContext(): %v", err)
+	}
+	if _, err := os.Stat(ctx.basedir); err != nil {
+		t.Fatal(err)
+	}
+	if err := ctx.Destroy(); err != nil {
+		t.Fatal(err)
+	}
+	if _, err := os.Stat(ctx.basedir); !os.IsNotExist(err) {
+		t.Fatalf("context did not destroy basedir")
 	}
 }

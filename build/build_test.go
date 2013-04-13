@@ -44,7 +44,7 @@ var buildCommandTests = []struct {
 }{
 	{"b"},
 	//	{"k"}, // uses cgo
-	{"helloworld"},	// links in a stdlib pkg
+	{"helloworld"}, // links in a stdlib pkg
 }
 
 func TestBuildCommand(t *testing.T) {
@@ -88,7 +88,7 @@ func TestBuild(t *testing.T) {
 		if err != nil {
 			t.Fatalf("ResolvePackage(): %v", err)
 		}
-		targets := build(ctx, pkg)
+		targets := Build(ctx, pkg)
 		if len := len(targets); len != 1 {
 			t.Fatalf("build %q: expected %d target, got %d", tt.pkg, 1, len)
 		}

@@ -7,6 +7,7 @@ import (
 
 	"github.com/davecheney/gogo"
 	"github.com/davecheney/gogo/build"
+	"github.com/davecheney/gogo/test"
 )
 
 func mustGetwd() string {
@@ -24,7 +25,9 @@ func main() {
 	var cmd *gogo.Command
 	switch first {
 	case "build":
-		cmd = build.Build
+		cmd = build.BuildCmd
+	case "test":
+		cmd = test.TestCmd
 	default:
 		log.Fatal("unknown command %q", first)
 	}

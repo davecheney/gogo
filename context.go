@@ -2,6 +2,7 @@ package gogo
 
 import (
 	"io/ioutil"
+	"os"
 	"path/filepath"
 	"runtime"
 )
@@ -45,6 +46,16 @@ func newContext(p *Project, goroot, goos, goarch string) (*Context, error) {
 	return ctx, nil
 }
 
-func (ctx *Context) Objdir(pkg *Package) string { return filepath.Join(ctx.basedir, pkg.ImportPath) }
-func (ctx *Context) Pkgdir() string             { return filepath.Join(ctx.basedir, "pkg", ctx.goos, ctx.goarch) }
-func (ctx *Context) stdlib() string             { return filepath.Join(ctx.goroot, "pkg", ctx.goos+"_"+ctx.goarch) }
+// Destroy removes any temporary files associated with this Context.
+func (ctx *Context) Destroy() error {
+	return os.RemoveAll(ctx.basedir)
+}
+
+func (ctx *Context) Objdir(pkg *Package) string {
+	return filepath.Join(ctx.basedir, filepath.FromSlash(pkg.ImportPath), "_obj")
+}
+func (ctx *Context) Pkgdir() string { return filepath.Join(ctx.basedir, "pkg", ctx.goos, ctx.goarch) }
+func (ctx *Context) Bindir() string {
+	return filepath.Join(ctx.Project.root, "bin", ctx.goos, ctx.goarch)
+}
+func (ctx *Context) stdlib() string { return filepath.Join(ctx.goroot, "pkg", ctx.goos+"_"+ctx.goarch) }
