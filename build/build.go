@@ -25,13 +25,7 @@ func run(project *gogo.Project, args []string) error {
 		return err
 	}
 	for _, pkg := range pkgs {
-		var tt []gogo.Target
-		if pkg.Name == "main" {
-			tt = buildCommand(ctx, pkg)
-		} else {
-			tt = buildPackage(ctx, pkg)
-		}
-		for _, t := range tt {
+		for _, t := range build(ctx, pkg) {
 			if err := t.Wait(); err != nil {
 				return err
 			}
@@ -40,9 +34,16 @@ func run(project *gogo.Project, args []string) error {
 	return nil
 }
 
+func build(ctx *gogo.Context, pkg *gogo.Package) []gogo.Target {
+	if pkg.Name == "main" {
+		return buildCommand(ctx, pkg)
+	}
+	return buildPackage(ctx, pkg)
+}
+
 func buildPackage(ctx *gogo.Context, pkg *gogo.Package) []gogo.Target {
 	var deps []gogo.Target
-	for _, dep := range pkg.Imports() {
+	for _, dep := range pkg.Imports {
 		deps = append(deps, buildPackage(ctx, dep)...)
 	}
 	if _, ok := ctx.Targets[pkg]; !ok {
@@ -59,7 +60,7 @@ func buildPackage(ctx *gogo.Context, pkg *gogo.Package) []gogo.Target {
 
 func buildCommand(ctx *gogo.Context, pkg *gogo.Package) []gogo.Target {
 	var deps []gogo.Target
-	for _, dep := range pkg.Imports() {
+	for _, dep := range pkg.Imports {
 		deps = append(deps, buildPackage(ctx, dep)...)
 	}
 	if _, ok := ctx.Targets[pkg]; !ok {

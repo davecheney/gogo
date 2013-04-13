@@ -8,6 +8,7 @@ var packageImportTests = []struct {
 }{
 	{"a", nil},
 	{"a/b", []string{"a"}},
+	{"c", []string{"b", "fmt"}},
 }
 
 func TestPackageImports(t *testing.T) {
