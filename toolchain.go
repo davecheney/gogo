@@ -14,11 +14,23 @@ type Toolchain interface {
 	Gc(importpath, srcdir, outfile string, files []string) error
 	Pack(string, string, ...string) error
 	Ld(string, string) error
+	Cgo(objdir string, cgofiles []string) error
+}
+
+type toolchain struct {
+	cgo string
+	*Context
+}
+
+func (t *toolchain) Cgo(objdir string, cgofiles []string) error {
+	args := []string{"-objdir", objdir, "--", "-I", objdir}
+	args = append(args, cgofiles...)
+	return run(t.basedir, t.cgo, args...)
 }
 
 type gcToolchain struct {
+	toolchain
 	gc, ld, as, pack string
-	*Context
 }
 
 func newGcToolchain(c *Context) (Toolchain, error) {
@@ -28,11 +40,14 @@ func newGcToolchain(c *Context) (Toolchain, error) {
 		return nil, err
 	}
 	return &gcToolchain{
-		gc:      filepath.Join(tooldir, archchar+"g"),
-		ld:      filepath.Join(tooldir, archchar+"l"),
-		as:      filepath.Join(tooldir, archchar+"a"),
-		pack:    filepath.Join(tooldir, "pack"),
-		Context: c,
+		toolchain: toolchain{
+			cgo:     filepath.Join(tooldir, "cgo"),
+			Context: c,
+		},
+		gc:   filepath.Join(tooldir, archchar+"g"),
+		ld:   filepath.Join(tooldir, archchar+"l"),
+		as:   filepath.Join(tooldir, archchar+"a"),
+		pack: filepath.Join(tooldir, "pack"),
 	}, nil
 }
 

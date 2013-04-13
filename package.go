@@ -18,6 +18,7 @@ type Package struct {
 	*Project
 	name, path string
 	GoFiles    []string
+	CgoFiles   []string // .go source files that import "C"
 	cFiles     []string
 	hFiles     []string
 	sFiles     []string

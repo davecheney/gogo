@@ -62,7 +62,7 @@ func (t *packTarget) execute() {
 
 func (t *packTarget) objdir() string  { return t.Context.Objdir(t.Package) }
 func (t *packTarget) objfile() string { return filepath.Join(t.objdir(), "_go_.6") }
-func (t *packTarget) pkgfile() string { return t.Package.ImportPath()+".a" }
+func (t *packTarget) pkgfile() string { return t.Package.ImportPath() + ".a" }
 
 func (t *packTarget) build() error {
 	ofile := t.pkgfile()
