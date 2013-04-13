@@ -11,6 +11,7 @@ var buildPackageTests = []struct {
 }{
 	{"a"},
 	{"b"}, // imports a
+	{"helloworld"},
 }
 
 func newProject() *gogo.Project {
@@ -43,6 +44,7 @@ var buildCommandTests = []struct {
 }{
 	{"b"},
 	//	{"k"}, // uses cgo
+	{"helloworld"},	// links in a stdlib pkg
 }
 
 func TestBuildCommand(t *testing.T) {
@@ -72,6 +74,7 @@ var buildTests = []struct {
 	{"a"},
 	{"b"},
 	// 	{ "k" },
+	{"helloworld"},
 }
 
 func TestBuild(t *testing.T) {
