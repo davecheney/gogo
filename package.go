@@ -31,12 +31,10 @@ type Package struct {
 	hFiles   []string
 	sFiles   []string
 
-	imports []*Package
+	Imports []*Package
 
 	testGoFiles []string
 }
-
-func (p *Package) Imports() []*Package { return p.imports }
 
 func (p *Package) Srcdir() string { return filepath.Join(p.Project.srcdir(), p.ImportPath) }
 
@@ -136,7 +134,7 @@ func (p *Package) readImports() error {
 		if err != nil {
 			return err
 		}
-		p.imports = append(p.imports, pkg)
+		p.Imports = append(p.Imports, pkg)
 	}
 	return nil
 }

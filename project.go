@@ -2,7 +2,6 @@ package gogo
 
 import (
 	"path/filepath"
-	"runtime"
 )
 
 type Project struct {
@@ -35,10 +34,6 @@ func (p *Project) ResolvePackage(path string) (*Package, error) {
 	}
 	p.pkgs[path] = pkg
 	return pkg, nil
-}
-
-func (p *Project) NewContext() (*Context, error) {
-	return newContext(p, runtime.GOROOT(), runtime.GOOS, runtime.GOARCH)
 }
 
 func (p *Project) srcdir() string { return filepath.Join(p.root, "src") }
