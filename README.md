@@ -37,6 +37,7 @@ todo
 
  * support cgo packages.
  * add test command.
+ * be able to invoke `gogo` from anywhere inside the project.
  * `gogo` should be able to build and test itself.
 
 licence
