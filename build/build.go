@@ -26,7 +26,7 @@ func run(project *gogo.Project, args []string) error {
 	}
 	for _, pkg := range pkgs {
 		var tt []gogo.Target
-		if pkg.Name() == "main" {
+		if pkg.Name == "main" {
 			tt = buildCommand(ctx, pkg)
 		} else {
 			tt = buildPackage(ctx, pkg)
@@ -53,7 +53,7 @@ func buildPackage(ctx *gogo.Context, pkg *gogo.Package) []gogo.Target {
 		go pack.execute()
 		ctx.Targets[pkg] = pack
 	}
-	log.Printf("build package %q", pkg.ImportPath())
+	log.Printf("build package %q", pkg.ImportPath)
 	return []gogo.Target{ctx.Targets[pkg]}
 }
 
@@ -72,6 +72,6 @@ func buildCommand(ctx *gogo.Context, pkg *gogo.Package) []gogo.Target {
 		go ld.execute()
 		ctx.Targets[pkg] = ld
 	}
-	log.Printf("build command %q", pkg.ImportPath())
+	log.Printf("build command %q", pkg.ImportPath)
 	return []gogo.Target{ctx.Targets[pkg]}
 }

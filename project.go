@@ -22,9 +22,9 @@ func (p *Project) ResolvePackage(path string) (*Package, error) {
 		return pkg, nil
 	}
 	pkg := &Package{
-		Project: p,
-		path:    path,
-		name:    filepath.Base(path),
+		Project:    p,
+		Name:       filepath.Base(path),
+		ImportPath: path,
 	}
 	if err := pkg.readFiles(); err != nil {
 		return nil, err

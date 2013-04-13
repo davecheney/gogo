@@ -30,11 +30,11 @@ func TestResolvePackage(t *testing.T) {
 		if err != nil {
 			t.Fatalf("Project.ResolvePackage(): %v", err)
 		}
-		if pkg.name != tt.name {
-			t.Fatalf("Package.name: expected %q, got %q", tt.name, pkg.name)
+		if pkg.Name != tt.name {
+			t.Fatalf("Package.name: expected %q, got %q", tt.name, pkg.Name)
 		}
-		if pkg.path != tt.path {
-			t.Fatalf("Package.path: expected %q, got %q", tt.path, pkg.path)
+		if pkg.ImportPath != tt.path {
+			t.Fatalf("Package.path: expected %q, got %q", tt.path, pkg.ImportPath)
 		}
 	}
 }

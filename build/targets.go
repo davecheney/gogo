@@ -62,7 +62,7 @@ func (t *packTarget) execute() {
 
 func (t *packTarget) objdir() string  { return t.Context.Objdir(t.Package) }
 func (t *packTarget) objfile() string { return filepath.Join(t.objdir(), "_go_.6") }
-func (t *packTarget) pkgfile() string { return t.Package.ImportPath() + ".a" }
+func (t *packTarget) pkgfile() string { return t.Package.ImportPath + ".a" }
 
 func (t *packTarget) build() error {
 	ofile := t.pkgfile()
@@ -117,7 +117,7 @@ func (t *gcTarget) build() error {
 	if err := os.MkdirAll(objdir, 0777); err != nil {
 		return err
 	}
-	return t.Gc(t.ImportPath(), t.Srcdir(), t.objfile(), gofiles)
+	return t.Gc(t.ImportPath, t.Srcdir(), t.objfile(), gofiles)
 }
 
 type asmTarget struct {
@@ -195,7 +195,7 @@ func newLdTarget(ctx *gogo.Context, pkg *gogo.Package, deps ...gogo.Target) *ldT
 }
 
 func (t *ldTarget) objdir() string  { return t.Context.Objdir(t.Package) }
-func (t *ldTarget) pkgfile() string { return filepath.Join(t.Pkgdir(), t.Package.ImportPath()+".a") }
+func (t *ldTarget) pkgfile() string { return filepath.Join(t.Pkgdir(), t.Package.ImportPath+".a") }
 
 func (t *ldTarget) build() error {
 	objdir := t.objdir()

@@ -14,28 +14,31 @@ import (
 	"strings"
 )
 
+// Package describes a Go package.
 type Package struct {
 	*Project
-	name, path string
-	GoFiles    []string
-	CgoFiles   []string // .go source files that import "C"
-	cFiles     []string
-	hFiles     []string
-	sFiles     []string
+
+	// The name of the package
+	Name string
+
+	// The full import path of the package. The import path
+	// is relative to the Project, and must be unique.
+	ImportPath string
+
+	GoFiles  []string
+	CgoFiles []string // .go source files that import "C"
+	cFiles   []string
+	hFiles   []string
+	sFiles   []string
 
 	imports []*Package
 
 	testGoFiles []string
 }
 
-func (p *Package) ImportPath() string  { return p.path }
-func (p *Package) Name() string        { return p.name }
 func (p *Package) Imports() []*Package { return p.imports }
-func (p *Package) String() string      { return fmt.Sprintf("package %q", p.path) }
 
-func (p *Package) Srcdir() string {
-	return filepath.Join(p.Project.srcdir(), p.path)
-}
+func (p *Package) Srcdir() string { return filepath.Join(p.Project.srcdir(), p.ImportPath) }
 
 // readFiles populates the various package file lists
 func (p *Package) readFiles() error {
@@ -91,7 +94,7 @@ func (p *Package) readImports() error {
 		if err != nil {
 			return err
 		}
-		p.name = pf.Name.Name
+		p.Name = pf.Name.Name
 		for _, decl := range pf.Decls {
 			switch decl := decl.(type) {
 			case *ast.GenDecl:

@@ -33,8 +33,8 @@ func TestContextObjdir(t *testing.T) {
 	if err != nil {
 		t.Fatalf("project.ResolvePackage(): %v", err)
 	}
-	if objdir := ctx.Objdir(pkg); objdir != filepath.Join(ctx.basedir, pkg.path) {
-		t.Fatalf("ctx.Objdir(): expected %q, got %q", filepath.Join(ctx.basedir, pkg.path), objdir)
+	if objdir := ctx.Objdir(pkg); objdir != filepath.Join(ctx.basedir, pkg.ImportPath) {
+		t.Fatalf("ctx.Objdir(): expected %q, got %q", filepath.Join(ctx.basedir, pkg.ImportPath), objdir)
 	}
 }
 
