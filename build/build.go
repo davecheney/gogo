@@ -51,7 +51,7 @@ func buildPackage(ctx *gogo.Context, pkg *gogo.Package) []gogo.Target {
 		pack := Pack(ctx, pkg, gc)
 		ctx.Targets[pkg] = pack
 	}
-	log.Printf("build package %q", pkg.ImportPath)
+	log.Printf("build package %q", pkg.ImportPath())
 	return []gogo.Target{ctx.Targets[pkg]}
 }
 
@@ -66,6 +66,6 @@ func buildCommand(ctx *gogo.Context, pkg *gogo.Package) []gogo.Target {
 		ld := Ld(ctx, pkg, pack)
 		ctx.Targets[pkg] = ld
 	}
-	log.Printf("build command %q", pkg.ImportPath)
+	log.Printf("build command %q", pkg.ImportPath())
 	return []gogo.Target{ctx.Targets[pkg]}
 }

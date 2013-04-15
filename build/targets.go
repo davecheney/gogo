@@ -203,7 +203,7 @@ func Ld(ctx *gogo.Context, pkg *gogo.Package, deps ...gogo.Target) *ldTarget {
 }
 
 func (t *ldTarget) objdir() string  { return t.Context.Objdir(t.Package) }
-func (t *ldTarget) pkgfile() string { return filepath.Join(t.Pkgdir(), t.Package.ImportPath()+".a") }
+func (t *ldTarget) pkgfile() string { return filepath.Join(t.Basedir(), t.Package.ImportPath()+".a") }
 
 func (t *ldTarget) build() error {
 	bindir := t.Context.Bindir()

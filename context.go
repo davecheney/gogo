@@ -42,7 +42,7 @@ func newContext(p *Project, goroot, goos, goarch string) (*Context, error) {
 		return nil, err
 	}
 	ctx.Toolchain = tc
-	ctx.SearchPaths = []string{ctx.stdlib(), ctx.Pkgdir()}
+	ctx.SearchPaths = []string{ctx.stdlib(), basedir}
 	return ctx, nil
 }
 
@@ -61,8 +61,10 @@ func (ctx *Context) TestObjdir(pkg *Package) string {
 	return filepath.Join(ctx.basedir, filepath.FromSlash(pkg.ImportPath()), "_test")
 }
 
+func (ctx *Context) Basedir() string { return ctx.basedir }
+
 func (ctx *Context) Pkgdir() string { return filepath.Join(ctx.basedir, "pkg", ctx.goos, ctx.goarch) }
 func (ctx *Context) Bindir() string {
-	return filepath.Join(ctx.Project.root, "bin", ctx.goos, ctx.goarch)
+	return filepath.Join(ctx.Project.Bindir(), ctx.goos, ctx.goarch)
 }
 func (ctx *Context) stdlib() string { return filepath.Join(ctx.goroot, "pkg", ctx.goos+"_"+ctx.goarch) }

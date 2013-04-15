@@ -23,6 +23,10 @@ func NewProject(root string) (*Project, error) {
 // Root returns the top level directory representing this project.
 func (p *Project) Root() string { return p.root }
 
+// Bindir returns the top level directory representing the binary
+// directory of this project.
+func (p *Project) Bindir() string { return filepath.Join(p.root, "bin") }
+
 func (p *Project) ResolvePackage(path string) (*Package, error) {
 	if pkg, ok := p.pkgs[path]; ok {
 		return pkg, nil
@@ -31,6 +35,7 @@ func (p *Project) ResolvePackage(path string) (*Package, error) {
 		Project:    p,
 		name:       filepath.Base(path),
 		importPath: path,
+		srcdir:     filepath.Join("src", path),
 	}
 	if err := pkg.readFiles(); err != nil {
 		return nil, err
@@ -42,5 +47,3 @@ func (p *Project) ResolvePackage(path string) (*Package, error) {
 	p.pkgs[path] = pkg
 	return pkg, nil
 }
-
-func (p *Project) srcdir() string { return filepath.Join(p.root, "src") }

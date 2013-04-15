@@ -9,7 +9,18 @@ func TestNewProject(t *testing.T) {
 	p := newProject(t)
 	cwd := getwd(t)
 	if expected := abs(t, filepath.Join(cwd, root)); expected != p.Root() {
-		t.Fatalf("Project.root: expected %q, got %q", expected, p.Root())
+		t.Fatalf("Project.Root(): expected %q, got %q", expected, p.Root())
+	}
+	if p.pkgs == nil {
+		t.Fatalf("Project.pkgs: map must be initalised")
+	}
+}
+
+func TestProjectBindir(t *testing.T) {
+	p := newProject(t)
+	cwd := getwd(t)
+	if expected := abs(t, filepath.Join(cwd, root, "bin")); expected != p.Bindir() {
+		t.Fatalf("Project.Bindir(): expected %q, got %q", expected, p.Bindir())
 	}
 	if p.pkgs == nil {
 		t.Fatalf("Project.pkgs: map must be initalised")
@@ -37,13 +48,5 @@ func TestResolvePackage(t *testing.T) {
 		if pkg.ImportPath() != tt.path {
 			t.Fatalf("Package.path: expected %q, got %q", tt.path, pkg.ImportPath)
 		}
-	}
-}
-
-func TestProjectSrcDir(t *testing.T) {
-	proj := newProject(t)
-	expected := abs(t, filepath.Join(root, "src"))
-	if proj.srcdir() != expected {
-		t.Fatalf("Project.srcdir(): expected %q, got %q", expected, proj.srcdir())
 	}
 }
