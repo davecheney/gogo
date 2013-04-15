@@ -73,8 +73,7 @@ func (t *packTarget) execute() {
 	}
 }
 
-func (t *packTarget) objdir() string  { return t.Package.Context.Objdir(t.Package) }
-func (t *packTarget) objfile() string { return filepath.Join(t.objdir(), "_go_.6") }
+func (t *packTarget) objfile() string { return filepath.Join(t.Objdir(), "_go_.6") }
 func (t *packTarget) pkgfile() string { return t.Package.ImportPath() + ".a" }
 
 func (t *packTarget) build() error {
@@ -117,13 +116,11 @@ func Gc(pkg *Package, deps ...Target) *gcTarget {
 	return t
 }
 
-func (t *gcTarget) objdir() string  { return t.Package.Context.Objdir(t.Package) }
-func (t *gcTarget) objfile() string { return filepath.Join(t.objdir(), "_go_.6") }
+func (t *gcTarget) objfile() string { return filepath.Join(t.Objdir(), "_go_.6") }
 
 func (t *gcTarget) build() error {
 	gofiles := t.GoFiles
-	objdir := t.objdir()
-	if err := os.MkdirAll(objdir, 0777); err != nil {
+	if err := os.MkdirAll(t.Objdir(), 0777); err != nil {
 		return err
 	}
 	return t.Gc(t.ImportPath(), t.Srcdir(), t.objfile(), gofiles)
@@ -195,7 +192,6 @@ func Ld(pkg *Package, deps ...Target) *ldTarget {
 	return t
 }
 
-func (t *ldTarget) objdir() string  { return t.Package.Context.Objdir(t.Package) }
 func (t *ldTarget) pkgfile() string { return filepath.Join(t.Workdir(), t.Package.ImportPath()+".a") }
 
 func (t *ldTarget) build() error {

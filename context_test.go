@@ -33,30 +33,6 @@ func newTestContext(t *testing.T) *Context {
 	return ctx
 }
 
-func TestContextObjdir(t *testing.T) {
-	ctx := newTestContext(t)
-	defer ctx.Destroy()
-	pkg, err := ctx.ResolvePackage("a")
-	if err != nil {
-		t.Fatalf("project.ResolvePackage(): %v", err)
-	}
-	if objdir := ctx.Objdir(pkg); objdir != filepath.Join(ctx.Workdir(), pkg.ImportPath(), "_obj") {
-		t.Fatalf("ctx.Objdir(): expected %q, got %q", filepath.Join(ctx.Workdir(), pkg.ImportPath(), "_obj"), objdir)
-	}
-}
-
-func TestContextTestObjdir(t *testing.T) {
-	ctx := newTestContext(t)
-	defer ctx.Destroy()
-	pkg, err := ctx.ResolvePackage("a")
-	if err != nil {
-		t.Fatalf("project.ResolvePackage(): %v", err)
-	}
-	if testdir := ctx.TestObjdir(pkg); testdir != filepath.Join(ctx.Workdir(), pkg.ImportPath(), "_test") {
-		t.Fatalf("ctx.Objdir(): expected %q, got %q", filepath.Join(ctx.Workdir(), pkg.ImportPath(), "_test"), testdir)
-	}
-}
-
 func TestContextPkgdir(t *testing.T) {
 	ctx := newTestContext(t)
 	defer ctx.Destroy()

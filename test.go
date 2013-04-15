@@ -43,14 +43,13 @@ func (t *buildTestTarget) execute() {
 	}
 }
 
-func (t *buildTestTarget) objdir() string  { return t.Package.Context.TestObjdir(t.Package) }
-func (t *buildTestTarget) objfile() string { return filepath.Join(t.objdir(), "_go_.6") }
+func (t *buildTestTarget) objfile() string { return filepath.Join(t.Objdir(), "_go_.6") }
 func (t *buildTestTarget) pkgfile() string { return t.Package.ImportPath() + ".a" }
 
 func (t *buildTestTarget) build() error {
 	gofiles := t.GoFiles
 	gofiles = append(gofiles, t.TestGoFiles...)
-	objdir := t.objdir()
+	objdir := t.Objdir()
 	if err := os.MkdirAll(objdir, 0777); err != nil {
 		return err
 	}
@@ -64,17 +63,17 @@ func (t *buildTestTarget) build() error {
 	if err := t.Pack(t.pkgfile(), t.Pkgdir(), t.objfile()); err != nil {
 		return err
 	}
-	if err := t.buildTestMain(t.objdir()); err != nil {
+	if err := t.buildTestMain(objdir); err != nil {
 		return err
 	}
-	if err := t.Gc(t.objdir(), t.objdir(), t.Package.Name()+".6", []string{"_testmain.go"}); err != nil {
+	if err := t.Gc(objdir, objdir, t.Package.Name()+".6", []string{"_testmain.go"}); err != nil {
 		return err
 	}
-	return t.Ld(filepath.Join(t.objdir(), t.Package.Name()+".test"), filepath.Join(t.objdir(), t.Package.Name()+".6"))
+	return t.Ld(filepath.Join(objdir, t.Package.Name()+".test"), filepath.Join(objdir, t.Package.Name()+".6"))
 }
 
 func (t *buildTestTarget) buildTestMain(objdir string) error {
-	return writeTestmain(filepath.Join(t.objdir(), "_testmain.go"), t.Package)
+	return writeTestmain(filepath.Join(t.Objdir(), "_testmain.go"), t.Package)
 }
 
 func buildTest(pkg *Package, deps []Target) *buildTestTarget {
@@ -95,8 +94,6 @@ type runTestTarget struct {
 	*Package
 }
 
-func (t *runTestTarget) objdir() string { return t.Package.Context.TestObjdir(t.Package) }
-
 func (t *runTestTarget) execute() {
 	defer close(t.done)
 	for _, dep := range t.deps {
@@ -111,7 +108,7 @@ func (t *runTestTarget) execute() {
 }
 
 func (t *runTestTarget) build() error {
-	cmd := exec.Command(filepath.Join(t.objdir(), t.Package.Name()+".test"))
+	cmd := exec.Command(filepath.Join(t.Objdir(), t.Package.Name()+".test"))
 	cmd.Dir = t.Package.Srcdir()
 	cmd.Stdout = os.Stdout
 	cmd.Stderr = os.Stderr

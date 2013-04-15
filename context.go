@@ -76,16 +76,6 @@ func (ctx *Context) Destroy() error {
 	return os.RemoveAll(ctx.workdir)
 }
 
-// Objdir returns the destination for object files compiled for this Package.
-func (ctx *Context) Objdir(pkg *Package) string {
-	return filepath.Join(ctx.workdir, filepath.FromSlash(pkg.ImportPath()), "_obj")
-}
-
-// TestObjDir returns the destination for test object files compiled for this Package.
-func (ctx *Context) TestObjdir(pkg *Package) string {
-	return filepath.Join(ctx.workdir, filepath.FromSlash(pkg.ImportPath()), "_test")
-}
-
 func (ctx *Context) Workdir() string { return ctx.workdir }
 
 func (ctx *Context) Pkgdir() string { return filepath.Join(ctx.workdir, "pkg", ctx.goos, ctx.goarch) }
