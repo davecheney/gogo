@@ -31,17 +31,8 @@ func (p *Project) ResolvePackage(path string) (*Package, error) {
 	if pkg, ok := p.pkgs[path]; ok {
 		return pkg, nil
 	}
-	pkg := &Package{
-		Project:    p,
-		name:       filepath.Base(path),
-		importPath: path,
-		srcdir:     filepath.Join("src", path),
-	}
-	if err := pkg.readFiles(); err != nil {
-		return nil, err
-	}
-
-	if err := pkg.readImports(); err != nil {
+	pkg, err := newPackage(p, path)
+	if err != nil {
 		return nil, err
 	}
 	p.pkgs[path] = pkg

@@ -38,6 +38,24 @@ type Package struct {
 	testGoFiles []string
 }
 
+// newPackage constructs a new Package homed in this Project.
+func newPackage(project *Project, path string) (*Package, error) {
+	pkg := &Package{
+		Project:    project,
+		name:       filepath.Base(path),
+		importPath: path,
+		srcdir:     filepath.Join("src", path),
+	}
+	if err := pkg.readFiles(); err != nil {
+		return nil, err
+	}
+
+	if err := pkg.readImports(); err != nil {
+		return nil, err
+	}
+	return pkg, nil
+}
+
 // Name returns the name of the package.
 func (p *Package) Name() string { return p.name }
 
