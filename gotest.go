@@ -2,7 +2,7 @@
 // Use of this source code is governed by a BSD-style
 // license that can be found in the LICENSE file.
 
-package test
+package gogo
 
 // imported from $GOROOT/src/cmd/go/test.go
 
@@ -18,8 +18,6 @@ import (
 	"text/template"
 	"unicode"
 	"unicode/utf8"
-
-	"github.com/davecheney/gogo"
 )
 
 // isTest tells whether name looks like a test (or benchmark, according to prefix).
@@ -38,7 +36,7 @@ func isTest(name, prefix string) bool {
 
 // writeTestmain writes the _testmain.go file for package p to
 // the file named out.
-func writeTestmain(out string, p *gogo.Package) error {
+func writeTestmain(out string, p *Package) error {
 	t := &testFuncs{
 		Package: p,
 	}
@@ -66,7 +64,7 @@ type testFuncs struct {
 	Tests      []testFunc
 	Benchmarks []testFunc
 	Examples   []testFunc
-	Package    *gogo.Package
+	Package    *Package
 	NeedTest   bool
 	NeedXtest  bool
 }

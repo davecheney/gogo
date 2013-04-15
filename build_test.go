@@ -1,4 +1,4 @@
-package build
+package gogo_test
 
 import (
 	"testing"
@@ -35,7 +35,7 @@ func TestBuildPackage(t *testing.T) {
 		if err != nil {
 			t.Fatalf("ResolvePackage(): %v", err)
 		}
-		targets := buildPackage(ctx, pkg)
+		targets := gogo.BuildPackage(ctx, pkg)
 		if len := len(targets); len != 1 {
 			t.Fatalf("buildPackage %q: expected %d target, got %d", tt.pkg, 1, len)
 		}
@@ -64,7 +64,7 @@ func TestBuildCommand(t *testing.T) {
 		if err != nil {
 			t.Fatalf("ResolvePackage(): %v", err)
 		}
-		targets := buildCommand(ctx, pkg)
+		targets := gogo.BuildCommand(ctx, pkg)
 		if len := len(targets); len != 1 {
 			t.Fatalf("buildCommand %q: expected %d target, got %d", tt.pkg, 1, len)
 		}
@@ -94,7 +94,7 @@ func TestBuild(t *testing.T) {
 		if err != nil {
 			t.Fatalf("ResolvePackage(): %v", err)
 		}
-		targets := Build(ctx, pkg)
+		targets := gogo.Build(ctx, pkg)
 		if len := len(targets); len != 1 {
 			t.Fatalf("build %q: expected %d target, got %d", tt.pkg, 1, len)
 		}

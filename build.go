@@ -4,7 +4,6 @@ import (
 	"log"
 	"os"
 	"path/filepath"
-	"sync"
 )
 
 func Build(ctx *Context, pkg *Package) []Target {
@@ -41,27 +40,6 @@ func buildCommand(ctx *Context, pkg *Package) []Target {
 	}
 	log.Printf("build command %q", pkg.ImportPath())
 	return []Target{ctx.Targets[pkg]}
-}
-
-type target struct {
-	done chan struct{}
-	err  struct {
-		sync.Mutex
-		val error
-	}
-}
-
-func (t *target) Wait() error {
-	<-t.done
-	t.err.Lock()
-	defer t.err.Unlock()
-	return t.err.val
-}
-
-func (t *target) setErr(err error) {
-	t.err.Lock()
-	t.err.val = err
-	t.err.Unlock()
 }
 
 type packTarget struct {

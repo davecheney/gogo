@@ -6,8 +6,6 @@ import (
 	"os"
 
 	"github.com/davecheney/gogo"
-	"github.com/davecheney/gogo/build"
-	"github.com/davecheney/gogo/test"
 )
 
 func mustGetwd() string {
@@ -25,12 +23,12 @@ func main() {
 		log.Fatalf("unable to construct project: %v", err)
 	}
 	first, rest := flag.Arg(0), flag.Args()[1:]
-	var cmd *gogo.Command
+	var cmd *Command
 	switch first {
 	case "build":
-		cmd = build.BuildCmd
+		cmd = BuildCmd
 	case "test":
-		cmd = test.TestCmd
+		cmd = TestCmd
 	default:
 		log.Fatal("unknown command %q", first)
 	}
