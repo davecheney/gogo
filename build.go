@@ -96,16 +96,12 @@ func (t *gcTarget) execute() {
 	defer close(t.done)
 	for _, dep := range t.deps {
 		if err := dep.Wait(); err != nil {
-			t.err.Lock()
-			t.err.val = err
-			t.err.Unlock()
+			t.setErr(err)
 			return
 		}
 	}
 	if err := t.build(); err != nil {
-		t.err.Lock()
-		t.err.val = err
-		t.err.Unlock()
+		t.setErr(err)
 	}
 }
 
@@ -143,16 +139,12 @@ func (t *asmTarget) execute() {
 	defer close(t.done)
 	for _, dep := range t.deps {
 		if err := dep.Wait(); err != nil {
-			t.err.Lock()
-			t.err.val = err
-			t.err.Unlock()
+			t.setErr(err)
 			return
 		}
 	}
 	if err := t.build(); err != nil {
-		t.err.Lock()
-		t.err.val = err
-		t.err.Unlock()
+		t.setErr(err)
 	}
 }
 
@@ -182,16 +174,12 @@ func (t *ldTarget) execute() {
 	defer close(t.done)
 	for _, dep := range t.deps {
 		if err := dep.Wait(); err != nil {
-			t.err.Lock()
-			t.err.val = err
-			t.err.Unlock()
+			t.setErr(err)
 			return
 		}
 	}
 	if err := t.build(); err != nil {
-		t.err.Lock()
-		t.err.val = err
-		t.err.Unlock()
+		t.setErr(err)
 	}
 }
 
