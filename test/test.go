@@ -2,7 +2,6 @@ package test
 
 import (
 	"fmt"
-	"log"
 
 	"github.com/davecheney/gogo"
 	"github.com/davecheney/gogo/build"
@@ -36,10 +35,7 @@ func run(project *gogo.Project, args []string) error {
 }
 
 func test(ctx *gogo.Context, pkg *gogo.Package) []gogo.Target {
-	if pkg.Name() == "main" {
-		log.Printf("Cannot test package %q, it is a command", pkg.ImportPath)
-		return nil
-	}
+	// commands are built as packages for testing.
 	return testPackage(ctx, pkg)
 }
 

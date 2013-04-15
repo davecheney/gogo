@@ -30,7 +30,7 @@ Inside your `gogo` project, you should arrange your Go source, and its dependenc
 
 ### gogo test
 
-`gogo` can invoke the standard `testing` tests. Only packages are supported at this time, commands will be implemented later.
+`gogo` can invoke the standard `testing` package tests. 
 
     cd $PROJECT
     gogo test $SOME_PACKAGE
@@ -43,7 +43,7 @@ Inside your `gogo` project, you should arrange your Go source, and its dependenc
 
  * support cgo packages.
  * ~~Add test command.~~
- * Add support for testing commands.
+ * ~~Add support for testing commands.~~
  * be able to invoke `gogo` from anywhere inside the project.
  * ~~`gogo` should be able to build and test itself.~~
  * implement incremental builds; only build what needs to be built
