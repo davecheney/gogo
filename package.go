@@ -33,6 +33,9 @@ type Package struct {
 	hFiles   []string
 	sFiles   []string
 
+	TestGoFiles  []string
+	XTestGoFiles []string
+
 	Imports []*Package
 
 	testGoFiles []string

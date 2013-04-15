@@ -22,8 +22,13 @@ usage
     mkdir $PROJECT
     mkdir $PROJECT/.project
 
+Inside your `gogo` project, you can use the following targets
+
     cd $PROJECT
     gogo build $SOME_PACKAGE_OR_COMMAND
+
+    cd $PROJECT
+    gogo test $SOME_PACKAGE
 
 `gogo` expects all your source to be in $PROJECT/src in GOPATH format.
 

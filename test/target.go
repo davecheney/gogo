@@ -3,7 +3,9 @@ package test
 import (
 	"log"
 	"os"
+	"os/exec"
 	"path/filepath"
+	"strings"
 	"sync"
 
 	"github.com/davecheney/gogo"
@@ -62,17 +64,17 @@ func (t *buildTestTarget) build() error {
 	if err := t.Gc(t.ImportPath(), t.Srcdir(), t.objfile(), gofiles); err != nil {
 		return err
 	}
-	if err := t.buildTestMain(t.objdir(), gofiles); err != nil {
+	if err := t.buildTestMain(t.objdir()); err != nil {
 		return err
 	}
 	if err := t.Gc(t.objdir(), t.objdir(), t.Package.Name()+".6", []string{"_testmain.go"}); err != nil {
 		return err
 	}
-	return t.Ld(filepath.Join(t.objdir(), t.Package.Name()+".test"), t.Package.Name()+".6")
+	return t.Ld(filepath.Join(t.objdir(), t.Package.Name()+".test"), filepath.Join(t.objdir(), t.Package.Name()+".6"))
 }
 
-func (t *buildTestTarget) buildTestMain(objdir string, gofiles []string) error {
-	return nil
+func (t *buildTestTarget) buildTestMain(objdir string) error {
+	return writeTestmain(filepath.Join(t.objdir(), "_testmain.go"), t.Package)
 }
 
 func buildTest(ctx *gogo.Context, pkg *gogo.Package, deps []gogo.Target) *buildTestTarget {
@@ -95,6 +97,8 @@ type runTestTarget struct {
 	*gogo.Context
 }
 
+func (t *runTestTarget) objdir() string { return t.Context.TestObjdir(t.Package) }
+
 func (t *runTestTarget) execute() {
 	defer close(t.done)
 	for _, dep := range t.deps {
@@ -109,8 +113,12 @@ func (t *runTestTarget) execute() {
 }
 
 func (t *runTestTarget) build() error {
-	log.Printf("testing package %q", t.Package.ImportPath)
-	return nil
+	cmd := exec.Command(filepath.Join(t.objdir(), t.Package.Name()+".test"))
+	cmd.Dir = t.objdir()
+	cmd.Stdout = os.Stdout
+	cmd.Stderr = os.Stderr
+	log.Printf("cd %s; %s", cmd.Dir, strings.Join(cmd.Args, " "))
+	return cmd.Run()
 }
 
 func runTest(ctx *gogo.Context, pkg *gogo.Package, deps ...gogo.Target) *runTestTarget {

@@ -210,5 +210,5 @@ func (t *ldTarget) build() error {
 	if err := os.MkdirAll(bindir, 0777); err != nil {
 		return err
 	}
-	return t.Ld(filepath.Join(bindir, "a.out"), t.pkgfile())
+	return t.Ld(filepath.Join(bindir, filepath.Base(t.Package.ImportPath())), t.pkgfile())
 }
