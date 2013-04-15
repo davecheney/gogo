@@ -2,4 +2,8 @@ package a
 
 import "testing"
 
-func TestHello(t *testing.T) { if Hello() != "helloworld" { t.Fatalf("test failed") } }
+func TestHello(t *testing.T) {
+	if Hello() != "helloworld" {
+		t.Fatalf("test failed")
+	}
+}

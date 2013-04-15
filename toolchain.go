@@ -25,7 +25,7 @@ type toolchain struct {
 func (t *toolchain) Cgo(objdir string, cgofiles []string) error {
 	args := []string{"-objdir", objdir, "--", "-I", objdir}
 	args = append(args, cgofiles...)
-	return run(t.basedir, t.cgo, args...)
+	return run(t.Workdir(), t.cgo, args...)
 }
 
 type gcToolchain struct {
@@ -62,7 +62,7 @@ func (t *gcToolchain) Gc(importpath, srcdir, outfile string, files []string) err
 }
 
 func (t *gcToolchain) Pack(afile, objdir string, ofiles ...string) error {
-	args := []string{"grcP", t.basedir, filepath.Join(t.basedir, afile)}
+	args := []string{"grcP", t.Workdir(), filepath.Join(t.Workdir(), afile)}
 	args = append(args, ofiles...)
 	return run(objdir, t.pack, args...)
 }
@@ -77,7 +77,7 @@ func (t *gcToolchain) Ld(outfile, afile string) error {
 		args = append(args, "-L", d)
 	}
 	args = append(args, afile)
-	return run(t.basedir, t.ld, args...)
+	return run(t.Workdir(), t.ld, args...)
 }
 
 func run(dir, command string, args ...string) error {

@@ -13,7 +13,7 @@ import (
 type Context struct {
 	*Project
 	goroot, goos, goarch string
-	basedir              string
+	workdir              string
 	archchar             string
 	Targets              map[*Package]Target
 	Toolchain
@@ -27,7 +27,7 @@ func NewDefaultContext(p *Project) (*Context, error) {
 }
 
 func newContext(p *Project, goroot, goos, goarch string) (*Context, error) {
-	basedir, err := ioutil.TempDir("", "gogo")
+	workdir, err := ioutil.TempDir("", "gogo")
 	if err != nil {
 		return nil, err
 	}
@@ -40,7 +40,7 @@ func newContext(p *Project, goroot, goos, goarch string) (*Context, error) {
 		goroot:   goroot,
 		goos:     goos,
 		goarch:   goarch,
-		basedir:  basedir,
+		workdir:  workdir,
 		archchar: archchar,
 		Targets:  make(map[*Package]Target),
 	}
@@ -49,28 +49,28 @@ func newContext(p *Project, goroot, goos, goarch string) (*Context, error) {
 		return nil, err
 	}
 	ctx.Toolchain = tc
-	ctx.SearchPaths = []string{ctx.stdlib(), basedir}
+	ctx.SearchPaths = []string{ctx.stdlib(), workdir}
 	return ctx, nil
 }
 
 // Destroy removes any temporary files associated with this Context.
 func (ctx *Context) Destroy() error {
-	return os.RemoveAll(ctx.basedir)
+	return os.RemoveAll(ctx.workdir)
 }
 
 // Objdir returns the destination for object files compiled for this Package.
 func (ctx *Context) Objdir(pkg *Package) string {
-	return filepath.Join(ctx.basedir, filepath.FromSlash(pkg.ImportPath()), "_obj")
+	return filepath.Join(ctx.workdir, filepath.FromSlash(pkg.ImportPath()), "_obj")
 }
 
 // TestObjDir returns the destination for test object files compiled for this Package.
 func (ctx *Context) TestObjdir(pkg *Package) string {
-	return filepath.Join(ctx.basedir, filepath.FromSlash(pkg.ImportPath()), "_test")
+	return filepath.Join(ctx.workdir, filepath.FromSlash(pkg.ImportPath()), "_test")
 }
 
-func (ctx *Context) Basedir() string { return ctx.basedir }
+func (ctx *Context) Workdir() string { return ctx.workdir }
 
-func (ctx *Context) Pkgdir() string { return filepath.Join(ctx.basedir, "pkg", ctx.goos, ctx.goarch) }
+func (ctx *Context) Pkgdir() string { return filepath.Join(ctx.workdir, "pkg", ctx.goos, ctx.goarch) }
 func (ctx *Context) Bindir() string {
 	return filepath.Join(ctx.Project.Bindir(), ctx.goos, ctx.goarch)
 }

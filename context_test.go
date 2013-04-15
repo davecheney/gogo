@@ -24,71 +24,64 @@ func TestNewDefaultContext(t *testing.T) {
 	}
 }
 
-func TestContextObjdir(t *testing.T) {
+func newTestContext(t *testing.T) *Context {
 	proj := newProject(t)
 	ctx, err := NewDefaultContext(proj)
 	if err != nil {
-		t.Fatalf("NewDefaultContext(): %v", err)
+		t.Fatalf("unable to create context: %v", err)
 	}
-	pkg, err := proj.ResolvePackage("a")
+	return ctx
+}
+
+func TestContextObjdir(t *testing.T) {
+	ctx := newTestContext(t)
+	defer ctx.Destroy()
+	pkg, err := ctx.ResolvePackage("a")
 	if err != nil {
 		t.Fatalf("project.ResolvePackage(): %v", err)
 	}
-	if objdir := ctx.Objdir(pkg); objdir != filepath.Join(ctx.basedir, pkg.ImportPath(), "_obj") {
-		t.Fatalf("ctx.Objdir(): expected %q, got %q", filepath.Join(ctx.basedir, pkg.ImportPath(), "_obj"), objdir)
+	if objdir := ctx.Objdir(pkg); objdir != filepath.Join(ctx.Workdir(), pkg.ImportPath(), "_obj") {
+		t.Fatalf("ctx.Objdir(): expected %q, got %q", filepath.Join(ctx.Workdir(), pkg.ImportPath(), "_obj"), objdir)
 	}
 }
 
 func TestContextTestObjdir(t *testing.T) {
-	proj := newProject(t)
-	ctx, err := NewDefaultContext(proj)
-	if err != nil {
-		t.Fatalf("NewDefaultContext(): %v", err)
-	}
-	pkg, err := proj.ResolvePackage("a")
+	ctx := newTestContext(t)
+	defer ctx.Destroy()
+	pkg, err := ctx.ResolvePackage("a")
 	if err != nil {
 		t.Fatalf("project.ResolvePackage(): %v", err)
 	}
-	if testdir := ctx.TestObjdir(pkg); testdir != filepath.Join(ctx.basedir, pkg.ImportPath(), "_test") {
-		t.Fatalf("ctx.Objdir(): expected %q, got %q", filepath.Join(ctx.basedir, pkg.ImportPath(), "_test"), testdir)
+	if testdir := ctx.TestObjdir(pkg); testdir != filepath.Join(ctx.Workdir(), pkg.ImportPath(), "_test") {
+		t.Fatalf("ctx.Objdir(): expected %q, got %q", filepath.Join(ctx.Workdir(), pkg.ImportPath(), "_test"), testdir)
 	}
 }
 
 func TestContextPkgdir(t *testing.T) {
-	proj := newProject(t)
-	ctx, err := NewDefaultContext(proj)
-	if err != nil {
-		t.Fatalf("NewDefaultContext(): %v", err)
-	}
-	if pkgdir := ctx.Pkgdir(); pkgdir != filepath.Join(ctx.basedir, "pkg", ctx.goos, ctx.goarch) {
-		t.Fatalf("ctx.Objdir(): expected %q, got %q", filepath.Join(ctx.basedir, "pkg", ctx.goos, ctx.goarch), pkgdir)
+	ctx := newTestContext(t)
+	defer ctx.Destroy()
+	if pkgdir := ctx.Pkgdir(); pkgdir != filepath.Join(ctx.Workdir(), "pkg", ctx.goos, ctx.goarch) {
+		t.Fatalf("ctx.Objdir(): expected %q, got %q", filepath.Join(ctx.Workdir(), "pkg", ctx.goos, ctx.goarch), pkgdir)
 	}
 }
 
 func TestContextBindir(t *testing.T) {
-	proj := newProject(t)
-	ctx, err := NewDefaultContext(proj)
-	if err != nil {
-		t.Fatalf("NewDefaultContext(): %v", err)
-	}
-	if bindir := ctx.Bindir(); bindir != filepath.Join(ctx.Project.root, "bin", ctx.goos, ctx.goarch) {
-		t.Fatalf("ctx.Bindir(): expected %q, got %q", filepath.Join(ctx.Project.root, "bin", ctx.goos, ctx.goarch), bindir)
+	ctx := newTestContext(t)
+	defer ctx.Destroy()
+	if bindir := ctx.Bindir(); bindir != filepath.Join(ctx.Project.Root(), "bin", ctx.goos, ctx.goarch) {
+		t.Fatalf("ctx.Bindir(): expected %q, got %q", filepath.Join(ctx.Project.Root(), "bin", ctx.goos, ctx.goarch), bindir)
 	}
 }
 
 func TestContextDestroy(t *testing.T) {
-	proj := newProject(t)
-	ctx, err := NewDefaultContext(proj)
-	if err != nil {
-		t.Fatalf("NewDefaultContext(): %v", err)
-	}
-	if _, err := os.Stat(ctx.basedir); err != nil {
+	ctx := newTestContext(t)
+	if _, err := os.Stat(ctx.Workdir()); err != nil {
 		t.Fatal(err)
 	}
 	if err := ctx.Destroy(); err != nil {
 		t.Fatal(err)
 	}
-	if _, err := os.Stat(ctx.basedir); !os.IsNotExist(err) {
+	if _, err := os.Stat(ctx.Workdir()); !os.IsNotExist(err) {
 		t.Fatalf("context did not destroy basedir")
 	}
 }

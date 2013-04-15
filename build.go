@@ -216,7 +216,7 @@ func Ld(ctx *Context, pkg *Package, deps ...Target) *ldTarget {
 }
 
 func (t *ldTarget) objdir() string  { return t.Context.Objdir(t.Package) }
-func (t *ldTarget) pkgfile() string { return filepath.Join(t.Basedir(), t.Package.ImportPath()+".a") }
+func (t *ldTarget) pkgfile() string { return filepath.Join(t.Workdir(), t.Package.ImportPath()+".a") }
 
 func (t *ldTarget) build() error {
 	bindir := t.Context.Bindir()
