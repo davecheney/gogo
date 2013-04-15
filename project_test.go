@@ -8,8 +8,8 @@ import (
 func TestNewProject(t *testing.T) {
 	p := newProject(t)
 	cwd := getwd(t)
-	if expected := abs(t, filepath.Join(cwd, root)); expected != p.root {
-		t.Fatalf("Project.root: expected %q, got %q", expected, p.root)
+	if expected := abs(t, filepath.Join(cwd, root)); expected != p.Root() {
+		t.Fatalf("Project.root: expected %q, got %q", expected, p.Root())
 	}
 	if p.pkgs == nil {
 		t.Fatalf("Project.pkgs: map must be initalised")
@@ -31,8 +31,8 @@ func TestResolvePackage(t *testing.T) {
 		if err != nil {
 			t.Fatalf("Project.ResolvePackage(): %v", err)
 		}
-		if pkg.Name != tt.name {
-			t.Fatalf("Package.name: expected %q, got %q", tt.name, pkg.Name)
+		if pkg.Name() != tt.name {
+			t.Fatalf("Package.name: expected %q, got %q", tt.name, pkg.Name())
 		}
 		if pkg.ImportPath != tt.path {
 			t.Fatalf("Package.path: expected %q, got %q", tt.path, pkg.ImportPath)

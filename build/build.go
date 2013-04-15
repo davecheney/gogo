@@ -35,7 +35,7 @@ func run(project *gogo.Project, args []string) error {
 }
 
 func Build(ctx *gogo.Context, pkg *gogo.Package) []gogo.Target {
-	if pkg.Name == "main" {
+	if pkg.Name() == "main" {
 		return buildCommand(ctx, pkg)
 	}
 	return buildPackage(ctx, pkg)

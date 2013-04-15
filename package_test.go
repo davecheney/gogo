@@ -19,7 +19,7 @@ func TestPackageImports(t *testing.T) {
 			t.Fatalf("Project.ResolvePackage(): %v", err)
 		}
 		for i, im := range pkg.Imports {
-			if im.Name != tt.imports[i] {
+			if im.Name() != tt.imports[i] {
 				t.Fatalf("Package %q: expecting import %q, got %q", pkg.ImportPath, im.Name, tt.imports[i])
 			}
 		}

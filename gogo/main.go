@@ -20,7 +20,10 @@ func mustGetwd() string {
 
 func main() {
 	flag.Parse()
-	project := gogo.NewProject(mustGetwd())
+	project, err := gogo.NewProject(mustGetwd())
+	if err != nil {
+		log.Fatalf("unable to construct project: %v", err)
+	}
 	first, rest := flag.Arg(0), flag.Args()[1:]
 	var cmd *gogo.Command
 	switch first {

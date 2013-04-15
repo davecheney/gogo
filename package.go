@@ -19,7 +19,7 @@ type Package struct {
 	*Project
 
 	// The name of the package
-	Name string
+	name string
 
 	// The full import path of the package. The import path
 	// is relative to the Project, and must be unique.
@@ -35,6 +35,9 @@ type Package struct {
 
 	testGoFiles []string
 }
+
+// Name returns the name of the package.
+func (p *Package) Name() string { return p.name }
 
 func (p *Package) Srcdir() string { return filepath.Join(p.Project.srcdir(), p.ImportPath) }
 
@@ -92,7 +95,7 @@ func (p *Package) readImports() error {
 		if err != nil {
 			return err
 		}
-		p.Name = pf.Name.Name
+		p.name = pf.Name.Name
 		for _, decl := range pf.Decls {
 			switch decl := decl.(type) {
 			case *ast.GenDecl:

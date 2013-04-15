@@ -20,13 +20,16 @@ func NewProject(root string) (*Project, error) {
 	}, nil
 }
 
+// Root returns the top level directory representing this project.
+func (p *Project) Root() string { return p.root }
+
 func (p *Project) ResolvePackage(path string) (*Package, error) {
 	if pkg, ok := p.pkgs[path]; ok {
 		return pkg, nil
 	}
 	pkg := &Package{
 		Project:    p,
-		Name:       filepath.Base(path),
+		name:       filepath.Base(path),
 		ImportPath: path,
 	}
 	if err := pkg.readFiles(); err != nil {

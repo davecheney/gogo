@@ -36,7 +36,7 @@ func run(project *gogo.Project, args []string) error {
 }
 
 func test(ctx *gogo.Context, pkg *gogo.Package) []gogo.Target {
-	if pkg.Name == "main" {
+	if pkg.Name() == "main" {
 		log.Printf("Cannot test package %q, it is a command", pkg.ImportPath)
 		return nil
 	}
