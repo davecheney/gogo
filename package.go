@@ -37,8 +37,6 @@ type Package struct {
 	XTestGoFiles []string
 
 	Imports []*Package
-
-	testGoFiles []string
 }
 
 // newPackage constructs a new Package homed in this Project.
@@ -86,7 +84,7 @@ func (p *Package) readFiles() error {
 		switch ext := filepath.Ext(name); ext {
 		case ".go":
 			if strings.HasSuffix(name, "_test.go") {
-				p.testGoFiles = append(p.testGoFiles, name)
+				p.TestGoFiles = append(p.TestGoFiles, name)
 				continue
 			}
 			p.GoFiles = append(p.GoFiles, name)

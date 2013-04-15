@@ -54,6 +54,7 @@ func (t *buildTestTarget) execute() {
 
 func (t *buildTestTarget) objdir() string  { return t.Context.TestObjdir(t.Package) }
 func (t *buildTestTarget) objfile() string { return filepath.Join(t.objdir(), "_go_.6") }
+func (t *buildTestTarget) pkgfile() string { return t.Package.ImportPath() + ".a" }
 
 func (t *buildTestTarget) build() error {
 	gofiles := t.GoFiles
@@ -62,6 +63,13 @@ func (t *buildTestTarget) build() error {
 		return err
 	}
 	if err := t.Gc(t.ImportPath(), t.Srcdir(), t.objfile(), gofiles); err != nil {
+		return err
+	}
+	pkgdir := filepath.Dir(filepath.Join(t.Pkgdir(), t.pkgfile()))
+	if err := os.MkdirAll(pkgdir, 0777); err != nil {
+		return err
+	}
+	if err := t.Pack(t.pkgfile(), t.Pkgdir(), t.objfile()); err != nil {
 		return err
 	}
 	if err := t.buildTestMain(t.objdir()); err != nil {
