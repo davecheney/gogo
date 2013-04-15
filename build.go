@@ -1,12 +1,47 @@
-package build
+package gogo
 
 import (
+	"log"
 	"os"
 	"path/filepath"
 	"sync"
-
-	"github.com/davecheney/gogo"
 )
+
+func Build(ctx *Context, pkg *Package) []Target {
+	if pkg.Name() == "main" {
+		return buildCommand(ctx, pkg)
+	}
+	return buildPackage(ctx, pkg)
+}
+
+func buildPackage(ctx *Context, pkg *Package) []Target {
+	var deps []Target
+	for _, dep := range pkg.Imports {
+		deps = append(deps, buildPackage(ctx, dep)...)
+	}
+	if _, ok := ctx.Targets[pkg]; !ok {
+		gc := Gc(ctx, pkg, deps...)
+		pack := Pack(ctx, pkg, gc)
+		ctx.Targets[pkg] = pack
+	}
+	log.Printf("build package %q", pkg.ImportPath())
+	return []Target{ctx.Targets[pkg]}
+}
+
+func buildCommand(ctx *Context, pkg *Package) []Target {
+	var deps []Target
+	for _, dep := range pkg.Imports {
+		deps = append(deps, buildPackage(ctx, dep)...)
+	}
+	if _, ok := ctx.Targets[pkg]; !ok {
+		gc := Gc(ctx, pkg, deps...)
+		pack := Pack(ctx, pkg, gc)
+		ld := Ld(ctx, pkg, pack)
+		ctx.Targets[pkg] = ld
+	}
+	log.Printf("build command %q", pkg.ImportPath())
+	return []Target{ctx.Targets[pkg]}
+}
 
 type target struct {
 	done chan struct{}
@@ -31,12 +66,12 @@ func (t *target) setErr(err error) {
 
 type packTarget struct {
 	target
-	deps []gogo.Target
-	*gogo.Package
-	*gogo.Context
+	deps []Target
+	*Package
+	*Context
 }
 
-func Pack(ctx *gogo.Context, pkg *gogo.Package, deps ...gogo.Target) *packTarget {
+func Pack(ctx *Context, pkg *Package, deps ...Target) *packTarget {
 	t := &packTarget{
 		target: target{
 			done: make(chan struct{}),
@@ -77,9 +112,9 @@ func (t *packTarget) build() error {
 
 type gcTarget struct {
 	target
-	deps []gogo.Target
-	*gogo.Package
-	*gogo.Context
+	deps []Target
+	*Package
+	*Context
 }
 
 func (t *gcTarget) execute() {
@@ -99,7 +134,7 @@ func (t *gcTarget) execute() {
 	}
 }
 
-func Gc(ctx *gogo.Context, pkg *gogo.Package, deps ...gogo.Target) *gcTarget {
+func Gc(ctx *Context, pkg *Package, deps ...Target) *gcTarget {
 	t := &gcTarget{
 		target: target{
 			done: make(chan struct{}),
@@ -126,9 +161,9 @@ func (t *gcTarget) build() error {
 
 type asmTarget struct {
 	target
-	deps []gogo.Target
-	*gogo.Package
-	*gogo.Context
+	deps []Target
+	*Package
+	*Context
 }
 
 func (t *asmTarget) execute() {
@@ -148,7 +183,7 @@ func (t *asmTarget) execute() {
 	}
 }
 
-func newAsmTarget(ctx *gogo.Context, pkg *gogo.Package, deps ...gogo.Target) *gcTarget {
+func newAsmTarget(ctx *Context, pkg *Package, deps ...Target) *gcTarget {
 	t := &gcTarget{
 		target: target{
 			done: make(chan struct{}),
@@ -167,9 +202,9 @@ func (t *asmTarget) build() error {
 
 type ldTarget struct {
 	target
-	deps []gogo.Target
-	*gogo.Package
-	*gogo.Context
+	deps []Target
+	*Package
+	*Context
 }
 
 func (t *ldTarget) execute() {
@@ -189,7 +224,7 @@ func (t *ldTarget) execute() {
 	}
 }
 
-func Ld(ctx *gogo.Context, pkg *gogo.Package, deps ...gogo.Target) *ldTarget {
+func Ld(ctx *Context, pkg *Package, deps ...Target) *ldTarget {
 	t := &ldTarget{
 		target: target{
 			done: make(chan struct{}),
