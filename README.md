@@ -5,13 +5,19 @@
 
 ## goals
 
- 1. An alternative build tool that is independent of go itself
+ 1. An alternative build tool that is independent of Go itself
 
- 2. Extensible, ie other go program's should be able to build go code without having to shell out to the go tool, and other code can reuse `gogo` components to make their own build automation.
+ 2. Extensible, ie other go program's should be able to build Go code without having to shell out to the `go` tool, and other code can reuse `gogo` components to make their own build automation.
 
  3. Project based, not package based, supporting some (as yet to be defined) package version system.
 
  4. Potentially support code generation phases and other pre and post targets.
+
+## installation
+
+The `gogo` command is `go get`able
+
+    go get github.com/davecheney/gogo/gogo
 
 ## usage
 
