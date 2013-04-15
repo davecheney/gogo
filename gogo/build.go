@@ -21,7 +21,7 @@ var BuildCmd = &Command{
 			pkgs = append(pkgs, pkg)
 		}
 		for _, pkg := range pkgs {
-			for _, t := range gogo.Build(ctx, pkg) {
+			for _, t := range gogo.Build(pkg) {
 				if err := t.Wait(); err != nil {
 					return err
 				}

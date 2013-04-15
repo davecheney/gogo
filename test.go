@@ -8,19 +8,19 @@ import (
 	"strings"
 )
 
-func Test(ctx *Context, pkg *Package) []Target {
+func Test(pkg *Package) []Target {
 	// commands are built as packages for testing.
-	return testPackage(ctx, pkg)
+	return testPackage(pkg)
 }
 
-func testPackage(ctx *Context, pkg *Package) []Target {
+func testPackage(pkg *Package) []Target {
 	// build dependencies
 	var deps []Target
 	for _, dep := range pkg.Imports {
-		deps = append(deps, Build(ctx, dep)...)
+		deps = append(deps, Build(dep)...)
 	}
-	buildtest := buildTest(ctx, pkg, deps)
-	runtest := runTest(ctx, pkg, buildtest)
+	buildtest := buildTest(pkg, deps)
+	runtest := runTest(pkg, buildtest)
 	return []Target{runtest}
 }
 
@@ -28,7 +28,6 @@ type buildTestTarget struct {
 	target
 	deps []Target
 	*Package
-	*Context
 }
 
 func (t *buildTestTarget) execute() {
@@ -44,7 +43,7 @@ func (t *buildTestTarget) execute() {
 	}
 }
 
-func (t *buildTestTarget) objdir() string  { return t.Context.TestObjdir(t.Package) }
+func (t *buildTestTarget) objdir() string  { return t.Package.Context.TestObjdir(t.Package) }
 func (t *buildTestTarget) objfile() string { return filepath.Join(t.objdir(), "_go_.6") }
 func (t *buildTestTarget) pkgfile() string { return t.Package.ImportPath() + ".a" }
 
@@ -78,14 +77,13 @@ func (t *buildTestTarget) buildTestMain(objdir string) error {
 	return writeTestmain(filepath.Join(t.objdir(), "_testmain.go"), t.Package)
 }
 
-func buildTest(ctx *Context, pkg *Package, deps []Target) *buildTestTarget {
+func buildTest(pkg *Package, deps []Target) *buildTestTarget {
 	t := &buildTestTarget{
 		target: target{
 			done: make(chan struct{}),
 		},
 		deps:    deps,
 		Package: pkg,
-		Context: ctx,
 	}
 	go t.execute()
 	return t
@@ -95,10 +93,9 @@ type runTestTarget struct {
 	target
 	deps []Target
 	*Package
-	*Context
 }
 
-func (t *runTestTarget) objdir() string { return t.Context.TestObjdir(t.Package) }
+func (t *runTestTarget) objdir() string { return t.Package.Context.TestObjdir(t.Package) }
 
 func (t *runTestTarget) execute() {
 	defer close(t.done)
@@ -122,14 +119,13 @@ func (t *runTestTarget) build() error {
 	return cmd.Run()
 }
 
-func runTest(ctx *Context, pkg *Package, deps ...Target) *runTestTarget {
+func runTest(pkg *Package, deps ...Target) *runTestTarget {
 	t := &runTestTarget{
 		target: target{
 			done: make(chan struct{}),
 		},
 		deps:    deps,
 		Package: pkg,
-		Context: ctx,
 	}
 	go t.execute()
 	return t

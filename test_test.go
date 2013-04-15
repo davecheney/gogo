@@ -24,7 +24,7 @@ func TestTestPackage(t *testing.T) {
 		if err != nil {
 			t.Fatalf("ResolvePackage(): %v", err)
 		}
-		targets := gogo.TestPackage(ctx, pkg)
+		targets := gogo.TestPackage(pkg)
 		if len := len(targets); len != 1 {
 			t.Fatalf("testPackage %q: expected %d target, got %d", tt.pkg, 1, len)
 		}

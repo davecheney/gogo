@@ -21,7 +21,7 @@ var TestCmd = &Command{
 			pkgs = append(pkgs, pkg)
 		}
 		for _, pkg := range pkgs {
-			for _, t := range gogo.Test(ctx, pkg) {
+			for _, t := range gogo.Test(pkg) {
 				if err := t.Wait(); err != nil {
 					return err
 				}

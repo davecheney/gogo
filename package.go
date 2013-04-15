@@ -16,6 +16,7 @@ import (
 
 // Package describes a Go package.
 type Package struct {
+	// The Context that resolved this package.
 	*Context
 
 	// The name of the package
