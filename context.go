@@ -1,6 +1,7 @@
 package gogo
 
 import (
+	"go/build"
 	"io/ioutil"
 	"os"
 	"path/filepath"
@@ -13,6 +14,7 @@ type Context struct {
 	*Project
 	goroot, goos, goarch string
 	basedir              string
+	archchar             string
 	Targets              map[*Package]Target
 	Toolchain
 	SearchPaths []string
@@ -29,13 +31,18 @@ func newContext(p *Project, goroot, goos, goarch string) (*Context, error) {
 	if err != nil {
 		return nil, err
 	}
+	archchar, err := build.ArchChar(goarch)
+	if err != nil {
+		return nil, err
+	}
 	ctx := &Context{
-		Project: p,
-		goroot:  goroot,
-		goos:    goos,
-		goarch:  goarch,
-		basedir: basedir,
-		Targets: make(map[*Package]Target),
+		Project:  p,
+		goroot:   goroot,
+		goos:     goos,
+		goarch:   goarch,
+		basedir:  basedir,
+		archchar: archchar,
+		Targets:  make(map[*Package]Target),
 	}
 	tc, err := newGcToolchain(ctx)
 	if err != nil {
