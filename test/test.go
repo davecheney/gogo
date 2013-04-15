@@ -49,6 +49,7 @@ func testPackage(ctx *gogo.Context, pkg *gogo.Package) []gogo.Target {
 	for _, dep := range pkg.Imports {
 		deps = append(deps, build.Build(ctx, dep)...)
 	}
-	deps = append(deps, build.Build(ctx, pkg)...)
-	return deps
+	buildtest := buildTest(ctx, pkg, deps)
+	runtest := runTest(ctx, pkg, buildtest)
+	return []gogo.Target{runtest}
 }

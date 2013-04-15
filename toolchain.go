@@ -62,7 +62,7 @@ func (t *gcToolchain) Gc(importpath, srcdir, outfile string, files []string) err
 }
 
 func (t *gcToolchain) Pack(afile, objdir string, ofiles ...string) error {
-	args := []string{"grcP", t.basedir, afile}
+	args := []string{"grcP", t.basedir, filepath.Join(t.basedir, afile)}
 	args = append(args, ofiles...)
 	return run(objdir, t.pack, args...)
 }
