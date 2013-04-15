@@ -9,11 +9,11 @@ import (
 const root = "testdata"
 
 func newProject(t *testing.T) *gogo.Project {
-	p, err := gogo.NewProject(root)
-	if err != nil {
-		t.Fatalf("could not resolve project root %q: %v", root, err)
-	}
-	return p
+        p, err := gogo.NewProject(root)
+        if err != nil {
+                t.Fatalf("could not resolve project root %q: %v", root, err)
+        }
+        return p
 }
 
 var buildPackageTests = []struct {
@@ -22,6 +22,7 @@ var buildPackageTests = []struct {
 	{"a"},
 	{"b"}, // imports a
 	{"helloworld"},
+//	{"stdio"}, // imports "C"
 }
 
 func TestBuildPackage(t *testing.T) {
@@ -49,8 +50,8 @@ var buildCommandTests = []struct {
 	pkg string
 }{
 	{"b"},
-	//	{"k"}, // uses cgo
 	{"helloworld"}, // links in a stdlib pkg
+	//{"hellocgo"},	// imports a cgo pkg
 }
 
 func TestBuildCommand(t *testing.T) {
@@ -79,7 +80,7 @@ var buildTests = []struct {
 }{
 	{"a"},
 	{"b"},
-	// 	{ "k" },
+//	{ "k" },
 	{"helloworld"},
 }
 
