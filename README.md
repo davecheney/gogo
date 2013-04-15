@@ -1,10 +1,9 @@
-gogo
-====
+# gogo
+
 
 `gogo` is an experimental alternative build tool for the Go programming language.
 
-goals
------
+## goals
 
  1. An alternative build tool that is independent of go itself
 
@@ -14,38 +13,41 @@ goals
 
  4. Potentially support code generation phases and other pre and post targets.
 
-usage
------
+### usage
 
 `gogo` is not ready for use, you'd be mad to use it. In the case that you _are_ mad, create a project workspace 
 
     mkdir $PROJECT
-    mkdir $PROJECT/.project
 
-Inside your `gogo` project, you can use the following targets
+Inside your `gogo` project, you should arrange your Go source, and its dependencies into the usual `$PACKAGE/src` subfolder.
+
+### gogo build
+
+`gogo` can build a package or a command, using the `build` subcommand. When commands are built, they are placed in `$PROJECT/bin/$GOOS/$GOARCH/` (this path is subject to change)
 
     cd $PROJECT
     gogo build $SOME_PACKAGE_OR_COMMAND
 
+### gogo test
+
+`gogo` can invoke the standard `testing` tests. Only packages are supported at this time, commands will be implemented later.
+
     cd $PROJECT
     gogo test $SOME_PACKAGE
 
-`gogo` expects all your source to be in $PROJECT/src in GOPATH format.
-
-faq
----
+## faq
 
  * Q. Will `gogo` build Go itself ? A. No.
 
-todo
-----
+## todo
 
  * support cgo packages.
- * add test command.
+ * ~~Add test command.~~
+ * Add support for testing commands.
  * be able to invoke `gogo` from anywhere inside the project.
- * `gogo` should be able to build and test itself.
+ * ~~`gogo` should be able to build and test itself.~~
+ * implement incremental builds; only build what needs to be built
 
-licence
--------
+## licence
 
 `gogo` is licenced under a BSD licence.
