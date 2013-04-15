@@ -16,7 +16,7 @@ import (
 
 // Package describes a Go package.
 type Package struct {
-	*Project
+	*Context
 
 	// The name of the package
 	name string
@@ -39,10 +39,10 @@ type Package struct {
 	Imports []*Package
 }
 
-// newPackage constructs a new Package homed in this Project.
-func newPackage(project *Project, path string) (*Package, error) {
+// newPackage constructs a new Package for the Context context.
+func newPackage(context *Context, path string) (*Package, error) {
 	pkg := &Package{
-		Project:    project,
+		Context:    context,
 		name:       filepath.Base(path),
 		importPath: path,
 		srcdir:     filepath.Join("src", path),

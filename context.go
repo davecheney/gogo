@@ -16,6 +16,10 @@ type Context struct {
 	workdir              string
 	archchar             string
 	Targets              map[*Package]Target
+
+	// pkgs is a map of import paths to resolved Packages within
+	// the scope of this context.
+	pkgs map[string]*Package
 	Toolchain
 	SearchPaths []string
 }
@@ -43,6 +47,7 @@ func newContext(p *Project, goroot, goos, goarch string) (*Context, error) {
 		workdir:  workdir,
 		archchar: archchar,
 		Targets:  make(map[*Package]Target),
+		pkgs:     make(map[string]*Package),
 	}
 	tc, err := newGcToolchain(ctx)
 	if err != nil {
@@ -51,6 +56,19 @@ func newContext(p *Project, goroot, goos, goarch string) (*Context, error) {
 	ctx.Toolchain = tc
 	ctx.SearchPaths = []string{ctx.stdlib(), workdir}
 	return ctx, nil
+}
+
+// ResolvePackage resolves the import path to a Package.
+func (c *Context) ResolvePackage(path string) (*Package, error) {
+	if pkg, ok := c.pkgs[path]; ok {
+		return pkg, nil
+	}
+	pkg, err := newPackage(c, path)
+	if err != nil {
+		return nil, err
+	}
+	c.pkgs[path] = pkg
+	return pkg, nil
 }
 
 // Destroy removes any temporary files associated with this Context.

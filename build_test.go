@@ -32,7 +32,8 @@ func TestBuildPackage(t *testing.T) {
 		if err != nil {
 			t.Fatalf("NewDefaultContext(): %v", err)
 		}
-		pkg, err := project.ResolvePackage(tt.pkg)
+		defer ctx.Destroy()
+		pkg, err := ctx.ResolvePackage(tt.pkg)
 		if err != nil {
 			t.Fatalf("ResolvePackage(): %v", err)
 		}
@@ -61,7 +62,8 @@ func TestBuildCommand(t *testing.T) {
 		if err != nil {
 			t.Fatalf("NewDefaultContext(): %v", err)
 		}
-		pkg, err := project.ResolvePackage(tt.pkg)
+		defer ctx.Destroy()
+		pkg, err := ctx.ResolvePackage(tt.pkg)
 		if err != nil {
 			t.Fatalf("ResolvePackage(): %v", err)
 		}
@@ -91,7 +93,8 @@ func TestBuild(t *testing.T) {
 		if err != nil {
 			t.Fatalf("NewDefaultContext(): %v", err)
 		}
-		pkg, err := project.ResolvePackage(tt.pkg)
+		defer ctx.Destroy()
+		pkg, err := ctx.ResolvePackage(tt.pkg)
 		if err != nil {
 			t.Fatalf("ResolvePackage(): %v", err)
 		}

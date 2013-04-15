@@ -20,7 +20,7 @@ func TestTestPackage(t *testing.T) {
 			t.Fatalf("NewDefaultContext(): %v", err)
 		}
 		defer ctx.Destroy()
-		pkg, err := project.ResolvePackage(tt.pkg)
+		pkg, err := ctx.ResolvePackage(tt.pkg)
 		if err != nil {
 			t.Fatalf("ResolvePackage(): %v", err)
 		}

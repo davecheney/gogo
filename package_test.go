@@ -15,9 +15,10 @@ var packageImportTests = []struct {
 }
 
 func TestPackageImports(t *testing.T) {
-	proj := newProject(t)
+	ctx := newTestContext(t)
+	defer ctx.Destroy()
 	for _, tt := range packageImportTests {
-		pkg, err := proj.ResolvePackage(tt.path)
+		pkg, err := ctx.ResolvePackage(tt.path)
 		if err != nil {
 			t.Fatalf("Project.ResolvePackage(): %v", err)
 		}
@@ -49,18 +50,19 @@ var newPackageTests = []struct {
 }
 
 func TestNewPackage(t *testing.T) {
-	proj := newProject(t)
+	ctx := newTestContext(t)
+	defer ctx.Destroy()
 	for _, tt := range newPackageTests {
-		_, err := proj.ResolvePackage(tt.importpath)
+		_, err := ctx.ResolvePackage(tt.importpath)
 		if err != nil {
 			t.Fatal(err)
 		}
-		for importpath, pkg := range proj.pkgs {
+		for importpath, pkg := range ctx.pkgs {
 			if expected, ok := tt.expected[importpath]; ok {
 				if pkg.Name() != expected.name {
 					t.Fatalf("pkg.Name(): expected %q, got %q", expected.name, pkg.Name())
 				}
-				if expected := abs(t, filepath.Join(proj.Root(), expected.srcdir)); expected != pkg.Srcdir() {
+				if expected := abs(t, filepath.Join(ctx.Project.Root(), expected.srcdir)); expected != pkg.Srcdir() {
 					t.Fatalf("pkg.Srcdir(): expected %q, got %q", expected, pkg.Srcdir())
 				}
 			} else {
