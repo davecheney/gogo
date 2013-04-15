@@ -9,11 +9,15 @@ type Project struct {
 	pkgs map[string]*Package
 }
 
-func NewProject(root string) *Project {
+func NewProject(root string) (*Project, error) {
+	root, err := filepath.Abs(root)
+	if err != nil {
+		return nil, err
+	}
 	return &Project{
 		root: root,
 		pkgs: make(map[string]*Package),
-	}
+	}, nil
 }
 
 func (p *Project) ResolvePackage(path string) (*Package, error) {

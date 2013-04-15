@@ -8,7 +8,7 @@ import (
 )
 
 func TestNewDefaultContext(t *testing.T) {
-	proj := NewProject(root)
+	proj := newProject(t)
 	c, err := NewDefaultContext(proj)
 	if err != nil {
 		t.Fatalf("NewDefaultContext: %v", err)
@@ -25,7 +25,7 @@ func TestNewDefaultContext(t *testing.T) {
 }
 
 func TestContextObjdir(t *testing.T) {
-	proj := NewProject(root)
+	proj := newProject(t)
 	ctx, err := NewDefaultContext(proj)
 	if err != nil {
 		t.Fatalf("NewDefaultContext(): %v", err)
@@ -40,22 +40,22 @@ func TestContextObjdir(t *testing.T) {
 }
 
 func TestContextTestObjdir(t *testing.T) {
-        proj := NewProject(root)
-        ctx, err := NewDefaultContext(proj)
-        if err != nil {
-                t.Fatalf("NewDefaultContext(): %v", err)
-        }
-        pkg, err := proj.ResolvePackage("a")
-        if err != nil {
-                t.Fatalf("project.ResolvePackage(): %v", err)
-        }
-        if testdir := ctx.TestObjdir(pkg); testdir != filepath.Join(ctx.basedir, pkg.ImportPath, "_test") {
-                t.Fatalf("ctx.Objdir(): expected %q, got %q", filepath.Join(ctx.basedir, pkg.ImportPath, "_test"), testdir)
-        }
+	proj := newProject(t)
+	ctx, err := NewDefaultContext(proj)
+	if err != nil {
+		t.Fatalf("NewDefaultContext(): %v", err)
+	}
+	pkg, err := proj.ResolvePackage("a")
+	if err != nil {
+		t.Fatalf("project.ResolvePackage(): %v", err)
+	}
+	if testdir := ctx.TestObjdir(pkg); testdir != filepath.Join(ctx.basedir, pkg.ImportPath, "_test") {
+		t.Fatalf("ctx.Objdir(): expected %q, got %q", filepath.Join(ctx.basedir, pkg.ImportPath, "_test"), testdir)
+	}
 }
 
 func TestContextPkgdir(t *testing.T) {
-	proj := NewProject(root)
+	proj := newProject(t)
 	ctx, err := NewDefaultContext(proj)
 	if err != nil {
 		t.Fatalf("NewDefaultContext(): %v", err)
@@ -66,7 +66,7 @@ func TestContextPkgdir(t *testing.T) {
 }
 
 func TestContextBindir(t *testing.T) {
-	proj := NewProject(root)
+	proj := newProject(t)
 	ctx, err := NewDefaultContext(proj)
 	if err != nil {
 		t.Fatalf("NewDefaultContext(): %v", err)
@@ -77,7 +77,7 @@ func TestContextBindir(t *testing.T) {
 }
 
 func TestContextDestroy(t *testing.T) {
-	proj := NewProject(root)
+	proj := newProject(t)
 	ctx, err := NewDefaultContext(proj)
 	if err != nil {
 		t.Fatalf("NewDefaultContext(): %v", err)

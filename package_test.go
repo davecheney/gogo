@@ -12,7 +12,7 @@ var packageImportTests = []struct {
 }
 
 func TestPackageImports(t *testing.T) {
-	proj := NewProject(root)
+	proj := newProject(t)
 	for _, tt := range packageImportTests {
 		pkg, err := proj.ResolvePackage(tt.path)
 		if err != nil {

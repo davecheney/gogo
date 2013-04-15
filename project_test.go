@@ -1,14 +1,15 @@
 package gogo
 
-import "testing"
-import "path/filepath"
-
-const root = "testdata"
+import (
+	"path/filepath"
+	"testing"
+)
 
 func TestNewProject(t *testing.T) {
-	p := NewProject(root)
-	if p.root != root {
-		t.Fatalf("Project.root: expected %q, got %q", root, p.root)
+	p := newProject(t)
+	cwd := getwd(t)
+	if expected := abs(t, filepath.Join(cwd, root)); expected != p.root {
+		t.Fatalf("Project.root: expected %q, got %q", expected, p.root)
 	}
 	if p.pkgs == nil {
 		t.Fatalf("Project.pkgs: map must be initalised")
@@ -24,7 +25,7 @@ var resolvePackageTests = []struct {
 }
 
 func TestResolvePackage(t *testing.T) {
-	proj := NewProject(root)
+	proj := newProject(t)
 	for _, tt := range resolvePackageTests {
 		pkg, err := proj.ResolvePackage(tt.path)
 		if err != nil {
@@ -40,8 +41,8 @@ func TestResolvePackage(t *testing.T) {
 }
 
 func TestProjectSrcDir(t *testing.T) {
-	proj := NewProject(root)
-	expected := filepath.Join(root, "src")
+	proj := newProject(t)
+	expected := abs(t, filepath.Join(root, "src"))
 	if proj.srcdir() != expected {
 		t.Fatalf("Project.srcdir(): expected %q, got %q", expected, proj.srcdir())
 	}
