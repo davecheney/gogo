@@ -58,6 +58,7 @@ func (t *buildTestTarget) pkgfile() string { return t.Package.ImportPath() + ".a
 
 func (t *buildTestTarget) build() error {
 	gofiles := t.GoFiles
+	gofiles = append(gofiles, t.TestGoFiles...)
 	objdir := t.objdir()
 	if err := os.MkdirAll(objdir, 0777); err != nil {
 		return err
