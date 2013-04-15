@@ -6,6 +6,16 @@ import (
 	"github.com/davecheney/gogo"
 )
 
+const root = "testdata"
+
+func newProject(t *testing.T) *gogo.Project {
+	p, err := gogo.NewProject(root)
+	if err != nil {
+		t.Fatalf("could not resolve project root %q: %v", root, err)
+	}
+	return p
+}
+
 var buildPackageTests = []struct {
 	pkg string
 }{
@@ -14,12 +24,8 @@ var buildPackageTests = []struct {
 	{"helloworld"},
 }
 
-func newProject() *gogo.Project {
-	return gogo.NewProject("testdata")
-}
-
 func TestBuildPackage(t *testing.T) {
-	project := newProject()
+	project := newProject(t)
 	for _, tt := range buildPackageTests {
 		ctx, err := gogo.NewDefaultContext(project)
 		if err != nil {
@@ -48,7 +54,7 @@ var buildCommandTests = []struct {
 }
 
 func TestBuildCommand(t *testing.T) {
-	project := newProject()
+	project := newProject(t)
 	for _, tt := range buildCommandTests {
 		ctx, err := gogo.NewDefaultContext(project)
 		if err != nil {
@@ -78,7 +84,7 @@ var buildTests = []struct {
 }
 
 func TestBuild(t *testing.T) {
-	project := newProject()
+	project := newProject(t)
 	for _, tt := range buildTests {
 		ctx, err := gogo.NewDefaultContext(project)
 		if err != nil {

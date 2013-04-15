@@ -59,7 +59,7 @@ func (t *buildTestTarget) build() error {
 	if err := os.MkdirAll(objdir, 0777); err != nil {
 		return err
 	}
-	if err := t.Gc(t.ImportPath, t.Srcdir(), t.objfile(), gofiles); err != nil {
+	if err := t.Gc(t.ImportPath(), t.Srcdir(), t.objfile(), gofiles); err != nil {
 		return err
 	}
 	if err := t.buildTestMain(t.objdir(), gofiles); err != nil {

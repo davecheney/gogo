@@ -30,7 +30,7 @@ func (p *Project) ResolvePackage(path string) (*Package, error) {
 	pkg := &Package{
 		Project:    p,
 		name:       filepath.Base(path),
-		ImportPath: path,
+		importPath: path,
 	}
 	if err := pkg.readFiles(); err != nil {
 		return nil, err

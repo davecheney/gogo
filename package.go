@@ -21,9 +21,8 @@ type Package struct {
 	// The name of the package
 	name string
 
-	// The full import path of the package. The import path
-	// is relative to the Project, and must be unique.
-	ImportPath string
+	// The import path of the package.
+	importPath string
 
 	GoFiles  []string
 	CgoFiles []string // .go source files that import "C"
@@ -39,7 +38,11 @@ type Package struct {
 // Name returns the name of the package.
 func (p *Package) Name() string { return p.name }
 
-func (p *Package) Srcdir() string { return filepath.Join(p.Project.srcdir(), p.ImportPath) }
+// ImportPath returns the import path that would is used to import this package into another.
+func (p *Package) ImportPath() string { return p.importPath }
+
+// BUG(dfc) Srcdir should be relative to p.Project.Root()
+func (p *Package) Srcdir() string { return filepath.Join(p.Project.srcdir(), p.ImportPath()) }
 
 // readFiles populates the various package file lists
 func (p *Package) readFiles() error {

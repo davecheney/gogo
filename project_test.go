@@ -34,7 +34,7 @@ func TestResolvePackage(t *testing.T) {
 		if pkg.Name() != tt.name {
 			t.Fatalf("Package.name: expected %q, got %q", tt.name, pkg.Name())
 		}
-		if pkg.ImportPath != tt.path {
+		if pkg.ImportPath() != tt.path {
 			t.Fatalf("Package.path: expected %q, got %q", tt.path, pkg.ImportPath)
 		}
 	}
