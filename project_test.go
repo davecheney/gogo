@@ -13,6 +13,15 @@ func TestNewProject(t *testing.T) {
 	}
 }
 
+// disabled
+func testProjectError(t *testing.T) {
+	cwd := getwd(t)
+	// assumes $CWD/missing is missing
+	if _, err := NewProject(filepath.Join(cwd, "missing")); err == nil {
+		t.Fatalf("Opening project on non existant directory, expected error, got %v", err)
+	}
+}
+
 func TestProjectBindir(t *testing.T) {
 	p := newProject(t)
 	cwd := getwd(t)

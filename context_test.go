@@ -41,6 +41,17 @@ func TestContextPkgdir(t *testing.T) {
 	}
 }
 
+func TestContextResolvePackage(t *testing.T) {
+	ctx := newTestContext(t)
+	defer ctx.Destroy()
+	if _, err := ctx.ResolvePackage("a"); err != nil {
+		t.Fatal(err)
+	}
+	if _, err := ctx.ResolvePackage("NOTHING!"); err == nil {
+		t.Fatalf("resolving missing package expected error, got %v", err)
+	}
+}
+
 func TestContextBindir(t *testing.T) {
 	ctx := newTestContext(t)
 	defer ctx.Destroy()
