@@ -30,9 +30,6 @@ type Package struct {
 
 	GoFiles  []string
 	CgoFiles []string // .go source files that import "C"
-	cFiles   []string
-	hFiles   []string
-	sFiles   []string
 
 	TestGoFiles  []string
 	XTestGoFiles []string
@@ -48,10 +45,37 @@ func newPackage(context *Context, path string) (*Package, error) {
 		importPath: path,
 		srcdir:     filepath.Join("src", path),
 	}
-	if err := pkg.readFiles(); err != nil {
+	files, err := ioutil.ReadDir(pkg.Srcdir())
+	if err != nil {
 		return nil, err
 	}
+	for _, file := range files {
+		if file.IsDir() {
+			// skip
+			continue
+		}
+		name := file.Name()
+		if strings.HasPrefix(name, "_") || strings.HasPrefix(name, ".") {
+			continue
+		}
+		switch ext := filepath.Ext(name); ext {
+		case ".go":
+			if strings.HasSuffix(name, "_test.go") {
+				pkg.TestGoFiles = append(pkg.TestGoFiles, name)
+				continue
+			}
+			pkg.GoFiles = append(pkg.GoFiles, name)
+			/**		case ".c":
+				p.cFiles = append(p.cFiles, name)
+			case ".h":
+				p.hFiles = append(p.hFiles, name)
+			case ".s":
+				p.sFiles = append(p.sFiles, name) **/
+		default:
+			log.Printf("skipping unknown extension %q", ext)
+		}
 
+	}
 	if err := pkg.readImports(); err != nil {
 		return nil, err
 	}
@@ -66,42 +90,6 @@ func (p *Package) ImportPath() string { return p.importPath }
 
 // Srcdir returns the path to this package.
 func (p *Package) Srcdir() string { return filepath.Join(p.Project.Root(), p.srcdir) }
-
-// readFiles populates the various package file lists
-func (p *Package) readFiles() error {
-	files, err := ioutil.ReadDir(p.Srcdir())
-	if err != nil {
-		return err
-	}
-	for _, file := range files {
-		if file.IsDir() {
-			// skip
-			continue
-		}
-		name := file.Name()
-		if strings.HasPrefix(name, "_") || strings.HasPrefix(name, ".") {
-			continue
-		}
-		switch ext := filepath.Ext(name); ext {
-		case ".go":
-			if strings.HasSuffix(name, "_test.go") {
-				p.TestGoFiles = append(p.TestGoFiles, name)
-				continue
-			}
-			p.GoFiles = append(p.GoFiles, name)
-		case ".c":
-			p.cFiles = append(p.cFiles, name)
-		case ".h":
-			p.hFiles = append(p.hFiles, name)
-		case ".s":
-			p.sFiles = append(p.sFiles, name)
-		default:
-			log.Printf("skipping unknown extension %q", ext)
-		}
-
-	}
-	return nil
-}
 
 func (p *Package) openFile(name string) (io.ReadCloser, error) {
 	return os.Open(filepath.Join(p.Srcdir(), name))
