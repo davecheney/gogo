@@ -49,37 +49,7 @@ func newPackage(context *Context, path string) (*Package, error) {
 	if err != nil {
 		return nil, err
 	}
-	for _, file := range files {
-		if file.IsDir() {
-			// skip
-			continue
-		}
-		name := file.Name()
-		if strings.HasPrefix(name, "_") || strings.HasPrefix(name, ".") {
-			continue
-		}
-		switch ext := filepath.Ext(name); ext {
-		case ".go":
-			if strings.HasSuffix(name, "_test.go") {
-				pkg.TestGoFiles = append(pkg.TestGoFiles, name)
-				continue
-			}
-			pkg.GoFiles = append(pkg.GoFiles, name)
-			/**		case ".c":
-				p.cFiles = append(p.cFiles, name)
-			case ".h":
-				p.hFiles = append(p.hFiles, name)
-			case ".s":
-				p.sFiles = append(p.sFiles, name) **/
-		default:
-			log.Printf("skipping unknown extension %q", ext)
-		}
-
-	}
-	if err := pkg.readImports(); err != nil {
-		return nil, err
-	}
-	return pkg, nil
+	return pkg, pkg.scanFiles(files)
 }
 
 // Name returns the name of the package.
@@ -93,6 +63,39 @@ func (p *Package) Srcdir() string { return filepath.Join(p.Project.Root(), p.src
 
 func (p *Package) openFile(name string) (io.ReadCloser, error) {
 	return os.Open(filepath.Join(p.Srcdir(), name))
+}
+
+// scanFiles scans the Package recording all source files relevant to the
+// current Context.
+func (p *Package) scanFiles(files []os.FileInfo) error {
+	for _, file := range files {
+		if file.IsDir() {
+			// skip
+			continue
+		}
+		name := file.Name()
+		if strings.HasPrefix(name, "_") || strings.HasPrefix(name, ".") {
+			continue
+		}
+		switch ext := filepath.Ext(name); ext {
+		case ".go":
+			if strings.HasSuffix(name, "_test.go") {
+				p.TestGoFiles = append(p.TestGoFiles, name)
+				continue
+			}
+			p.GoFiles = append(p.GoFiles, name)
+			/**             case ".c":
+			          p.cFiles = append(p.cFiles, name)
+			  case ".h":
+			          p.hFiles = append(p.hFiles, name)
+			  case ".s":
+			          p.sFiles = append(p.sFiles, name) **/
+		default:
+			log.Printf("skipping unknown extension %q", ext)
+		}
+
+	}
+	return p.readImports()
 }
 
 // readImports populates the import paths of this package
