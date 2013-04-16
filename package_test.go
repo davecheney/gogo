@@ -1,7 +1,9 @@
 package gogo
 
 import (
+	"io/ioutil"
 	"path/filepath"
+	"reflect"
 	"testing"
 )
 
@@ -93,5 +95,39 @@ func TestPackageTestObjdir(t *testing.T) {
 	}
 	if testdir := pkg.TestObjdir(); testdir != filepath.Join(ctx.Workdir(), pkg.ImportPath(), "_test") {
 		t.Fatalf("pkg.Objdir(): expected %q, got %q", filepath.Join(ctx.Workdir(), pkg.ImportPath(), "_test"), testdir)
+	}
+}
+
+var scanFilesTests = []struct {
+	path        string
+	gofiles     []string
+	testgofiles []string
+}{
+	{"scanfiles", []string{"go1.go"}, []string{"scanfiles_test.go"}},
+}
+
+func TestPackageScanFiles(t *testing.T) {
+	ctx := newTestContext(t)
+	defer ctx.Destroy()
+	for _, tt := range scanFilesTests {
+		p := &Package{
+			Context:    ctx,
+			importPath: tt.path,
+			name:       filepath.Base(tt.path),
+			srcdir:     filepath.Join("src", tt.path),
+		}
+		files, err := ioutil.ReadDir(p.Srcdir())
+		if err != nil {
+			t.Fatal(err)
+		}
+		if err := p.scanFiles(files); err != nil {
+			t.Fatalf("scanFiles: %v", err)
+		}
+		if !reflect.DeepEqual(tt.gofiles, p.GoFiles) {
+			t.Fatalf("pkg.Gofiles: expected %q, got %q", tt.gofiles, p.GoFiles)
+		}
+		if !reflect.DeepEqual(tt.testgofiles, p.TestGoFiles) {
+			t.Fatalf("pkg.Gofiles: expected %q, got %q", tt.testgofiles, p.TestGoFiles)
+		}
 	}
 }
