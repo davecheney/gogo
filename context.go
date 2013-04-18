@@ -6,6 +6,8 @@ import (
 	"os"
 	"path/filepath"
 	"runtime"
+	"strings"
+	"unicode"
 )
 
 // Context represents the execution of a series of Targets
@@ -17,11 +19,22 @@ type Context struct {
 	archchar             string
 	Targets              map[*Package]Target
 
+	// The build and release tags specify build constraints
+	// that should be considered satisfied when processing +build lines.
+	// Clients creating a new context may customize BuildTags, which
+	// defaults to empty, but it is usually an error to customize ReleaseTags,
+	// which defaults to the list of Go releases the current release is compatible with.
+	// In addition to the BuildTags and ReleaseTags, build constraints
+	// consider the values of GOARCH and GOOS as satisfied tags.
+	BuildTags   []string
+	ReleaseTags []string
+
 	// pkgs is a map of import paths to resolved Packages within
 	// the scope of this context.
 	pkgs map[string]*Package
 	Toolchain
 	SearchPaths []string
+	cgoEnabled  bool
 }
 
 // NewDefaultContext returns a Context that represents the version
@@ -40,14 +53,15 @@ func newContext(p *Project, goroot, goos, goarch string) (*Context, error) {
 		return nil, err
 	}
 	ctx := &Context{
-		Project:  p,
-		goroot:   goroot,
-		goos:     goos,
-		goarch:   goarch,
-		workdir:  workdir,
-		archchar: archchar,
-		Targets:  make(map[*Package]Target),
-		pkgs:     make(map[string]*Package),
+		Project:    p,
+		goroot:     goroot,
+		goos:       goos,
+		goarch:     goarch,
+		workdir:    workdir,
+		archchar:   archchar,
+		Targets:    make(map[*Package]Target),
+		pkgs:       make(map[string]*Package),
+		cgoEnabled: true,
 	}
 	tc, err := newGcToolchain(ctx)
 	if err != nil {
@@ -83,3 +97,63 @@ func (ctx *Context) Bindir() string {
 	return filepath.Join(ctx.Project.Bindir(), ctx.goos, ctx.goarch)
 }
 func (ctx *Context) stdlib() string { return filepath.Join(ctx.goroot, "pkg", ctx.goos+"_"+ctx.goarch) }
+
+// from $GOROOT/src/pkg/go/build/build.go
+
+// match returns true if the name is one of:
+//
+//      $GOOS
+//      $GOARCH
+//      cgo (if cgo is enabled)
+//      !cgo (if cgo is disabled)
+//      ctxt.Compiler
+//      !ctxt.Compiler
+//      tag (if tag is listed in ctxt.BuildTags or ctxt.ReleaseTags)
+//      !tag (if tag is not listed in ctxt.BuildTags or ctxt.ReleaseTags)
+//      a comma-separated list of any of these
+//
+func (c *Context) match(name string) bool {
+	if name == "" {
+		return false
+	}
+	if i := strings.Index(name, ","); i >= 0 {
+		// comma-separated list
+		return c.match(name[:i]) && c.match(name[i+1:])
+	}
+	if strings.HasPrefix(name, "!!") { // bad syntax, reject always
+		return false
+	}
+	if strings.HasPrefix(name, "!") { // negation
+		return len(name) > 1 && !c.match(name[1:])
+	}
+
+	// Tags must be letters, digits, underscores or dots.
+	// Unlike in Go identifiers, all digits are fine (e.g., "386").
+	for _, c := range name {
+		if !unicode.IsLetter(c) && !unicode.IsDigit(c) && c != '_' && c != '.' {
+			return false
+		}
+	}
+
+	// special tags
+	if c.cgoEnabled && name == "cgo" {
+		return true
+	}
+	if name == c.goos || name == c.goarch || name == c.Toolchain.name() {
+		return true
+	}
+
+	// other tags
+	for _, tag := range c.BuildTags {
+		if tag == name {
+			return true
+		}
+	}
+	for _, tag := range c.ReleaseTags {
+		if tag == name {
+			return true
+		}
+	}
+
+	return false
+}

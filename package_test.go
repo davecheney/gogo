@@ -1,7 +1,6 @@
 package gogo
 
 import (
-	"io/ioutil"
 	"path/filepath"
 	"reflect"
 	"testing"
@@ -26,7 +25,7 @@ func TestPackageImports(t *testing.T) {
 		}
 		for i, im := range pkg.Imports {
 			if im.Name() != tt.imports[i] {
-				t.Fatalf("Package %q: expecting import %q, got %q", pkg.ImportPath(), im.Name, tt.imports[i])
+				t.Fatalf("Package %q: expecting import %q, got %q", pkg.ImportPath(), im.Name(), tt.imports[i])
 			}
 		}
 	}
@@ -101,30 +100,25 @@ func TestPackageTestObjdir(t *testing.T) {
 var scanFilesTests = []struct {
 	path        string
 	gofiles     []string
+	cgofiles    []string
 	testgofiles []string
 }{
-	{"scanfiles", []string{"go1.go"}, []string{"scanfiles_test.go"}},
+	{"scanfiles", []string{"go1.go"}, []string{"cgo.go"}, []string{"scanfiles_test.go"}},
 }
 
 func TestPackageScanFiles(t *testing.T) {
 	ctx := newTestContext(t)
 	defer ctx.Destroy()
 	for _, tt := range scanFilesTests {
-		p := &Package{
-			Context:    ctx,
-			importPath: tt.path,
-			name:       filepath.Base(tt.path),
-			srcdir:     filepath.Join("src", tt.path),
-		}
-		files, err := ioutil.ReadDir(p.Srcdir())
+		p, err := ctx.ResolvePackage(tt.path)
 		if err != nil {
-			t.Fatal(err)
-		}
-		if err := p.scanFiles(files); err != nil {
-			t.Fatalf("scanFiles: %v", err)
+			t.Fatalf("resolvepackage: %v", err)
 		}
 		if !reflect.DeepEqual(tt.gofiles, p.GoFiles) {
 			t.Fatalf("pkg.Gofiles: expected %q, got %q", tt.gofiles, p.GoFiles)
+		}
+		if !reflect.DeepEqual(tt.cgofiles, p.CgoFiles) {
+			t.Fatalf("pkg.Gofiles: expected %q, got %q", tt.cgofiles, p.CgoFiles)
 		}
 		if !reflect.DeepEqual(tt.testgofiles, p.TestGoFiles) {
 			t.Fatalf("pkg.Gofiles: expected %q, got %q", tt.testgofiles, p.TestGoFiles)

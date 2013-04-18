@@ -52,6 +52,15 @@ func TestContextResolvePackage(t *testing.T) {
 	}
 }
 
+func TestContextResolvePackageCgoTest(t *testing.T) {
+	ctx := newTestContext(t)
+	defer ctx.Destroy()
+	expected := "use of cgo in test cgo_test.go not supported"
+	if _, err := ctx.ResolvePackage("cgotest"); err.Error() != expected {
+		t.Fatalf("expected %q, got %q", err, expected)
+	}
+}
+
 func TestContextBindir(t *testing.T) {
 	ctx := newTestContext(t)
 	defer ctx.Destroy()
@@ -71,4 +80,35 @@ func TestContextDestroy(t *testing.T) {
 	if _, err := os.Stat(ctx.Workdir()); !os.IsNotExist(err) {
 		t.Fatalf("context did not destroy basedir")
 	}
+}
+
+// from $GOROOT/src/pkg/go/build/build_test.go
+
+func TestMatch(t *testing.T) {
+	ctxt := newTestContext(t)
+	defer ctxt.Destroy()
+	what := "default"
+	match := func(tag string) {
+		if !ctxt.match(tag) {
+			t.Errorf("%s context should match %s, does not", what, tag)
+		}
+	}
+	nomatch := func(tag string) {
+		if ctxt.match(tag) {
+			t.Errorf("%s context should NOT match %s, does", what, tag)
+		}
+	}
+
+	match(runtime.GOOS + "," + runtime.GOARCH)
+	match(runtime.GOOS + "," + runtime.GOARCH + ",!foo")
+	nomatch(runtime.GOOS + "," + runtime.GOARCH + ",foo")
+
+	what = "modified"
+	ctxt.BuildTags = []string{"foo"}
+	match(runtime.GOOS + "," + runtime.GOARCH)
+	match(runtime.GOOS + "," + runtime.GOARCH + ",foo")
+	nomatch(runtime.GOOS + "," + runtime.GOARCH + ",!foo")
+	match(runtime.GOOS + "," + runtime.GOARCH + ",!bar")
+	nomatch(runtime.GOOS + "," + runtime.GOARCH + ",bar")
+	nomatch("!")
 }

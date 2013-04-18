@@ -44,16 +44,18 @@ Inside your `gogo` project, you should arrange your Go source, and its dependenc
 ## faq
 
  * Q. Will `gogo` build Go itself ? A. No.
+ * Q. Will relative imports be supported ? A. No, they are evil.
 
 ## todo
 
- * support cgo packages.
- * ~~Add test command.~~
- * ~~Add support for testing commands.~~
- * be able to invoke `gogo` from anywhere inside the project.
- * ~~`gogo` should be able to build and test itself.~~
+ * better package parsing (support all file types)
+ * cgo support for build and tes
+ * project auto discovery; be able to invoke `gogo` from anywhere inside the project.
+ * support external tests in package, XTestGoFiles
+ * `gogo` should be able to ~~build~~ test itself.
+ * build tags support
  * implement incremental builds; only build what needs to be built
 
 ## licence
 
-`gogo` is licenced under a BSD licence.
+`gogo` is licenced under a BSD licence. Various parts of gogo are copyright the Go Authors 2012.

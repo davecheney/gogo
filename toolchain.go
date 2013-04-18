@@ -2,7 +2,6 @@ package gogo
 
 import (
 	"log"
-	"os"
 	"os/exec"
 	"path/filepath"
 	"strings"
@@ -15,6 +14,8 @@ type Toolchain interface {
 	Pack(string, string, ...string) error
 	Ld(string, string) error
 	Cgo(objdir string, cgofiles []string) error
+
+	name() string
 }
 
 type toolchain struct {
@@ -51,6 +52,8 @@ func newGcToolchain(c *Context) (Toolchain, error) {
 	}, nil
 }
 
+func (t *gcToolchain) name() string { return "gc" }
+
 func (t *gcToolchain) Gc(importpath, srcdir, outfile string, files []string) error {
 	args := []string{"-p", importpath}
 	for _, d := range t.SearchPaths {
@@ -83,8 +86,10 @@ func (t *gcToolchain) Ld(outfile, afile string) error {
 func run(dir, command string, args ...string) error {
 	cmd := exec.Command(command, args...)
 	cmd.Dir = dir
-	cmd.Stdout = os.Stdout
-	cmd.Stderr = os.Stderr
-	log.Printf("cd %s; %s %s", dir, command, strings.Join(args, " "))
-	return cmd.Run()
+	output, err := cmd.CombinedOutput()
+	if err != nil {
+		log.Printf("cd %s; %s %s", dir, command, strings.Join(args, " "))
+		log.Printf("%s", output)
+	}
+	return err
 }
