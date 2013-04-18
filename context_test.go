@@ -52,15 +52,6 @@ func TestContextResolvePackage(t *testing.T) {
 	}
 }
 
-func TestContextResolvePackageCgoTest(t *testing.T) {
-	ctx := newTestContext(t)
-	defer ctx.Destroy()
-	expected := "use of cgo in test cgo_test.go not supported"
-	if _, err := ctx.ResolvePackage("cgotest"); err.Error() != expected {
-		t.Fatalf("expected %q, got %q", err, expected)
-	}
-}
-
 func TestContextBindir(t *testing.T) {
 	ctx := newTestContext(t)
 	defer ctx.Destroy()

@@ -98,12 +98,14 @@ func TestPackageTestObjdir(t *testing.T) {
 }
 
 var scanFilesTests = []struct {
-	path        string
-	gofiles     []string
-	cgofiles    []string
-	testgofiles []string
+	path           string
+	gofiles        []string
+	cgofiles       []string
+	testgofiles    []string
+	xtestgofiles   []string
+	ignoredgofiles []string
 }{
-	{"scanfiles", []string{"go1.go"}, []string{"cgo.go"}, []string{"scanfiles_test.go"}},
+	{"scanfiles", []string{"go1.go"}, []string{"cgo.go"}, []string{"scanfiles_test.go"}, []string{"scanfiles_external_test.go"}, []string{"doc.go"}},
 }
 
 func TestPackageScanFiles(t *testing.T) {
@@ -118,10 +120,34 @@ func TestPackageScanFiles(t *testing.T) {
 			t.Fatalf("pkg.Gofiles: expected %q, got %q", tt.gofiles, p.GoFiles)
 		}
 		if !reflect.DeepEqual(tt.cgofiles, p.CgoFiles) {
-			t.Fatalf("pkg.Gofiles: expected %q, got %q", tt.cgofiles, p.CgoFiles)
+			t.Fatalf("pkg.Cgofiles: expected %q, got %q", tt.cgofiles, p.CgoFiles)
 		}
 		if !reflect.DeepEqual(tt.testgofiles, p.TestGoFiles) {
-			t.Fatalf("pkg.Gofiles: expected %q, got %q", tt.testgofiles, p.TestGoFiles)
+			t.Fatalf("pkg.TestGofiles: expected %q, got %q", tt.testgofiles, p.TestGoFiles)
+		}
+		if !reflect.DeepEqual(tt.ignoredgofiles, p.IgnoredGoFiles) {
+			t.Fatalf("pkg.IgnoredGofiles: expected %q, got %q", tt.ignoredgofiles, p.IgnoredGoFiles)
+		}
+	}
+}
+
+var resolvePackageErrorTests = []struct {
+	path string
+	err  string
+}{
+	{"cgotest", "use of cgo in test cgo_test.go not supported"},
+	{"doublepkg", "found packages a (a.go) and b (b.go) in doublepkg"},
+	{"blankimport", `blank.go:3:8: invalid import path: ""`},
+	{"empty", "no Go source files in empty"},
+	{"empty2", "no Go source files in empty2/empty3"},
+}
+
+func TestResolvePackageError(t *testing.T) {
+	ctx := newTestContext(t)
+	defer ctx.Destroy()
+	for _, tt := range resolvePackageErrorTests {
+		if _, err := ctx.ResolvePackage(tt.path); err.Error() != tt.err {
+			t.Fatalf("resolve package: expected %q, got %q", tt.err, err.Error())
 		}
 	}
 }
