@@ -10,6 +10,7 @@ var testPackageTests = []struct {
 	pkg string
 }{
 	{"a"},
+	// 	{"extdata"}, external tests are not supported
 }
 
 func TestTestPackage(t *testing.T) {

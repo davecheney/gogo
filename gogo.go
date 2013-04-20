@@ -50,7 +50,7 @@ func (t *target) setErr(err error) {
 //
 //     []string{"a", "b:c d", "ef", `g"`}
 //
-func splitQuoted(s string) (r []string, err error) {
+func splitQuoted(s string) ([]string, error) {
 	var args []string
 	arg := make([]rune, len(s))
 	escaped := false
@@ -88,11 +88,11 @@ func splitQuoted(s string) (r []string, err error) {
 		args = append(args, string(arg[:i]))
 	}
 	if quote != 0 {
-		err = errors.New("unclosed quote")
+		return nil, errors.New("unclosed quote")
 	} else if escaped {
-		err = errors.New("unfinished escaping")
+		return nil, errors.New("unfinished escaping")
 	}
-	return args, err
+	return args, nil
 }
 
 var safeBytes = []byte("+-.,/0123456789=ABCDEFGHIJKLMNOPQRSTUVWXYZ_abcdefghijklmnopqrstuvwxyz:")

@@ -73,33 +73,27 @@ func TestContextDestroy(t *testing.T) {
 	}
 }
 
-// from $GOROOT/src/pkg/go/build/build_test.go
+var matchTests = []struct {
+	tag   string
+	match bool
+}{
+	{"", false},
+	{"!", false},
+	{"!!", false},
+	{"&", false},
+	{"cgo", true}, // matches CgoEnabled
+	{runtime.GOOS + "," + runtime.GOARCH, true},
+	{runtime.GOOS + "," + runtime.GOARCH + ",!foo", true},
+	{runtime.GOOS + "," + runtime.GOARCH + ",foo", false},
+}
 
 func TestMatch(t *testing.T) {
-	ctxt := newTestContext(t)
-	defer ctxt.Destroy()
-	what := "default"
-	match := func(tag string) {
-		if !ctxt.match(tag) {
-			t.Errorf("%s context should match %s, does not", what, tag)
+	ctx := newTestContext(t)
+	defer ctx.Destroy()
+	for _, tt := range matchTests {
+		match := ctx.match(tt.tag)
+		if match != tt.match {
+			t.Errorf("match %q expected %v, got %v", tt.tag, tt.match, match)
 		}
 	}
-	nomatch := func(tag string) {
-		if ctxt.match(tag) {
-			t.Errorf("%s context should NOT match %s, does", what, tag)
-		}
-	}
-
-	match(runtime.GOOS + "," + runtime.GOARCH)
-	match(runtime.GOOS + "," + runtime.GOARCH + ",!foo")
-	nomatch(runtime.GOOS + "," + runtime.GOARCH + ",foo")
-
-	what = "modified"
-	ctxt.BuildTags = []string{"foo"}
-	match(runtime.GOOS + "," + runtime.GOARCH)
-	match(runtime.GOOS + "," + runtime.GOARCH + ",foo")
-	nomatch(runtime.GOOS + "," + runtime.GOARCH + ",!foo")
-	match(runtime.GOOS + "," + runtime.GOARCH + ",!bar")
-	nomatch(runtime.GOOS + "," + runtime.GOARCH + ",bar")
-	nomatch("!")
 }

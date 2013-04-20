@@ -49,11 +49,11 @@ Inside your `gogo` project, you should arrange your Go source, and its dependenc
 ## todo
 
  * better package parsing (support all file types)
- * cgo support for build and tes
+ * cgo support for build and test
  * project auto discovery; be able to invoke `gogo` from anywhere inside the project.
- * support external tests in package, XTestGoFiles
  * `gogo` should be able to ~~build~~ test itself.
  * build tags support
+ * support external tests in package, XTestGoFiles
  * implement incremental builds; only build what needs to be built
 
 ## licence

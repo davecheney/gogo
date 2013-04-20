@@ -103,8 +103,8 @@ func (p *Package) scanFiles(files []os.FileInfo) error {
 		if err != nil {
 			return err
 		}
-		defer r.Close()
 		pf, err := parser.ParseFile(fset, filename, r, parser.ImportsOnly)
+		r.Close()
 		if err != nil {
 			return err
 		}
@@ -158,7 +158,9 @@ func (p *Package) scanFiles(files []os.FileInfo) error {
 							}
 							isCgo = true
 						default:
-							imports[path] = struct{}{}
+							if !isXTest {
+								imports[path] = struct{}{}
+							}
 						}
 					default:
 						// skip
