@@ -1,6 +1,6 @@
 package gogo
 
-import (
+import (	
 	"go/build"
 	"io/ioutil"
 	"os"
@@ -99,6 +99,50 @@ func (ctx *Context) Bindir() string {
 func (ctx *Context) stdlib() string { return filepath.Join(ctx.goroot, "pkg", ctx.goos+"_"+ctx.goarch) }
 
 // from $GOROOT/src/pkg/go/build/build.go
+
+// goodOSArchFile returns false if the name contains a $GOOS or $GOARCH
+// suffix which does not match the current system.
+// The recognized name formats are:
+//
+//     name_$(GOOS).*
+//     name_$(GOARCH).*
+//     name_$(GOOS)_$(GOARCH).*
+//     name_$(GOOS)_test.*
+//     name_$(GOARCH)_test.*
+//     name_$(GOOS)_$(GOARCH)_test.*
+//
+func (ctxt *Context) goodOSArchFile(name string) bool {
+        if dot := strings.Index(name, "."); dot != -1 {
+                name = name[:dot]
+        }
+        l := strings.Split(name, "_")
+        if n := len(l); n > 0 && l[n-1] == "test" {
+                l = l[:n-1]
+        }
+        n := len(l)
+        if n >= 2 && knownOS[l[n-2]] && knownArch[l[n-1]] {
+                return l[n-2] == ctxt.goos && l[n-1] == ctxt.goarch
+        }
+        if n >= 1 && knownOS[l[n-1]] {
+                return l[n-1] == ctxt.goos
+        }
+        if n >= 1 && knownArch[l[n-1]] {
+                return l[n-1] == ctxt.goarch
+        }
+        return true
+}
+
+var knownOS = make(map[string]bool)
+var knownArch = make(map[string]bool)
+
+func init() {
+        for _, v := range strings.Fields(goosList) {
+                knownOS[v] = true
+        }
+        for _, v := range strings.Fields(goarchList) {
+                knownArch[v] = true
+        }
+}
 
 // match returns true if the name is one of:
 //

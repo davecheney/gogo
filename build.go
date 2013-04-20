@@ -45,8 +45,11 @@ func compile(pkg *Package, deps []Future, includeTests bool) Future {
 	if includeTests {
 		gofiles = append(gofiles, pkg.TestGoFiles...)
 	}
-	gc := Gc(pkg, deps, gofiles)
-	pack := Pack(pkg, gc)
+	targets := []Future{ Gc(pkg, deps, gofiles) }
+	for _, sfile := range pkg.SFiles {
+		targets = append(targets, Asm(pkg, deps, sfile) )
+	}		
+	pack := Pack(pkg, targets...)
 	return pack
 }
 
@@ -105,7 +108,7 @@ func (t *gcTarget) execute() {
 			return
 		}
 	}
-	log.Printf("gc %q", t.Package.ImportPath())
+	log.Printf("gc %q: %s", t.Package.ImportPath(), t.gofiles)
 	t.future.err <- t.build()
 }
 
@@ -134,6 +137,7 @@ func (t *gcTarget) build() error {
 type asmTarget struct {
 	future
 	deps []Future
+	sfile string
 	*Package
 }
 
@@ -144,16 +148,17 @@ func (t *asmTarget) execute() {
 			return
 		}
 	}
-	log.Printf("as %q", t.Package.ImportPath())
+	log.Printf("as %q: %s", t.Package.ImportPath(), t.sfile)
 	t.future.err <- t.build()
 }
 
-func newAsmTarget(pkg *Package, deps ...Future) Future {
-	t := &gcTarget{
+func Asm(pkg *Package, deps []Future, sfile string) Future {
+	t := &asmTarget{
 		future: future{
 			err: make(chan error, 1),
 		},
 		deps:    deps,
+		sfile: sfile,
 		Package: pkg,
 	}
 	go t.execute()
@@ -161,7 +166,10 @@ func newAsmTarget(pkg *Package, deps ...Future) Future {
 }
 
 func (t *asmTarget) build() error {
-	return nil // t.Project.Toolchain().Asm(t.Context, t.Package)
+        if err := os.MkdirAll(t.Objdir(), 0777); err != nil {
+                return err
+        }
+        return t.Asm(t.ImportPath(), t.Srcdir(), t.sfile)
 }
 
 type ldTarget struct {

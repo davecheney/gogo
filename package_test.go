@@ -4,6 +4,7 @@ import (
 	"path/filepath"
 	"reflect"
 	"testing"
+	"runtime"
 )
 
 var packageImportTests = []struct {
@@ -115,7 +116,7 @@ var scanFilesTests = []struct {
 	},
 	{path: "stdlib/bytes",
 		gofiles:     []string{"buffer.go", "bytes.go", "bytes_decl.go", "reader.go"},
-		sfiles:      []string{"asm_386.s", "asm_amd64.s", "asm_arm.s"},
+		sfiles:      []string{"asm_"+runtime.GOARCH+".s"},
 		testgofiles: []string{"export_test.go"},
 	},
 }

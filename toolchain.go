@@ -11,6 +11,7 @@ import (
 
 type Toolchain interface {
 	Gc(importpath, srcdir, outfile string, files []string) error
+	Asm(importpath, srcdir, sfile string) error
 	Pack(string, string, ...string) error
 	Ld(string, string) error
 	Cgo(objdir string, cgofiles []string) error
@@ -70,8 +71,10 @@ func (t *gcToolchain) Pack(afile, objdir string, ofiles ...string) error {
 	return run(objdir, t.pack, args...)
 }
 
-func (tc *gcToolchain) Asm(ctx *Context, pkg *Package) error {
-	return nil
+func (t *gcToolchain) Asm(importpath, objdir, sfile string) error {
+	ofile := sfile[:len(sfile)-len(".s")] + ".6"
+	args := []string{"-o", filepath.Join(objdir, ofile), "-D", "GOOS_"+t.goos, "-D",  "GOARCH_"+t.goarch, sfile}
+	return run(objdir, t.as, args...)
 }
 
 func (t *gcToolchain) Ld(outfile, afile string) error {

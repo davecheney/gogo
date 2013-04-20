@@ -28,6 +28,11 @@ func (f *future) Result() error {
 	return result
 }
 
+// from $GOROOT/src/pkg/go/build/syslist.go
+
+const goosList = "darwin freebsd linux netbsd openbsd plan9 windows "
+const goarchList = "386 amd64 arm "
+
 // from $GOROOT/src/pkg/go/build/build.go
 
 // splitQuoted splits the string s around each instance of one or more consecutive
