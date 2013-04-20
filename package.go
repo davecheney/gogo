@@ -31,6 +31,7 @@ type Package struct {
 	// Source files
 	GoFiles        []string // .go source files (excluding CgoFiles, TestGoFiles, XTestGoFiles)
 	CgoFiles       []string // .go source files that import "C"
+	SFiles         []string // .s source files
 	IgnoredGoFiles []string // .go source files ignored for this build
 
 	// Cgo directives
@@ -95,9 +96,10 @@ func (p *Package) scanFiles(files []os.FileInfo) error {
 			// skip
 			continue
 		}
-		// This file is part of the part of the build Context.
 		switch ext {
-		// add non go files here
+		case ".s":
+			p.SFiles = append(p.SFiles, filename)
+			continue
 		}
 		r, err := p.openFile(filename)
 		if err != nil {

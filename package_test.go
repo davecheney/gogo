@@ -101,11 +101,23 @@ var scanFilesTests = []struct {
 	path           string
 	gofiles        []string
 	cgofiles       []string
+	sfiles         []string
 	testgofiles    []string
 	xtestgofiles   []string
 	ignoredgofiles []string
 }{
-	{"scanfiles", []string{"go1.go"}, []string{"cgo.go"}, []string{"scanfiles_test.go"}, []string{"scanfiles_external_test.go"}, []string{"doc.go"}},
+	{path: "scanfiles",
+		gofiles:        []string{"go1.go"},
+		cgofiles:       []string{"cgo.go"},
+		testgofiles:    []string{"scanfiles_test.go"},
+		xtestgofiles:   []string{"scanfiles_external_test.go"},
+		ignoredgofiles: []string{"doc.go"},
+	},
+	{path: "stdlib/bytes",
+		gofiles:     []string{"buffer.go", "bytes.go", "bytes_decl.go", "reader.go"},
+		sfiles:      []string{"asm_386.s", "asm_amd64.s", "asm_arm.s"},
+		testgofiles: []string{"export_test.go"},
+	},
 }
 
 func TestPackageScanFiles(t *testing.T) {
@@ -117,16 +129,19 @@ func TestPackageScanFiles(t *testing.T) {
 			t.Fatalf("resolvepackage: %v", err)
 		}
 		if !reflect.DeepEqual(tt.gofiles, p.GoFiles) {
-			t.Fatalf("pkg.Gofiles: expected %q, got %q", tt.gofiles, p.GoFiles)
+			t.Fatalf("pkg.GoFiles: expected %q, got %q", tt.gofiles, p.GoFiles)
+		}
+		if !reflect.DeepEqual(tt.sfiles, p.SFiles) {
+			t.Fatalf("pkg.SFiles: expected %q, got %q", tt.sfiles, p.SFiles)
 		}
 		if !reflect.DeepEqual(tt.cgofiles, p.CgoFiles) {
-			t.Fatalf("pkg.Cgofiles: expected %q, got %q", tt.cgofiles, p.CgoFiles)
+			t.Fatalf("pkg.CgoFiles: expected %q, got %q", tt.cgofiles, p.CgoFiles)
 		}
 		if !reflect.DeepEqual(tt.testgofiles, p.TestGoFiles) {
-			t.Fatalf("pkg.TestGofiles: expected %q, got %q", tt.testgofiles, p.TestGoFiles)
+			t.Fatalf("pkg.TestGoFiles: expected %q, got %q", tt.testgofiles, p.TestGoFiles)
 		}
 		if !reflect.DeepEqual(tt.ignoredgofiles, p.IgnoredGoFiles) {
-			t.Fatalf("pkg.IgnoredGofiles: expected %q, got %q", tt.ignoredgofiles, p.IgnoredGoFiles)
+			t.Fatalf("pkg.IgnoredGoFiles: expected %q, got %q", tt.ignoredgofiles, p.IgnoredGoFiles)
 		}
 	}
 }

@@ -22,6 +22,7 @@ var buildPackageTests = []struct {
 	{"a"},
 	{"b"}, // imports a
 	{"helloworld"},
+	{"stdlib/bytes"}, // uses build tags, has .s files
 	//	{"stdio"}, // imports "C"
 }
 
