@@ -19,9 +19,8 @@ func buildPackage(pkg *Package) []Future {
 		deps = append(deps, buildPackage(dep)...)
 	}
 	if _, ok := pkg.Context.Targets[pkg]; !ok {
-		gc := Gc(pkg, pkg.GoFiles, deps...)
-		pack := Pack(pkg, gc)
-		pkg.Context.Targets[pkg] = pack
+		compile := compile(pkg, deps, false)
+		pkg.Context.Targets[pkg] = compile
 	}
 	return []Future{pkg.Context.Targets[pkg]}
 }
@@ -32,12 +31,23 @@ func buildCommand(pkg *Package) []Future {
 		deps = append(deps, buildPackage(dep)...)
 	}
 	if _, ok := pkg.Context.Targets[pkg]; !ok {
-		gc := Gc(pkg, pkg.GoFiles, deps...)
-		pack := Pack(pkg, gc)
-		ld := Ld(pkg, pack)
+		compile := compile(pkg, deps, false)
+		ld := Ld(pkg, compile)
 		pkg.Context.Targets[pkg] = ld
 	}
 	return []Future{pkg.Context.Targets[pkg]}
+}
+
+// compile is a helper which combines all the steps required
+// to build a go package
+func compile(pkg *Package, deps []Future, includeTests bool) Future {
+	gofiles := pkg.GoFiles
+	if includeTests {
+		gofiles = append(gofiles, pkg.TestGoFiles...)
+	}
+	gc := Gc(pkg, deps, gofiles)
+	pack := Pack(pkg, gc)
+	return pack
 }
 
 type packTarget struct {
@@ -99,7 +109,7 @@ func (t *gcTarget) execute() {
 	t.future.err <- t.build()
 }
 
-func Gc(pkg *Package, gofiles []string, deps ...Future) Future {
+func Gc(pkg *Package, deps []Future, gofiles []string) Future {
 	t := &gcTarget{
 		future: future{
 			err: make(chan error, 1),

@@ -19,11 +19,8 @@ func testPackage(pkg *Package) []Future {
 	for _, dep := range pkg.Imports {
 		deps = append(deps, Build(dep)...)
 	}
-	gofiles := pkg.GoFiles
-	gofiles = append(gofiles, pkg.TestGoFiles...)
-	gc := Gc(pkg, gofiles, deps...)
-	pack := Pack(pkg, gc)
-	buildtest := buildTest(pkg, pack)
+	compile := compile(pkg, deps, true)
+	buildtest := buildTest(pkg, compile)
 	runtest := runTest(pkg, buildtest)
 	return []Future{runtest}
 }
