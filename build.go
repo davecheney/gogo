@@ -45,23 +45,33 @@ func compile(pkg *Package, deps []Future, includeTests bool) Future {
 	if includeTests {
 		gofiles = append(gofiles, pkg.TestGoFiles...)
 	}
-	targets := []Future{Gc(pkg, deps, gofiles)}
+	objs := []objFuture{Gc(pkg, deps, gofiles)}
 	for _, sfile := range pkg.SFiles {
-		targets = append(targets, Asm(pkg, sfile))
+		objs = append(objs, Asm(pkg, sfile))
 	}
-	pack := Pack(pkg, targets...)
+	pack := Pack(pkg, objs)
 	return pack
+}
+
+// objFuture represents a Future that produces an object file.
+type objFuture interface {
+	Future
+
+	// ofile returns the name of the file that is
+	// produced by the Future if successful
+	objfile() string
 }
 
 type packTarget struct {
 	future
-	deps []Future
+	deps     []objFuture
+	objfiles []string
 	*Package
 }
 
 // Pack returns a Future representing the result of packing a
 // set of Context specific object files into an archive.
-func Pack(pkg *Package, deps ...Future) Future {
+func Pack(pkg *Package, deps []objFuture) Future {
 	t := &packTarget{
 		future: future{
 			err: make(chan error, 1),
@@ -79,12 +89,13 @@ func (t *packTarget) execute() {
 			t.future.err <- err
 			return
 		}
+		// collect successful objfiles for packing
+		t.objfiles = append(t.objfiles, dep.objfile())
 	}
-	log.Printf("pack %q", t.Package.ImportPath())
+	log.Printf("pack %q: %s", t.Package.ImportPath(), t.objfiles)
 	t.future.err <- t.build()
 }
 
-func (t *packTarget) objfile() string { return filepath.Join(t.Objdir(), "_go_.6") }
 func (t *packTarget) pkgfile() string { return t.Package.ImportPath() + ".a" }
 
 func (t *packTarget) build() error {
@@ -93,7 +104,7 @@ func (t *packTarget) build() error {
 	if err := os.MkdirAll(pkgdir, 0777); err != nil {
 		return err
 	}
-	return t.Pack(ofile, t.Pkgdir(), t.objfile())
+	return t.Pack(ofile, t.Pkgdir(), t.objfiles...)
 }
 
 type gcTarget struct {
@@ -116,7 +127,7 @@ func (t *gcTarget) execute() {
 
 // Gc returns a Future representing the result of compiling a
 // set of gofiles with the Context specified gc compiler.
-func Gc(pkg *Package, deps []Future, gofiles []string) Future {
+func Gc(pkg *Package, deps []Future, gofiles []string) objFuture {
 	t := &gcTarget{
 		future: future{
 			err: make(chan error, 1),
@@ -126,7 +137,7 @@ func Gc(pkg *Package, deps []Future, gofiles []string) Future {
 		Package: pkg,
 	}
 	go t.execute()
-	return &t.future
+	return t
 }
 
 func (t *gcTarget) objfile() string { return filepath.Join(t.Objdir(), "_go_.6") }
@@ -151,7 +162,7 @@ func (t *asmTarget) execute() {
 
 // Asm returns a Future representing the result of assembling
 // sfile with the Context specified asssembler.
-func Asm(pkg *Package, sfile string) Future {
+func Asm(pkg *Package, sfile string) objFuture {
 	t := &asmTarget{
 		future: future{
 			err: make(chan error, 1),
@@ -160,14 +171,18 @@ func Asm(pkg *Package, sfile string) Future {
 		Package: pkg,
 	}
 	go t.execute()
-	return &t.future
+	return t
+}
+
+func (t *asmTarget) objfile() string {
+	return filepath.Join(t.Objdir(), t.sfile[:len(t.sfile)-len(".s")]+".6")
 }
 
 func (t *asmTarget) build() error {
 	if err := os.MkdirAll(t.Objdir(), 0777); err != nil {
 		return err
 	}
-	return t.Asm(t.ImportPath(), t.Srcdir(), t.sfile)
+	return t.Asm(t.Srcdir(), t.objfile(), t.sfile)
 }
 
 type ldTarget struct {
