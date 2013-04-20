@@ -3,7 +3,6 @@ package gogo
 import (
 	"bytes"
 	"errors"
-	"sync"
 	"unicode"
 )
 
@@ -19,25 +18,14 @@ type Future interface {
 	Result() error
 }
 
-type target struct {
-	done chan struct{}
-	err  struct {
-		sync.Mutex
-		val error
-	}
+type future struct {
+	err chan error
 }
 
-func (t *target) Result() error {
-	<-t.done
-	t.err.Lock()
-	defer t.err.Unlock()
-	return t.err.val
-}
-
-func (t *target) setErr(err error) {
-	t.err.Lock()
-	t.err.val = err
-	t.err.Unlock()
+func (f *future) Result() error {
+	result := <-f.err
+	f.err <- result
+	return result
 }
 
 // from $GOROOT/src/pkg/go/build/build.go

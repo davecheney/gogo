@@ -25,22 +25,19 @@ func testPackage(pkg *Package) []Future {
 }
 
 type buildTestTarget struct {
-	target
+	future
 	deps []Future
 	*Package
 }
 
 func (t *buildTestTarget) execute() {
-	defer close(t.done)
 	for _, dep := range t.deps {
 		if err := dep.Result(); err != nil {
-			t.setErr(err)
+			t.future.err <- err
 			return
 		}
 	}
-	if err := t.build(); err != nil {
-		t.setErr(err)
-	}
+	t.future.err <- t.build()
 }
 
 func (t *buildTestTarget) objfile() string { return filepath.Join(t.Objdir(), "_go_.6") }
@@ -76,35 +73,32 @@ func (t *buildTestTarget) buildTestMain(objdir string) error {
 	return writeTestmain(filepath.Join(t.Objdir(), "_testmain.go"), t.Package)
 }
 
-func buildTest(pkg *Package, deps []Future) *buildTestTarget {
+func buildTest(pkg *Package, deps []Future) Future {
 	t := &buildTestTarget{
-		target: target{
-			done: make(chan struct{}),
+		future: future{
+			err: make(chan error, 1),
 		},
 		deps:    deps,
 		Package: pkg,
 	}
 	go t.execute()
-	return t
+	return &t.future
 }
 
 type runTestTarget struct {
-	target
+	future
 	deps []Future
 	*Package
 }
 
 func (t *runTestTarget) execute() {
-	defer close(t.done)
 	for _, dep := range t.deps {
 		if err := dep.Result(); err != nil {
-			t.setErr(err)
+			t.future.err <- err
 			return
 		}
 	}
-	if err := t.build(); err != nil {
-		t.setErr(err)
-	}
+	t.future.err <- t.build()
 }
 
 func (t *runTestTarget) build() error {
@@ -116,14 +110,14 @@ func (t *runTestTarget) build() error {
 	return cmd.Run()
 }
 
-func runTest(pkg *Package, deps ...Future) *runTestTarget {
+func runTest(pkg *Package, deps ...Future) Future {
 	t := &runTestTarget{
-		target: target{
-			done: make(chan struct{}),
+		future: future{
+			err: make(chan error, 1),
 		},
 		deps:    deps,
 		Package: pkg,
 	}
 	go t.execute()
-	return t
+	return &t.future
 }

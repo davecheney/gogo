@@ -43,34 +43,31 @@ func buildCommand(pkg *Package) []Future {
 }
 
 type packTarget struct {
-	target
+	future
 	deps []Future
 	*Package
 }
 
-func Pack(pkg *Package, deps ...Future) *packTarget {
+func Pack(pkg *Package, deps ...Future) Future {
 	t := &packTarget{
-		target: target{
-			done: make(chan struct{}),
+		future: future{
+			err: make(chan error, 1),
 		},
 		deps:    deps,
 		Package: pkg,
 	}
 	go t.execute()
-	return t
+	return &t.future
 }
 
 func (t *packTarget) execute() {
-	defer close(t.done)
 	for _, dep := range t.deps {
 		if err := dep.Result(); err != nil {
-			t.setErr(err)
+			t.future.err <- err
 			return
 		}
 	}
-	if err := t.build(); err != nil {
-		t.setErr(err)
-	}
+	t.future.err <- t.build()
 }
 
 func (t *packTarget) objfile() string { return filepath.Join(t.Objdir(), "_go_.6") }
@@ -86,34 +83,31 @@ func (t *packTarget) build() error {
 }
 
 type gcTarget struct {
-	target
+	future
 	deps []Future
 	*Package
 }
 
 func (t *gcTarget) execute() {
-	defer close(t.done)
 	for _, dep := range t.deps {
 		if err := dep.Result(); err != nil {
-			t.setErr(err)
+			t.future.err <- err
 			return
 		}
 	}
-	if err := t.build(); err != nil {
-		t.setErr(err)
-	}
+	t.future.err <- t.build()
 }
 
-func Gc(pkg *Package, deps ...Future) *gcTarget {
+func Gc(pkg *Package, deps ...Future) Future {
 	t := &gcTarget{
-		target: target{
-			done: make(chan struct{}),
+		future: future{
+			err: make(chan error, 1),
 		},
 		deps:    deps,
 		Package: pkg,
 	}
 	go t.execute()
-	return t
+	return &t.future
 }
 
 func (t *gcTarget) objfile() string { return filepath.Join(t.Objdir(), "_go_.6") }
@@ -127,34 +121,31 @@ func (t *gcTarget) build() error {
 }
 
 type asmTarget struct {
-	target
+	future
 	deps []Future
 	*Package
 }
 
 func (t *asmTarget) execute() {
-	defer close(t.done)
 	for _, dep := range t.deps {
 		if err := dep.Result(); err != nil {
-			t.setErr(err)
+			t.future.err <- err
 			return
 		}
 	}
-	if err := t.build(); err != nil {
-		t.setErr(err)
-	}
+	t.future.err <- t.build()
 }
 
-func newAsmTarget(pkg *Package, deps ...Future) *gcTarget {
+func newAsmTarget(pkg *Package, deps ...Future) Future {
 	t := &gcTarget{
-		target: target{
-			done: make(chan struct{}),
+		future: future{
+			err: make(chan error, 1),
 		},
 		deps:    deps,
 		Package: pkg,
 	}
 	go t.execute()
-	return t
+	return &t.future
 }
 
 func (t *asmTarget) build() error {
@@ -162,34 +153,31 @@ func (t *asmTarget) build() error {
 }
 
 type ldTarget struct {
-	target
+	future
 	deps []Future
 	*Package
 }
 
 func (t *ldTarget) execute() {
-	defer close(t.done)
 	for _, dep := range t.deps {
 		if err := dep.Result(); err != nil {
-			t.setErr(err)
+			t.future.err <- err
 			return
 		}
 	}
-	if err := t.build(); err != nil {
-		t.setErr(err)
-	}
+	t.future.err <- t.build()
 }
 
-func Ld(pkg *Package, deps ...Future) *ldTarget {
+func Ld(pkg *Package, deps ...Future) Future {
 	t := &ldTarget{
-		target: target{
-			done: make(chan struct{}),
+		future: future{
+			err: make(chan error, 1),
 		},
 		deps:    deps,
 		Package: pkg,
 	}
 	go t.execute()
-	return t
+	return &t.future
 }
 
 func (t *ldTarget) pkgfile() string { return filepath.Join(t.Workdir(), t.Package.ImportPath()+".a") }
