@@ -2,10 +2,9 @@
 // Use of this source code is governed by a BSD-style
 // license that can be found in the LICENSE file.
 
-package bytes_test
+package bytes
 
 import (
-	. "bytes"
 	"math/rand"
 	"reflect"
 	"testing"
@@ -79,9 +78,9 @@ func TestCompare(t *testing.T) {
 		if eql != (tt.i == 0) {
 			t.Errorf(`Equal(%q, %q) = %v`, tt.a, tt.b, eql)
 		}
-		eql = EqualPortable(tt.a, tt.b)
+		eql = equalPortable(tt.a, tt.b)
 		if eql != (tt.i == 0) {
-			t.Errorf(`EqualPortable(%q, %q) = %v`, tt.a, tt.b, eql)
+			t.Errorf(`equalPortable(%q, %q) = %v`, tt.a, tt.b, eql)
 		}
 	}
 }
@@ -205,7 +204,7 @@ func TestIndexByte(t *testing.T) {
 		if pos != tt.i {
 			t.Errorf(`IndexByte(%q, '%c') = %v`, tt.a, b, pos)
 		}
-		posp := IndexBytePortable(a, b)
+		posp := indexBytePortable(a, b)
 		if posp != tt.i {
 			t.Errorf(`indexBytePortable(%q, '%c') = %v`, tt.a, b, posp)
 		}
@@ -282,10 +281,10 @@ func BenchmarkIndexByte32(b *testing.B)          { bmIndexByte(b, IndexByte, 32)
 func BenchmarkIndexByte4K(b *testing.B)          { bmIndexByte(b, IndexByte, 4<<10) }
 func BenchmarkIndexByte4M(b *testing.B)          { bmIndexByte(b, IndexByte, 4<<20) }
 func BenchmarkIndexByte64M(b *testing.B)         { bmIndexByte(b, IndexByte, 64<<20) }
-func BenchmarkIndexBytePortable32(b *testing.B)  { bmIndexByte(b, IndexBytePortable, 32) }
-func BenchmarkIndexBytePortable4K(b *testing.B)  { bmIndexByte(b, IndexBytePortable, 4<<10) }
-func BenchmarkIndexBytePortable4M(b *testing.B)  { bmIndexByte(b, IndexBytePortable, 4<<20) }
-func BenchmarkIndexBytePortable64M(b *testing.B) { bmIndexByte(b, IndexBytePortable, 64<<20) }
+func BenchmarkindexBytePortable32(b *testing.B)  { bmIndexByte(b, indexBytePortable, 32) }
+func BenchmarkindexBytePortable4K(b *testing.B)  { bmIndexByte(b, indexBytePortable, 4<<10) }
+func BenchmarkindexBytePortable4M(b *testing.B)  { bmIndexByte(b, indexBytePortable, 4<<20) }
+func BenchmarkindexBytePortable64M(b *testing.B) { bmIndexByte(b, indexBytePortable, 64<<20) }
 
 func bmIndexByte(b *testing.B, index func([]byte, byte) int, n int) {
 	if len(bmbuf) < n {
@@ -307,10 +306,10 @@ func BenchmarkEqual32(b *testing.B)          { bmEqual(b, Equal, 32) }
 func BenchmarkEqual4K(b *testing.B)          { bmEqual(b, Equal, 4<<10) }
 func BenchmarkEqual4M(b *testing.B)          { bmEqual(b, Equal, 4<<20) }
 func BenchmarkEqual64M(b *testing.B)         { bmEqual(b, Equal, 64<<20) }
-func BenchmarkEqualPort32(b *testing.B)      { bmEqual(b, EqualPortable, 32) }
-func BenchmarkEqualPort4K(b *testing.B)      { bmEqual(b, EqualPortable, 4<<10) }
-func BenchmarkEqualPortable4M(b *testing.B)  { bmEqual(b, EqualPortable, 4<<20) }
-func BenchmarkEqualPortable64M(b *testing.B) { bmEqual(b, EqualPortable, 64<<20) }
+func BenchmarkEqualPort32(b *testing.B)      { bmEqual(b, equalPortable, 32) }
+func BenchmarkEqualPort4K(b *testing.B)      { bmEqual(b, equalPortable, 4<<10) }
+func BenchmarkequalPortable4M(b *testing.B)  { bmEqual(b, equalPortable, 4<<20) }
+func BenchmarkequalPortable64M(b *testing.B) { bmEqual(b, equalPortable, 64<<20) }
 
 func bmEqual(b *testing.B, equal func([]byte, []byte) bool, n int) {
 	if len(bmbuf) < 2*n {

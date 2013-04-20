@@ -10,6 +10,7 @@ var testPackageTests = []struct {
 	pkg string
 }{
 	{"a"},
+	{"stdlib/bytes"}, // includes asm files
 	// 	{"extdata"}, external tests are not supported
 }
 

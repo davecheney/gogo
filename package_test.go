@@ -117,7 +117,7 @@ var scanFilesTests = []struct {
 	{path: "stdlib/bytes",
 		gofiles:     []string{"buffer.go", "bytes.go", "bytes_decl.go", "reader.go"},
 		sfiles:      []string{"asm_" + runtime.GOARCH + ".s"},
-		testgofiles: []string{"export_test.go"},
+		testgofiles: []string{"buffer_test.go", "bytes_test.go", "example_test.go", "reader_test.go"},
 	},
 }
 

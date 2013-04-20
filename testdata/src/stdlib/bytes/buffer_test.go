@@ -2,10 +2,9 @@
 // Use of this source code is governed by a BSD-style
 // license that can be found in the LICENSE file.
 
-package bytes_test
+package bytes
 
 import (
-	. "bytes"
 	"io"
 	"math/rand"
 	"runtime"
@@ -486,10 +485,10 @@ func TestBufferGrowth(t *testing.T) {
 		b.Write(buf)
 		b.Read(buf)
 		if i == 0 {
-			cap0 = b.Cap()
+			cap0 = cap(b.buf)
 		}
 	}
-	cap1 := b.Cap()
+	cap1 := cap(b.buf)
 	// (*Buffer).grow allows for 2x capacity slop before sliding,
 	// so set our error threshold at 3x.
 	if cap1 > cap0*3 {
@@ -516,7 +515,7 @@ func BenchmarkBufferFullSmallReads(b *testing.B) {
 	for i := 0; i < b.N; i++ {
 		var b Buffer
 		b.Write(buf)
-		for b.Len()+20 < b.Cap() {
+		for b.Len()+20 < cap(b.buf) {
 			b.Write(buf[:10])
 		}
 		for i := 0; i < 5<<10; i++ {
