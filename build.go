@@ -19,7 +19,7 @@ func buildPackage(pkg *Package) []Future {
 		deps = append(deps, buildPackage(dep)...)
 	}
 	if _, ok := pkg.Context.Targets[pkg]; !ok {
-		gc := Gc(pkg, deps...)
+		gc := Gc(pkg, pkg.GoFiles, deps...)
 		pack := Pack(pkg, gc)
 		pkg.Context.Targets[pkg] = pack
 	}
@@ -32,7 +32,7 @@ func buildCommand(pkg *Package) []Future {
 		deps = append(deps, buildPackage(dep)...)
 	}
 	if _, ok := pkg.Context.Targets[pkg]; !ok {
-		gc := Gc(pkg, deps...)
+		gc := Gc(pkg, pkg.GoFiles, deps...)
 		pack := Pack(pkg, gc)
 		ld := Ld(pkg, pack)
 		pkg.Context.Targets[pkg] = ld
@@ -83,7 +83,8 @@ func (t *packTarget) build() error {
 
 type gcTarget struct {
 	future
-	deps []Future
+	deps    []Future
+	gofiles []string
 	*Package
 }
 
@@ -98,12 +99,13 @@ func (t *gcTarget) execute() {
 	t.future.err <- t.build()
 }
 
-func Gc(pkg *Package, deps ...Future) Future {
+func Gc(pkg *Package, gofiles []string, deps ...Future) Future {
 	t := &gcTarget{
 		future: future{
 			err: make(chan error, 1),
 		},
 		deps:    deps,
+		gofiles: gofiles,
 		Package: pkg,
 	}
 	go t.execute()
@@ -113,11 +115,10 @@ func Gc(pkg *Package, deps ...Future) Future {
 func (t *gcTarget) objfile() string { return filepath.Join(t.Objdir(), "_go_.6") }
 
 func (t *gcTarget) build() error {
-	gofiles := t.GoFiles
 	if err := os.MkdirAll(t.Objdir(), 0777); err != nil {
 		return err
 	}
-	return t.Gc(t.ImportPath(), t.Srcdir(), t.objfile(), gofiles)
+	return t.Gc(t.ImportPath(), t.Srcdir(), t.objfile(), t.gofiles)
 }
 
 type asmTarget struct {
