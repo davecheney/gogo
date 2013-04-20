@@ -17,7 +17,7 @@ type Context struct {
 	goroot, goos, goarch string
 	workdir              string
 	archchar             string
-	Targets              map[*Package]Target
+	Targets              map[*Package]Future
 
 	// The build and release tags specify build constraints
 	// that should be considered satisfied when processing +build lines.
@@ -59,7 +59,7 @@ func newContext(p *Project, goroot, goos, goarch string) (*Context, error) {
 		goarch:     goarch,
 		workdir:    workdir,
 		archchar:   archchar,
-		Targets:    make(map[*Package]Target),
+		Targets:    make(map[*Package]Future),
 		pkgs:       make(map[string]*Package),
 		cgoEnabled: true,
 	}

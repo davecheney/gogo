@@ -22,7 +22,7 @@ var TestCmd = &Command{
 		}
 		for _, pkg := range pkgs {
 			for _, t := range gogo.Test(pkg) {
-				if err := t.Wait(); err != nil {
+				if err := t.Result(); err != nil {
 					return err
 				}
 			}

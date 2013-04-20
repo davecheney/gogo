@@ -29,7 +29,7 @@ func TestTestPackage(t *testing.T) {
 		if len := len(targets); len != 1 {
 			t.Fatalf("testPackage %q: expected %d target, got %d", tt.pkg, 1, len)
 		}
-		if err := targets[0].Wait(); err != nil {
+		if err := targets[0].Result(); err != nil {
 			t.Fatalf("testPackage %q: %v", tt.pkg, err)
 		}
 	}
@@ -51,7 +51,7 @@ func TestTest(t *testing.T) {
 		if len := len(targets); len != 1 {
 			t.Fatalf("testPackage %q: expected %d target, got %d", tt.pkg, 1, len)
 		}
-		if err := targets[0].Wait(); err != nil {
+		if err := targets[0].Result(); err != nil {
 			t.Fatalf("testPackage %q: %v", tt.pkg, err)
 		}
 	}

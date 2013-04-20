@@ -1,8 +1,8 @@
 package extdata_test
 
-import ( 
-	"testing"
+import (
 	"extdata"
+	"testing"
 )
 
 func TestExternal(t *testing.T) {

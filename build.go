@@ -6,15 +6,15 @@ import (
 	"path/filepath"
 )
 
-func Build(pkg *Package) []Target {
+func Build(pkg *Package) []Future {
 	if pkg.Name() == "main" {
 		return buildCommand(pkg)
 	}
 	return buildPackage(pkg)
 }
 
-func buildPackage(pkg *Package) []Target {
-	var deps []Target
+func buildPackage(pkg *Package) []Future {
+	var deps []Future
 	for _, dep := range pkg.Imports {
 		deps = append(deps, buildPackage(dep)...)
 	}
@@ -24,11 +24,11 @@ func buildPackage(pkg *Package) []Target {
 		pkg.Context.Targets[pkg] = pack
 	}
 	log.Printf("build package %q", pkg.ImportPath())
-	return []Target{pkg.Context.Targets[pkg]}
+	return []Future{pkg.Context.Targets[pkg]}
 }
 
-func buildCommand(pkg *Package) []Target {
-	var deps []Target
+func buildCommand(pkg *Package) []Future {
+	var deps []Future
 	for _, dep := range pkg.Imports {
 		deps = append(deps, buildPackage(dep)...)
 	}
@@ -39,16 +39,16 @@ func buildCommand(pkg *Package) []Target {
 		pkg.Context.Targets[pkg] = ld
 	}
 	log.Printf("build command %q", pkg.ImportPath())
-	return []Target{pkg.Context.Targets[pkg]}
+	return []Future{pkg.Context.Targets[pkg]}
 }
 
 type packTarget struct {
 	target
-	deps []Target
+	deps []Future
 	*Package
 }
 
-func Pack(pkg *Package, deps ...Target) *packTarget {
+func Pack(pkg *Package, deps ...Future) *packTarget {
 	t := &packTarget{
 		target: target{
 			done: make(chan struct{}),
@@ -63,7 +63,7 @@ func Pack(pkg *Package, deps ...Target) *packTarget {
 func (t *packTarget) execute() {
 	defer close(t.done)
 	for _, dep := range t.deps {
-		if err := dep.Wait(); err != nil {
+		if err := dep.Result(); err != nil {
 			t.setErr(err)
 			return
 		}
@@ -87,14 +87,14 @@ func (t *packTarget) build() error {
 
 type gcTarget struct {
 	target
-	deps []Target
+	deps []Future
 	*Package
 }
 
 func (t *gcTarget) execute() {
 	defer close(t.done)
 	for _, dep := range t.deps {
-		if err := dep.Wait(); err != nil {
+		if err := dep.Result(); err != nil {
 			t.setErr(err)
 			return
 		}
@@ -104,7 +104,7 @@ func (t *gcTarget) execute() {
 	}
 }
 
-func Gc(pkg *Package, deps ...Target) *gcTarget {
+func Gc(pkg *Package, deps ...Future) *gcTarget {
 	t := &gcTarget{
 		target: target{
 			done: make(chan struct{}),
@@ -128,14 +128,14 @@ func (t *gcTarget) build() error {
 
 type asmTarget struct {
 	target
-	deps []Target
+	deps []Future
 	*Package
 }
 
 func (t *asmTarget) execute() {
 	defer close(t.done)
 	for _, dep := range t.deps {
-		if err := dep.Wait(); err != nil {
+		if err := dep.Result(); err != nil {
 			t.setErr(err)
 			return
 		}
@@ -145,7 +145,7 @@ func (t *asmTarget) execute() {
 	}
 }
 
-func newAsmTarget(pkg *Package, deps ...Target) *gcTarget {
+func newAsmTarget(pkg *Package, deps ...Future) *gcTarget {
 	t := &gcTarget{
 		target: target{
 			done: make(chan struct{}),
@@ -163,14 +163,14 @@ func (t *asmTarget) build() error {
 
 type ldTarget struct {
 	target
-	deps []Target
+	deps []Future
 	*Package
 }
 
 func (t *ldTarget) execute() {
 	defer close(t.done)
 	for _, dep := range t.deps {
-		if err := dep.Wait(); err != nil {
+		if err := dep.Result(); err != nil {
 			t.setErr(err)
 			return
 		}
@@ -180,7 +180,7 @@ func (t *ldTarget) execute() {
 	}
 }
 
-func Ld(pkg *Package, deps ...Target) *ldTarget {
+func Ld(pkg *Package, deps ...Future) *ldTarget {
 	t := &ldTarget{
 		target: target{
 			done: make(chan struct{}),

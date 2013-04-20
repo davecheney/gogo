@@ -8,32 +8,32 @@ import (
 	"strings"
 )
 
-func Test(pkg *Package) []Target {
+func Test(pkg *Package) []Future {
 	// commands are built as packages for testing.
 	return testPackage(pkg)
 }
 
-func testPackage(pkg *Package) []Target {
+func testPackage(pkg *Package) []Future {
 	// build dependencies
-	var deps []Target
+	var deps []Future
 	for _, dep := range pkg.Imports {
 		deps = append(deps, Build(dep)...)
 	}
 	buildtest := buildTest(pkg, deps)
 	runtest := runTest(pkg, buildtest)
-	return []Target{runtest}
+	return []Future{runtest}
 }
 
 type buildTestTarget struct {
 	target
-	deps []Target
+	deps []Future
 	*Package
 }
 
 func (t *buildTestTarget) execute() {
 	defer close(t.done)
 	for _, dep := range t.deps {
-		if err := dep.Wait(); err != nil {
+		if err := dep.Result(); err != nil {
 			t.setErr(err)
 			return
 		}
@@ -76,7 +76,7 @@ func (t *buildTestTarget) buildTestMain(objdir string) error {
 	return writeTestmain(filepath.Join(t.Objdir(), "_testmain.go"), t.Package)
 }
 
-func buildTest(pkg *Package, deps []Target) *buildTestTarget {
+func buildTest(pkg *Package, deps []Future) *buildTestTarget {
 	t := &buildTestTarget{
 		target: target{
 			done: make(chan struct{}),
@@ -90,14 +90,14 @@ func buildTest(pkg *Package, deps []Target) *buildTestTarget {
 
 type runTestTarget struct {
 	target
-	deps []Target
+	deps []Future
 	*Package
 }
 
 func (t *runTestTarget) execute() {
 	defer close(t.done)
 	for _, dep := range t.deps {
-		if err := dep.Wait(); err != nil {
+		if err := dep.Result(); err != nil {
 			t.setErr(err)
 			return
 		}
@@ -116,7 +116,7 @@ func (t *runTestTarget) build() error {
 	return cmd.Run()
 }
 
-func runTest(pkg *Package, deps ...Target) *runTestTarget {
+func runTest(pkg *Package, deps ...Future) *runTestTarget {
 	t := &runTestTarget{
 		target: target{
 			done: make(chan struct{}),

@@ -41,7 +41,7 @@ func TestBuildPackage(t *testing.T) {
 		if len := len(targets); len != 1 {
 			t.Fatalf("buildPackage %q: expected %d target, got %d", tt.pkg, 1, len)
 		}
-		if err := targets[0].Wait(); err != nil {
+		if err := targets[0].Result(); err != nil {
 			t.Fatalf("buildPackage %q: %v", tt.pkg, err)
 		}
 	}
@@ -71,7 +71,7 @@ func TestBuildCommand(t *testing.T) {
 		if len := len(targets); len != 1 {
 			t.Fatalf("buildCommand %q: expected %d target, got %d", tt.pkg, 1, len)
 		}
-		if err := targets[0].Wait(); err != nil {
+		if err := targets[0].Result(); err != nil {
 			t.Fatalf("buildCommand %q: %v", tt.pkg, err)
 		}
 	}
@@ -102,7 +102,7 @@ func TestBuild(t *testing.T) {
 		if len := len(targets); len != 1 {
 			t.Fatalf("build %q: expected %d target, got %d", tt.pkg, 1, len)
 		}
-		if err := targets[0].Wait(); err != nil {
+		if err := targets[0].Result(); err != nil {
 			t.Fatalf("build %q: %v", tt.pkg, err)
 		}
 	}

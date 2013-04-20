@@ -7,8 +7,16 @@ import (
 	"unicode"
 )
 
-type Target interface {
-	Wait() error
+// A Future represents some work to be performed.
+type Future interface {
+	// Result returns the result of the work as an error, or nil if the work
+	// was performed successfully.
+	// Implementers must observe these invariants
+	// 1. There may be multiple concurrent callers to Result, or Result may
+	//     be called many times in sequence, it must always return the same
+	//     value.
+	// 2. Result blocks until the work has been performed.
+	Result() error
 }
 
 type target struct {
@@ -19,7 +27,7 @@ type target struct {
 	}
 }
 
-func (t *target) Wait() error {
+func (t *target) Result() error {
 	<-t.done
 	t.err.Lock()
 	defer t.err.Unlock()
