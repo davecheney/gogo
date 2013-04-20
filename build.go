@@ -47,7 +47,7 @@ func compile(pkg *Package, deps []Future, includeTests bool) Future {
 	}
 	targets := []Future{ Gc(pkg, deps, gofiles) }
 	for _, sfile := range pkg.SFiles {
-		targets = append(targets, Asm(pkg, deps, sfile) )
+		targets = append(targets, Asm(pkg, sfile) )
 	}		
 	pack := Pack(pkg, targets...)
 	return pack
@@ -59,6 +59,8 @@ type packTarget struct {
 	*Package
 }
 
+// Pack returns a Future representing the result of packing a 
+// set of Context specific object files into an archive.
 func Pack(pkg *Package, deps ...Future) Future {
 	t := &packTarget{
 		future: future{
@@ -112,6 +114,8 @@ func (t *gcTarget) execute() {
 	t.future.err <- t.build()
 }
 
+// Gc returns a Future representing the result of compiling a 
+// set of gofiles with the Context specified gc compiler.
 func Gc(pkg *Package, deps []Future, gofiles []string) Future {
 	t := &gcTarget{
 		future: future{
@@ -136,28 +140,22 @@ func (t *gcTarget) build() error {
 
 type asmTarget struct {
 	future
-	deps []Future
 	sfile string
 	*Package
 }
 
 func (t *asmTarget) execute() {
-	for _, dep := range t.deps {
-		if err := dep.Result(); err != nil {
-			t.future.err <- err
-			return
-		}
-	}
 	log.Printf("as %q: %s", t.Package.ImportPath(), t.sfile)
 	t.future.err <- t.build()
 }
 
-func Asm(pkg *Package, deps []Future, sfile string) Future {
+// Asm returns a Future representing the result of assembling 
+// sfile with the Context specified asssembler.
+func Asm(pkg *Package, sfile string) Future {
 	t := &asmTarget{
 		future: future{
 			err: make(chan error, 1),
 		},
-		deps:    deps,
 		sfile: sfile,
 		Package: pkg,
 	}
@@ -189,6 +187,8 @@ func (t *ldTarget) execute() {
 	t.future.err <- t.build()
 }
 
+// Ld returns a Future representing the result of linking a 
+// Package into a command with the Context provided linker.
 func Ld(pkg *Package, deps ...Future) Future {
 	t := &ldTarget{
 		future: future{
