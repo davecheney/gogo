@@ -23,7 +23,6 @@ func buildPackage(pkg *Package) []Future {
 		pack := Pack(pkg, gc)
 		pkg.Context.Targets[pkg] = pack
 	}
-	log.Printf("build package %q", pkg.ImportPath())
 	return []Future{pkg.Context.Targets[pkg]}
 }
 
@@ -38,7 +37,6 @@ func buildCommand(pkg *Package) []Future {
 		ld := Ld(pkg, pack)
 		pkg.Context.Targets[pkg] = ld
 	}
-	log.Printf("build command %q", pkg.ImportPath())
 	return []Future{pkg.Context.Targets[pkg]}
 }
 
@@ -67,6 +65,7 @@ func (t *packTarget) execute() {
 			return
 		}
 	}
+	log.Printf("pack %q", t.Package.ImportPath())
 	t.future.err <- t.build()
 }
 
@@ -95,6 +94,7 @@ func (t *gcTarget) execute() {
 			return
 		}
 	}
+	log.Printf("gc %q", t.Package.ImportPath())
 	t.future.err <- t.build()
 }
 
@@ -133,6 +133,7 @@ func (t *asmTarget) execute() {
 			return
 		}
 	}
+	log.Printf("as %q", t.Package.ImportPath())
 	t.future.err <- t.build()
 }
 
@@ -165,6 +166,7 @@ func (t *ldTarget) execute() {
 			return
 		}
 	}
+	log.Printf("ld %q", t.Package.ImportPath())
 	t.future.err <- t.build()
 }
 

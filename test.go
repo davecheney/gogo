@@ -98,6 +98,7 @@ func (t *runTestTarget) execute() {
 			return
 		}
 	}
+	log.Printf("test %q", t.Package.ImportPath())
 	t.future.err <- t.build()
 }
 
