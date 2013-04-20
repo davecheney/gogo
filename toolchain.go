@@ -9,6 +9,8 @@ import (
 	"go/build"
 )
 
+// Toolchain represents a standardised set of command line tools
+// used to build and test Go programs.
 type Toolchain interface {
 	Gc(importpath, srcdir, outfile string, files []string) error
 	Asm(srcdir, ofile, sfile string) error
