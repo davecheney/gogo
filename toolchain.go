@@ -73,7 +73,7 @@ func (t *gcToolchain) Pack(afile, objdir string, ofiles ...string) error {
 
 func (t *gcToolchain) Asm(importpath, objdir, sfile string) error {
 	ofile := sfile[:len(sfile)-len(".s")] + ".6"
-	args := []string{"-o", filepath.Join(objdir, ofile), "-D", "GOOS_"+t.goos, "-D",  "GOARCH_"+t.goarch, sfile}
+	args := []string{"-o", filepath.Join(objdir, ofile), "-D", "GOOS_" + t.goos, "-D", "GOARCH_" + t.goarch, sfile}
 	return run(objdir, t.as, args...)
 }
 

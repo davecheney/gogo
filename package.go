@@ -1,8 +1,8 @@
 package gogo
 
 import (
-	"fmt"
 	"bytes"
+	"fmt"
 	"go/ast"
 	"go/build"
 	"go/parser"
@@ -92,12 +92,12 @@ func (p *Package) scanFiles(files []os.FileInfo) error {
 
 		ext := filepath.Ext(filename)
 
-                if !p.goodOSArchFile(filename) {
-                        if ext == ".go" {
-                                p.IgnoredGoFiles = append(p.IgnoredGoFiles, filename)
-                        }
-                        continue
-                }
+		if !p.goodOSArchFile(filename) {
+			if ext == ".go" {
+				p.IgnoredGoFiles = append(p.IgnoredGoFiles, filename)
+			}
+			continue
+		}
 
 		switch ext {
 		case ".go", ".c", ".s", ".h", ".S", ".swig", ".swigcxx":
@@ -111,24 +111,24 @@ func (p *Package) scanFiles(files []os.FileInfo) error {
 		if err != nil {
 			return err
 		}
-                var data []byte
-                if strings.HasSuffix(filename, ".go") {
-                        data, err = readImports(r, false)
-                } else {
-                        data, err = readComments(r)
-                }
+		var data []byte
+		if strings.HasSuffix(filename, ".go") {
+			data, err = readImports(r, false)
+		} else {
+			data, err = readComments(r)
+		}
 		r.Close()
 		if err != nil {
 			return err
 		}
 
-                // Look for +build comments to accept or reject the file.
-                if !p.shouldBuild(data) {
-                        if ext == ".go" {
-                                p.IgnoredGoFiles = append(p.IgnoredGoFiles, filename)
-                        }
-                        continue
-                }
+		// Look for +build comments to accept or reject the file.
+		if !p.shouldBuild(data) {
+			if ext == ".go" {
+				p.IgnoredGoFiles = append(p.IgnoredGoFiles, filename)
+			}
+			continue
+		}
 
 		switch ext {
 		case ".s":
@@ -136,10 +136,10 @@ func (p *Package) scanFiles(files []os.FileInfo) error {
 			continue
 		}
 
-                pf, err := parser.ParseFile(fset, filename, data, parser.ImportsOnly|parser.ParseComments)
-                if err != nil {
-                        return err
-                }
+		pf, err := parser.ParseFile(fset, filename, data, parser.ImportsOnly|parser.ParseComments)
+		if err != nil {
+			return err
+		}
 
 		pkg := pf.Name.Name
 		if pkg == "documentation" {
@@ -251,59 +251,59 @@ var slashslash = []byte("//")
 // marks the file as applicable only on Windows and Linux.
 //
 func (ctxt *Context) shouldBuild(content []byte) bool {
-        // Pass 1. Identify leading run of // comments and blank lines,
-        // which must be followed by a blank line.
-        end := 0
-        p := content
-        for len(p) > 0 {
-                line := p
-                if i := bytes.IndexByte(line, '\n'); i >= 0 {
-                        line, p = line[:i], p[i+1:]
-                } else {
-                        p = p[len(p):]
-                }
-                line = bytes.TrimSpace(line)
-                if len(line) == 0 { // Blank line
-                        end = len(content) - len(p)
-                        continue
-                }
-                if !bytes.HasPrefix(line, slashslash) { // Not comment line
-                        break
-                }
-        }
-        content = content[:end]
+	// Pass 1. Identify leading run of // comments and blank lines,
+	// which must be followed by a blank line.
+	end := 0
+	p := content
+	for len(p) > 0 {
+		line := p
+		if i := bytes.IndexByte(line, '\n'); i >= 0 {
+			line, p = line[:i], p[i+1:]
+		} else {
+			p = p[len(p):]
+		}
+		line = bytes.TrimSpace(line)
+		if len(line) == 0 { // Blank line
+			end = len(content) - len(p)
+			continue
+		}
+		if !bytes.HasPrefix(line, slashslash) { // Not comment line
+			break
+		}
+	}
+	content = content[:end]
 
-        // Pass 2.  Process each line in the run.
-        p = content
-        for len(p) > 0 {
-                line := p
-                if i := bytes.IndexByte(line, '\n'); i >= 0 {
-                        line, p = line[:i], p[i+1:]
-                } else {
-                        p = p[len(p):]
-                }
-                line = bytes.TrimSpace(line)
-                if bytes.HasPrefix(line, slashslash) {
-                        line = bytes.TrimSpace(line[len(slashslash):])
-                        if len(line) > 0 && line[0] == '+' {
-                                // Looks like a comment +line.
-                                f := strings.Fields(string(line))
-                                if f[0] == "+build" {
-                                        ok := false
-                                        for _, tok := range f[1:] {
-                                                if ctxt.match(tok) {
-                                                        ok = true
-                                                        break
-                                                }
-                                        }
-                                        if !ok {
-                                                return false // this one doesn't match
-                                        }
-                                }
-                        }
-                }
-        }
-        return true // everything matches
+	// Pass 2.  Process each line in the run.
+	p = content
+	for len(p) > 0 {
+		line := p
+		if i := bytes.IndexByte(line, '\n'); i >= 0 {
+			line, p = line[:i], p[i+1:]
+		} else {
+			p = p[len(p):]
+		}
+		line = bytes.TrimSpace(line)
+		if bytes.HasPrefix(line, slashslash) {
+			line = bytes.TrimSpace(line[len(slashslash):])
+			if len(line) > 0 && line[0] == '+' {
+				// Looks like a comment +line.
+				f := strings.Fields(string(line))
+				if f[0] == "+build" {
+					ok := false
+					for _, tok := range f[1:] {
+						if ctxt.match(tok) {
+							ok = true
+							break
+						}
+					}
+					if !ok {
+						return false // this one doesn't match
+					}
+				}
+			}
+		}
+	}
+	return true // everything matches
 }
 
 // saveCgo saves the information from the #cgo lines in the import "C" comment.

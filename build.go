@@ -45,10 +45,10 @@ func compile(pkg *Package, deps []Future, includeTests bool) Future {
 	if includeTests {
 		gofiles = append(gofiles, pkg.TestGoFiles...)
 	}
-	targets := []Future{ Gc(pkg, deps, gofiles) }
+	targets := []Future{Gc(pkg, deps, gofiles)}
 	for _, sfile := range pkg.SFiles {
-		targets = append(targets, Asm(pkg, sfile) )
-	}		
+		targets = append(targets, Asm(pkg, sfile))
+	}
 	pack := Pack(pkg, targets...)
 	return pack
 }
@@ -59,7 +59,7 @@ type packTarget struct {
 	*Package
 }
 
-// Pack returns a Future representing the result of packing a 
+// Pack returns a Future representing the result of packing a
 // set of Context specific object files into an archive.
 func Pack(pkg *Package, deps ...Future) Future {
 	t := &packTarget{
@@ -114,7 +114,7 @@ func (t *gcTarget) execute() {
 	t.future.err <- t.build()
 }
 
-// Gc returns a Future representing the result of compiling a 
+// Gc returns a Future representing the result of compiling a
 // set of gofiles with the Context specified gc compiler.
 func Gc(pkg *Package, deps []Future, gofiles []string) Future {
 	t := &gcTarget{
@@ -149,14 +149,14 @@ func (t *asmTarget) execute() {
 	t.future.err <- t.build()
 }
 
-// Asm returns a Future representing the result of assembling 
+// Asm returns a Future representing the result of assembling
 // sfile with the Context specified asssembler.
 func Asm(pkg *Package, sfile string) Future {
 	t := &asmTarget{
 		future: future{
 			err: make(chan error, 1),
 		},
-		sfile: sfile,
+		sfile:   sfile,
 		Package: pkg,
 	}
 	go t.execute()
@@ -164,10 +164,10 @@ func Asm(pkg *Package, sfile string) Future {
 }
 
 func (t *asmTarget) build() error {
-        if err := os.MkdirAll(t.Objdir(), 0777); err != nil {
-                return err
-        }
-        return t.Asm(t.ImportPath(), t.Srcdir(), t.sfile)
+	if err := os.MkdirAll(t.Objdir(), 0777); err != nil {
+		return err
+	}
+	return t.Asm(t.ImportPath(), t.Srcdir(), t.sfile)
 }
 
 type ldTarget struct {
@@ -187,7 +187,7 @@ func (t *ldTarget) execute() {
 	t.future.err <- t.build()
 }
 
-// Ld returns a Future representing the result of linking a 
+// Ld returns a Future representing the result of linking a
 // Package into a command with the Context provided linker.
 func Ld(pkg *Package, deps ...Future) Future {
 	t := &ldTarget{
