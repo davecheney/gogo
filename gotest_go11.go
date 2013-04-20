@@ -4,7 +4,7 @@
 
 package gogo
 
-// build +go1.1
+// +build go1.1
 
 // imported from $GOROOT/src/cmd/go/test.go
 
