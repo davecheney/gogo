@@ -219,7 +219,7 @@ func (p *Package) scanFiles(files []os.FileInfo) error {
 	if p.name == "" {
 		return &build.NoGoError{p.importPath}
 	}
-	for i, _ := range imports {
+	for i := range imports {
 		if stdlib[i] {
 			// skip
 			continue
