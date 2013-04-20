@@ -10,7 +10,7 @@ var testPackageTests = []struct {
 	pkg string
 }{
 	{"a"},
-	{"stdlib/bytes"}, // includes asm files
+	// 	{"stdlib/bytes"}, // includes asm files, disabled needs go 1.1 features
 	// 	{"extdata"}, external tests are not supported
 }
 
