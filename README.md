@@ -25,7 +25,7 @@ The `gogo` command is `go get`able
 
     mkdir $PROJECT
 
-Inside your `gogo` project, you should arrange your Go source, and its dependencies into the usual `$PACKAGE/src` subfolder.
+Inside your `gogo` project, you should arrange your Go source, and its dependencies into the usual `$PACKAGE/src` subfolder. You can also use your existing $GOPATH directory as a project location, `gogo` will not overwrite the output of the `go` tool.
 
 ### gogo build
 
@@ -43,7 +43,7 @@ Inside your `gogo` project, you should arrange your Go source, and its dependenc
 
 ## documentation
 
-[http://godoc.org/github.com/davecheney/gogo]
+(http://godoc.org/github.com/davecheney/gogo)
 
 ## build status
 
@@ -59,7 +59,6 @@ Inside your `gogo` project, you should arrange your Go source, and its dependenc
  * better package parsing (support all file types)
  * cgo support for build and test
  * project auto discovery; be able to invoke `gogo` from anywhere inside the project.
- * `gogo` should be able to ~~build~~ test itself.
  * build tags support
  * support external tests in package, XTestGoFiles
  * implement incremental builds; only build what needs to be built
