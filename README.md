@@ -41,6 +41,14 @@ Inside your `gogo` project, you should arrange your Go source, and its dependenc
     cd $PROJECT
     gogo test $SOME_PACKAGE
 
+## documentation
+
+[http://godoc.org/github.com/davecheney/gogo]
+
+## build status
+
+[![Build Status](https://drone.io/github.com/davecheney/gogo/status.png)](https://drone.io/github.com/davecheney/gogo/latest)
+
 ## faq
 
  * Q. Will `gogo` build Go itself ? A. No.
