@@ -4,6 +4,7 @@ import (
 	"fmt"
 
 	"github.com/davecheney/gogo"
+	"github.com/davecheney/gogo/build"
 )
 
 var TestCmd = &Command{
@@ -21,7 +22,7 @@ var TestCmd = &Command{
 			pkgs = append(pkgs, pkg)
 		}
 		for _, pkg := range pkgs {
-			for _, t := range gogo.Test(pkg) {
+			for _, t := range build.Test(pkg) {
 				if err := t.Result(); err != nil {
 					return err
 				}

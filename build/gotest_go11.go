@@ -2,9 +2,9 @@
 // Use of this source code is governed by a BSD-style
 // license that can be found in the LICENSE file.
 
-// +build !go1.1
+// +build go1.1
 
-package gogo
+package build
 
 // imported from $GOROOT/src/cmd/go/test.go
 
@@ -15,10 +15,13 @@ import (
 	"go/token"
 	"os"
 	"path/filepath"
+	"sort"
 	"strings"
 	"text/template"
 	"unicode"
 	"unicode/utf8"
+
+	"github.com/davecheney/gogo"
 )
 
 // isTest tells whether name looks like a test (or benchmark, according to prefix).
@@ -37,7 +40,7 @@ func isTest(name, prefix string) bool {
 
 // writeTestmain writes the _testmain.go file for package p to
 // the file named out.
-func writeTestmain(out string, p *Package) error {
+func writeTestmain(out string, p *gogo.Package) error {
 	t := &testFuncs{
 		Package: p,
 	}
@@ -58,20 +61,16 @@ func writeTestmain(out string, p *Package) error {
 	}
 	defer f.Close()
 
-	if err := testmainTmpl.Execute(f, t); err != nil {
-		return err
-	}
-
-	return nil
+	return testmainTmpl.Execute(f, t)
 }
 
 type testFuncs struct {
 	Tests      []testFunc
 	Benchmarks []testFunc
 	Examples   []testFunc
-	Package    *Package
-	NeedTest   bool
-	NeedXtest  bool
+	*gogo.Package
+	NeedTest  bool
+	NeedXtest bool
 }
 
 type testFunc struct {
@@ -105,8 +104,10 @@ func (t *testFuncs) load(filename, pkg string, seen *bool) error {
 			*seen = true
 		}
 	}
-	for _, e := range doc.Examples(f) {
-		if e.Output == "" {
+	ex := doc.Examples(f)
+	sort.Sort(byOrder(ex))
+	for _, e := range ex {
+		if e.Output == "" && !e.EmptyOutput {
 			// Don't run examples with no output.
 			continue
 		}
@@ -115,6 +116,12 @@ func (t *testFuncs) load(filename, pkg string, seen *bool) error {
 	}
 	return nil
 }
+
+type byOrder []*doc.Example
+
+func (x byOrder) Len() int           { return len(x) }
+func (x byOrder) Swap(i, j int)      { x[i], x[j] = x[j], x[i] }
+func (x byOrder) Less(i, j int) bool { return x[i].Order < x[j].Order }
 
 var testmainTmpl = template.Must(template.New("main").Parse(`
 package main

@@ -1,4 +1,4 @@
-package gogo
+package build
 
 import (
 	"log"
@@ -6,29 +6,31 @@ import (
 	"os/exec"
 	"path/filepath"
 	"strings"
+
+	"github.com/davecheney/gogo"
 )
 
-func Test(pkg *Package) []Future {
+func Test(pkg *gogo.Package) []gogo.Future {
 	// commands are built as packages for testing.
 	return testPackage(pkg)
 }
 
-func testPackage(pkg *Package) []Future {
+func testPackage(pkg *gogo.Package) []gogo.Future {
 	// build dependencies
-	var deps []Future
+	var deps []gogo.Future
 	for _, dep := range pkg.Imports {
 		deps = append(deps, Build(dep)...)
 	}
 	compile := compile(pkg, deps, true)
 	buildtest := buildTest(pkg, compile)
 	runtest := runTest(pkg, buildtest)
-	return []Future{runtest}
+	return []gogo.Future{runtest}
 }
 
 type buildTestTarget struct {
 	future
-	deps []Future
-	*Package
+	deps []gogo.Future
+	*gogo.Package
 }
 
 func (t *buildTestTarget) execute() {
@@ -59,7 +61,7 @@ func (t *buildTestTarget) buildTestMain(objdir string) error {
 	return writeTestmain(filepath.Join(t.Objdir(), "_testmain.go"), t.Package)
 }
 
-func buildTest(pkg *Package, deps ...Future) Future {
+func buildTest(pkg *gogo.Package, deps ...gogo.Future) gogo.Future {
 	t := &buildTestTarget{
 		future: future{
 			err: make(chan error, 1),
@@ -73,8 +75,8 @@ func buildTest(pkg *Package, deps ...Future) Future {
 
 type runTestTarget struct {
 	future
-	deps []Future
-	*Package
+	deps []gogo.Future
+	*gogo.Package
 }
 
 func (t *runTestTarget) execute() {
@@ -97,7 +99,7 @@ func (t *runTestTarget) build() error {
 	return cmd.Run()
 }
 
-func runTest(pkg *Package, deps ...Future) Future {
+func runTest(pkg *gogo.Package, deps ...gogo.Future) gogo.Future {
 	t := &runTestTarget{
 		future: future{
 			err: make(chan error, 1),

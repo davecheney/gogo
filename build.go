@@ -1,254 +1,88 @@
+// Copyright 2012 The Go Authors.  All rights reserved.
+// Use of this source code is governed by a BSD-style
+// license that can be found in the LICENSE file.
+
 package gogo
 
 import (
-	"log"
-	"os"
-	"path/filepath"
+	"bytes"
+	"errors"
+	"unicode"
 )
 
-// A Future represents some work to be performed.
-type Future interface {
-	// Result returns the result of the work as an error, or nil if the work
-	// was performed successfully.
-	// Implementers must observe these invariants
-	// 1. There may be multiple concurrent callers to Result, or Result may
-	//     be called many times in sequence, it must always return the same
-	//     value.
-	// 2. Result blocks until the work has been performed.
-	Result() error
-}
+// from $GOROOT/src/pkg/go/build/build.go
 
-type future struct {
-	err chan error
-}
-
-func (f *future) Result() error {
-	result := <-f.err
-	f.err <- result
-	return result
-}
-
-// from $GOROOT/src/pkg/go/build/syslist.go
-
-const goosList = "darwin freebsd linux netbsd openbsd plan9 windows "
-const goarchList = "386 amd64 arm "
-
-func Build(pkg *Package) []Future {
-	if pkg.Name() == "main" {
-		return buildCommand(pkg)
-	}
-	return buildPackage(pkg)
-}
-
-func buildPackage(pkg *Package) []Future {
-	var deps []Future
-	for _, dep := range pkg.Imports {
-		deps = append(deps, buildPackage(dep)...)
-	}
-	if _, ok := pkg.Context.Targets[pkg]; !ok {
-		compile := compile(pkg, deps, false)
-		pkg.Context.Targets[pkg] = compile
-	}
-	return []Future{pkg.Context.Targets[pkg]}
-}
-
-func buildCommand(pkg *Package) []Future {
-	var deps []Future
-	for _, dep := range pkg.Imports {
-		deps = append(deps, buildPackage(dep)...)
-	}
-	if _, ok := pkg.Context.Targets[pkg]; !ok {
-		compile := compile(pkg, deps, false)
-		ld := Ld(pkg, compile)
-		pkg.Context.Targets[pkg] = ld
-	}
-	return []Future{pkg.Context.Targets[pkg]}
-}
-
-// compile is a helper which combines all the steps required
-// to build a go package
-func compile(pkg *Package, deps []Future, includeTests bool) Future {
-	gofiles := pkg.GoFiles
-	if includeTests {
-		gofiles = append(gofiles, pkg.TestGoFiles...)
-	}
-	objs := []objFuture{Gc(pkg, deps, gofiles)}
-	for _, sfile := range pkg.SFiles {
-		objs = append(objs, Asm(pkg, sfile))
-	}
-	pack := Pack(pkg, objs)
-	return pack
-}
-
-// objFuture represents a Future that produces an object file.
-type objFuture interface {
-	Future
-
-	// ofile returns the name of the file that is
-	// produced by the Future if successful
-	objfile() string
-}
-
-type packTarget struct {
-	future
-	deps     []objFuture
-	objfiles []string
-	*Package
-}
-
-// Pack returns a Future representing the result of packing a
-// set of Context specific object files into an archive.
-func Pack(pkg *Package, deps []objFuture) Future {
-	t := &packTarget{
-		future: future{
-			err: make(chan error, 1),
-		},
-		deps:    deps,
-		Package: pkg,
-	}
-	go t.execute()
-	return &t.future
-}
-
-func (t *packTarget) execute() {
-	for _, dep := range t.deps {
-		if err := dep.Result(); err != nil {
-			t.future.err <- err
-			return
+// splitQuoted splits the string s around each instance of one or more consecutive
+// white space characters while taking into account quotes and escaping, and
+// returns an array of substrings of s or an empty list if s contains only white space.
+// Single quotes and double quotes are recognized to prevent splitting within the
+// quoted region, and are removed from the resulting substrings. If a quote in s
+// isn't closed err will be set and r will have the unclosed argument as the
+// last element.  The backslash is used for escaping.
+//
+// For example, the following string:
+//
+//     a b:"c d" 'e''f'  "g\""
+//
+// Would be parsed as:
+//
+//     []string{"a", "b:c d", "ef", `g"`}
+//
+func splitQuoted(s string) ([]string, error) {
+	var args []string
+	arg := make([]rune, len(s))
+	escaped := false
+	quoted := false
+	quote := '\x00'
+	i := 0
+	for _, rune := range s {
+		switch {
+		case escaped:
+			escaped = false
+		case rune == '\\':
+			escaped = true
+			continue
+		case quote != '\x00':
+			if rune == quote {
+				quote = '\x00'
+				continue
+			}
+		case rune == '"' || rune == '\'':
+			quoted = true
+			quote = rune
+			continue
+		case unicode.IsSpace(rune):
+			if quoted || i > 0 {
+				quoted = false
+				args = append(args, string(arg[:i]))
+				i = 0
+			}
+			continue
 		}
-		// collect successful objfiles for packing
-		t.objfiles = append(t.objfiles, dep.objfile())
+		arg[i] = rune
+		i++
 	}
-	log.Printf("pack %q: %s", t.Package.ImportPath(), t.objfiles)
-	t.future.err <- t.build()
-}
-
-func (t *packTarget) pkgfile() string { return t.Package.ImportPath() + ".a" }
-
-func (t *packTarget) build() error {
-	ofile := t.pkgfile()
-	pkgdir := filepath.Dir(filepath.Join(t.Pkgdir(), ofile))
-	if err := os.MkdirAll(pkgdir, 0777); err != nil {
-		return err
+	if quoted || i > 0 {
+		args = append(args, string(arg[:i]))
 	}
-	return t.Pack(ofile, t.Pkgdir(), t.objfiles...)
+	if quote != 0 {
+		return nil, errors.New("unclosed quote")
+	} else if escaped {
+		return nil, errors.New("unfinished escaping")
+	}
+	return args, nil
 }
 
-type gcTarget struct {
-	future
-	deps    []Future
-	gofiles []string
-	*Package
-}
+var safeBytes = []byte("+-.,/0123456789=ABCDEFGHIJKLMNOPQRSTUVWXYZ_abcdefghijklmnopqrstuvwxyz:")
 
-func (t *gcTarget) execute() {
-	for _, dep := range t.deps {
-		if err := dep.Result(); err != nil {
-			t.future.err <- err
-			return
+func safeName(s string) bool {
+	if s == "" {
+		return false
+	}
+	for i := 0; i < len(s); i++ {
+		if c := s[i]; c < 0x80 && bytes.IndexByte(safeBytes, c) < 0 {
+			return false
 		}
 	}
-	log.Printf("gc %q: %s", t.Package.ImportPath(), t.gofiles)
-	t.future.err <- t.build()
-}
-
-// Gc returns a Future representing the result of compiling a
-// set of gofiles with the Context specified gc compiler.
-func Gc(pkg *Package, deps []Future, gofiles []string) objFuture {
-	t := &gcTarget{
-		future: future{
-			err: make(chan error, 1),
-		},
-		deps:    deps,
-		gofiles: gofiles,
-		Package: pkg,
-	}
-	go t.execute()
-	return t
-}
-
-func (t *gcTarget) objfile() string { return filepath.Join(t.Objdir(), "_go_.6") }
-
-func (t *gcTarget) build() error {
-	if err := os.MkdirAll(t.Objdir(), 0777); err != nil {
-		return err
-	}
-	return t.Gc(t.ImportPath(), t.Srcdir(), t.objfile(), t.gofiles)
-}
-
-type asmTarget struct {
-	future
-	sfile string
-	*Package
-}
-
-func (t *asmTarget) execute() {
-	log.Printf("as %q: %s", t.Package.ImportPath(), t.sfile)
-	t.future.err <- t.build()
-}
-
-// Asm returns a Future representing the result of assembling
-// sfile with the Context specified asssembler.
-func Asm(pkg *Package, sfile string) objFuture {
-	t := &asmTarget{
-		future: future{
-			err: make(chan error, 1),
-		},
-		sfile:   sfile,
-		Package: pkg,
-	}
-	go t.execute()
-	return t
-}
-
-func (t *asmTarget) objfile() string {
-	return filepath.Join(t.Objdir(), t.sfile[:len(t.sfile)-len(".s")]+".6")
-}
-
-func (t *asmTarget) build() error {
-	if err := os.MkdirAll(t.Objdir(), 0777); err != nil {
-		return err
-	}
-	return t.Asm(t.Srcdir(), t.objfile(), t.sfile)
-}
-
-type ldTarget struct {
-	future
-	deps []Future
-	*Package
-}
-
-func (t *ldTarget) execute() {
-	for _, dep := range t.deps {
-		if err := dep.Result(); err != nil {
-			t.future.err <- err
-			return
-		}
-	}
-	log.Printf("ld %q", t.Package.ImportPath())
-	t.future.err <- t.build()
-}
-
-// Ld returns a Future representing the result of linking a
-// Package into a command with the Context provided linker.
-func Ld(pkg *Package, deps ...Future) Future {
-	t := &ldTarget{
-		future: future{
-			err: make(chan error, 1),
-		},
-		deps:    deps,
-		Package: pkg,
-	}
-	go t.execute()
-	return &t.future
-}
-
-func (t *ldTarget) pkgfile() string { return filepath.Join(t.Workdir(), t.Package.ImportPath()+".a") }
-
-func (t *ldTarget) build() error {
-	bindir := t.Package.Context.Bindir()
-	if err := os.MkdirAll(bindir, 0777); err != nil {
-		return err
-	}
-	return t.Ld(filepath.Join(bindir, filepath.Base(t.Package.ImportPath())), t.pkgfile())
+	return true
 }

@@ -1,4 +1,4 @@
-package gogo_test
+package build
 
 import (
 	"testing"
@@ -6,7 +6,7 @@ import (
 	"github.com/davecheney/gogo"
 )
 
-const root = "testdata"
+const root = "../testdata"
 
 func newProject(t *testing.T) *gogo.Project {
 	p, err := gogo.NewProject(root)
@@ -38,7 +38,7 @@ func TestBuildPackage(t *testing.T) {
 		if err != nil {
 			t.Fatalf("ResolvePackage(): %v", err)
 		}
-		targets := gogo.BuildPackage(pkg)
+		targets := buildPackage(pkg)
 		if len := len(targets); len != 1 {
 			t.Fatalf("buildPackage %q: expected %d target, got %d", tt.pkg, 1, len)
 		}
@@ -68,7 +68,7 @@ func TestBuildCommand(t *testing.T) {
 		if err != nil {
 			t.Fatalf("ResolvePackage(): %v", err)
 		}
-		targets := gogo.BuildCommand(pkg)
+		targets := buildCommand(pkg)
 		if len := len(targets); len != 1 {
 			t.Fatalf("buildCommand %q: expected %d target, got %d", tt.pkg, 1, len)
 		}
@@ -99,7 +99,7 @@ func TestBuild(t *testing.T) {
 		if err != nil {
 			t.Fatalf("ResolvePackage(): %v", err)
 		}
-		targets := gogo.Build(pkg)
+		targets := Build(pkg)
 		if len := len(targets); len != 1 {
 			t.Fatalf("build %q: expected %d target, got %d", tt.pkg, 1, len)
 		}

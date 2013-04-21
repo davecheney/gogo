@@ -1,4 +1,4 @@
-package gogo_test
+package build
 
 import (
 	"testing"
@@ -26,7 +26,7 @@ func TestTestPackage(t *testing.T) {
 		if err != nil {
 			t.Fatalf("ResolvePackage(): %v", err)
 		}
-		targets := gogo.TestPackage(pkg)
+		targets := testPackage(pkg)
 		if len := len(targets); len != 1 {
 			t.Fatalf("testPackage %q: expected %d target, got %d", tt.pkg, 1, len)
 		}
@@ -48,7 +48,7 @@ func TestTest(t *testing.T) {
 		if err != nil {
 			t.Fatalf("ResolvePackage(): %v", err)
 		}
-		targets := gogo.Test(pkg)
+		targets := Test(pkg)
 		if len := len(targets); len != 1 {
 			t.Fatalf("testPackage %q: expected %d target, got %d", tt.pkg, 1, len)
 		}
