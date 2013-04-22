@@ -16,25 +16,31 @@ type Toolchain interface {
 	Asm(srcdir, ofile, sfile string) error
 	Pack(string, string, ...string) error
 	Ld(string, string) error
-	Cgo(objdir string, cgofiles []string) error
+	Cc(srcdir, objdir, ofile, cfile string) error
+
+	Cgo(string, []string) error
+	Gcc(string, []string) error
 
 	name() string
 }
 
 type toolchain struct {
 	cgo string
+	gcc string
 	*Context
 }
 
-func (t *toolchain) Cgo(objdir string, cgofiles []string) error {
-	args := []string{"-objdir", objdir, "--", "-I", objdir}
-	args = append(args, cgofiles...)
-	return run(t.Workdir(), t.cgo, args...)
+func (t *toolchain) Cgo(cwd string, args []string) error {
+	return run(cwd, t.cgo, args...)
+}
+
+func (t *toolchain) Gcc(cwd string, args []string) error {
+	return run(cwd, t.gcc, args...)
 }
 
 type gcToolchain struct {
 	toolchain
-	gc, ld, as, pack string
+	gc, cc, ld, as, pack string
 }
 
 func newGcToolchain(c *Context) (Toolchain, error) {
@@ -46,9 +52,11 @@ func newGcToolchain(c *Context) (Toolchain, error) {
 	return &gcToolchain{
 		toolchain: toolchain{
 			cgo:     filepath.Join(tooldir, "cgo"),
+			gcc:     "/usr/bin/gcc",
 			Context: c,
 		},
 		gc:   filepath.Join(tooldir, archchar+"g"),
+		cc:   filepath.Join(tooldir, archchar+"c"),
 		ld:   filepath.Join(tooldir, archchar+"l"),
 		as:   filepath.Join(tooldir, archchar+"a"),
 		pack: filepath.Join(tooldir, "pack"),
@@ -65,6 +73,13 @@ func (t *gcToolchain) Gc(importpath, srcdir, outfile string, files []string) err
 	args = append(args, "-o", outfile)
 	args = append(args, files...)
 	return run(srcdir, t.gc, args...)
+}
+
+func (t *gcToolchain) Cc(srcdir, objdir, outfile, cfile string) error {
+	args := []string{"-F", "-V", "-w", "-I", objdir, "-I", filepath.Join(t.goroot, "pkg", t.goos+"_"+t.goarch)}
+	args = append(args, "-o", outfile)
+	args = append(args, cfile)
+	return run(srcdir, t.cc, args...)
 }
 
 func (t *gcToolchain) Pack(afile, objdir string, ofiles ...string) error {

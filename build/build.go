@@ -52,6 +52,11 @@ func buildCommand(pkg *gogo.Package) gogo.Future {
 // to build a go package
 func compile(pkg *gogo.Package, deps []gogo.Future, includeTests bool) gogo.Future {
 	gofiles := pkg.GoFiles
+	cgo, cgofiles := cgo(pkg, deps)
+
+	// warning
+	deps = append(deps, cgo)
+	gofiles = append(gofiles, cgofiles...)
 	if includeTests {
 		gofiles = append(gofiles, pkg.TestGoFiles...)
 	}
