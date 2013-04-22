@@ -43,9 +43,6 @@ func (t *buildTestTarget) execute() {
 	t.future.err <- t.build()
 }
 
-func (t *buildTestTarget) objfile() string { return filepath.Join(t.Objdir(), "_go_.6") }
-func (t *buildTestTarget) pkgfile() string { return t.Package.ImportPath() + ".a" }
-
 func (t *buildTestTarget) build() error {
 	objdir := t.Objdir()
 	if err := t.buildTestMain(objdir); err != nil {
