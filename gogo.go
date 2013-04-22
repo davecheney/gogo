@@ -11,8 +11,3 @@ type Future interface {
 	// 2. Result blocks until the work has been performed.
 	Result() error
 }
-
-// from $GOROOT/src/pkg/go/build/syslist.go
-
-const goosList = "darwin freebsd linux netbsd openbsd plan9 windows "
-const goarchList = "386 amd64 arm "
