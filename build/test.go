@@ -10,21 +10,21 @@ import (
 	"github.com/davecheney/gogo"
 )
 
-func Test(pkg *gogo.Package) []gogo.Future {
+func Test(pkg *gogo.Package) gogo.Future {
 	// commands are built as packages for testing.
 	return testPackage(pkg)
 }
 
-func testPackage(pkg *gogo.Package) []gogo.Future {
+func testPackage(pkg *gogo.Package) gogo.Future {
 	// build dependencies
 	var deps []gogo.Future
 	for _, dep := range pkg.Imports {
-		deps = append(deps, Build(dep)...)
+		deps = append(deps, Build(dep))
 	}
 	compile := compile(pkg, deps, true)
 	buildtest := buildTest(pkg, compile)
 	runtest := runTest(pkg, buildtest)
-	return []gogo.Future{runtest}
+	return runtest
 }
 
 type buildTestTarget struct {

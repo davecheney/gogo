@@ -19,36 +19,33 @@ func (f *future) Result() error {
 	return result
 }
 
-func Build(pkg *gogo.Package) []gogo.Future {
+func Build(pkg *gogo.Package) gogo.Future {
 	if pkg.Name() == "main" {
 		return buildCommand(pkg)
 	}
 	return buildPackage(pkg)
 }
 
-func buildPackage(pkg *gogo.Package) []gogo.Future {
+func buildPackage(pkg *gogo.Package) gogo.Future {
 	var deps []gogo.Future
 	for _, dep := range pkg.Imports {
-		deps = append(deps, buildPackage(dep)...)
+		deps = append(deps, buildPackage(dep))
 	}
 	if _, ok := pkg.Context.Targets[pkg]; !ok {
 		compile := compile(pkg, deps, false)
 		pkg.Context.Targets[pkg] = compile
 	}
-	return []gogo.Future{pkg.Context.Targets[pkg]}
+	return pkg.Context.Targets[pkg]
 }
 
-func buildCommand(pkg *gogo.Package) []gogo.Future {
+func buildCommand(pkg *gogo.Package) gogo.Future {
 	var deps []gogo.Future
 	for _, dep := range pkg.Imports {
-		deps = append(deps, buildPackage(dep)...)
+		deps = append(deps, buildPackage(dep))
 	}
-	if _, ok := pkg.Context.Targets[pkg]; !ok {
-		compile := compile(pkg, deps, false)
-		ld := Ld(pkg, compile)
-		pkg.Context.Targets[pkg] = ld
-	}
-	return []gogo.Future{pkg.Context.Targets[pkg]}
+	compile := compile(pkg, deps, false)
+	ld := Ld(pkg, compile)
+	return ld
 }
 
 // compile is a helper which combines all the steps required
@@ -70,9 +67,18 @@ func compile(pkg *gogo.Package, deps []gogo.Future, includeTests bool) gogo.Futu
 type objFuture interface {
 	gogo.Future
 
-	// ofile returns the name of the file that is
-	// produced by the Future if successful
+	// objfile returns the name of the file that is
+	// produced by the Future if successful.
 	objfile() string
+}
+
+// pkgFuture represents a Future that produces a pkg (.a) file.
+type pkgFuture interface {
+	gogo.Future
+
+	// pkgfile returns the name of the file that is
+	// produced by the Future if successful.
+	pkgfile() string
 }
 
 type packTarget struct {
@@ -84,7 +90,7 @@ type packTarget struct {
 
 // Pack returns a Future representing the result of packing a
 // set of Context specific object files into an archive.
-func Pack(pkg *gogo.Package, deps []objFuture) gogo.Future {
+func Pack(pkg *gogo.Package, deps []objFuture) pkgFuture {
 	t := &packTarget{
 		future: future{
 			err: make(chan error, 1),
@@ -93,7 +99,7 @@ func Pack(pkg *gogo.Package, deps []objFuture) gogo.Future {
 		Package: pkg,
 	}
 	go t.execute()
-	return &t.future
+	return t
 }
 
 func (t *packTarget) execute() {

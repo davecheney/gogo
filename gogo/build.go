@@ -22,10 +22,8 @@ var BuildCmd = &Command{
 			pkgs = append(pkgs, pkg)
 		}
 		for _, pkg := range pkgs {
-			for _, t := range build.Build(pkg) {
-				if err := t.Result(); err != nil {
-					return err
-				}
+			if err := build.Build(pkg).Result(); err != nil {
+				return err
 			}
 		}
 		return ctx.Destroy()

@@ -22,10 +22,8 @@ var TestCmd = &Command{
 			pkgs = append(pkgs, pkg)
 		}
 		for _, pkg := range pkgs {
-			for _, t := range build.Test(pkg) {
-				if err := t.Result(); err != nil {
-					return err
-				}
+			if err := build.Test(pkg).Result(); err != nil {
+				return err
 			}
 		}
 		return ctx.Destroy()
