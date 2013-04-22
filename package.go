@@ -33,6 +33,8 @@ type Package struct {
 	GoFiles        []string // .go source files (excluding CgoFiles, TestGoFiles, XTestGoFiles)
 	CgoFiles       []string // .go source files that import "C"
 	SFiles         []string // .s source files
+	CFiles         []string // .c source files
+	HFiles         []string // .h c header files
 	IgnoredGoFiles []string // .go source files ignored for this build
 
 	// Cgo directives
@@ -133,6 +135,12 @@ func (p *Package) scanFiles(files []os.FileInfo) error {
 		switch ext {
 		case ".s":
 			p.SFiles = append(p.SFiles, filename)
+			continue
+		case ".c":
+			p.CFiles = append(p.CFiles, filename)
+			continue
+		case ".h":
+			p.HFiles = append(p.HFiles, filename)
 			continue
 		}
 

@@ -19,24 +19,28 @@ func cgo(pkg *gogo.Package, deps []gogo.Future) (gogo.Future, []string) {
 	if len(pkg.CgoFiles) == 0 {
 		return new(nilFuture), nil
 	}
+	objdir := pkg.Objdir()
 
-	var args = []string{"-objdir", pkg.Objdir(), "--", "-I", pkg.Objdir()}
+	var args = []string{"-objdir", objdir, "--", "-I", pkg.Srcdir(), "-I", objdir}
+	args = append(args, pkg.CgoCFLAGS...)
 	var gofiles []string
-	var gccfiles = []string{"_cgo_main.c", "_cgo_export.c"}
+	var gccfiles = []string{filepath.Join(objdir, "_cgo_main.c"), filepath.Join(objdir, "_cgo_export.c")}
 	for _, cgofile := range pkg.CgoFiles {
 		args = append(args, cgofile)
-		gofiles = append(gofiles, strings.Replace(cgofile, ".go", ".cgo1.go", 1))
-		gccfiles = append(gccfiles, strings.Replace(cgofile, ".go", ".cgo2.c", 1))
+		gofiles = append(gofiles, filepath.Join(objdir, strings.Replace(cgofile, ".go", ".cgo1.go", 1)))
+		gccfiles = append(gccfiles, filepath.Join(objdir, strings.Replace(cgofile, ".go", ".cgo2.c", 1)))
 	}
+	gccfiles = append(gccfiles, pkg.CFiles...)
 	cgo := Cgo(pkg, deps, args)
 
 	cgodefun := Cc(pkg, cgo, "_cgo_defun.c")
 
-	args = []string{"-pthread", "-I", pkg.Srcdir(), "-I", pkg.Objdir()}
+	args = []string{"-fPIC", "-pthread", "-I", pkg.Srcdir(), "-I", pkg.Objdir()}
+	args = append(args, pkg.CgoCFLAGS...)
 	var ofiles []string
 	var deps2 []gogo.Future
 	for _, gccfile := range gccfiles {
-		ofile := strings.Replace(gccfile, ".c", ".o", 1)
+		ofile := filepath.Join(objdir, gccfile[:len(gccfile)-2]+".o")
 		ofiles = append(ofiles, ofile)
 		deps2 = append(deps2, Gcc(pkg, []gogo.Future{cgodefun}, append(args, "-o", ofile, "-c", gccfile)))
 	}
