@@ -43,7 +43,7 @@ Inside your `gogo` project, you should arrange your Go source, and its dependenc
 
 ## documentation
 
-(http://godoc.org/github.com/davecheney/gogo)
+[godoc.org/github.com/davecheney/gogo](http://godoc.org/github.com/davecheney/gogo)
 
 ## build status
 
