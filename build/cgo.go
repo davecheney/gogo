@@ -47,6 +47,7 @@ func cgo(pkg *gogo.Package, deps []gogo.Future) ([]objFuture, []string) {
 
 	args = []string{"-pthread", "-o", filepath.Join(pkg.Objdir(), "_cgo_.o")}
 	args = append(args, ofiles...)
+	args = append(args, pkg.CgoLDFLAGS...)
 	gcc := Gcc(pkg, deps2, args)
 
 	cgo = Cgo(pkg, []gogo.Future{gcc}, []string{"-dynimport", filepath.Join(pkg.Objdir(), "_cgo_.o"), "-dynout", filepath.Join(pkg.Objdir(), "_cgo_import.c")})
@@ -56,7 +57,7 @@ func cgo(pkg *gogo.Package, deps []gogo.Future) ([]objFuture, []string) {
 	args = []string{"-I", srcdir, "-fPIC", "-pthread", "-o", filepath.Join(objdir, "_all.o")}
 	for _, ofile := range ofiles {
 		// hack
-		if strings.Contains(ofile, "_cgo_") {
+		if strings.Contains(ofile, "_cgo_main") {
 			continue
 		}
 		args = append(args, ofile)
@@ -72,7 +73,7 @@ func cgo(pkg *gogo.Package, deps []gogo.Future) ([]objFuture, []string) {
 		Package: pkg,
 	}
 	go func() { f.future.err <- f.dep.Result() }()
-	return []objFuture{f, cgoimport}, gofiles
+	return []objFuture{f, cgoimport, cgodefun}, gofiles
 }
 
 type cgoFuture struct {
