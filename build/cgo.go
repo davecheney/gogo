@@ -19,28 +19,31 @@ func cgo(pkg *gogo.Package, deps []gogo.Future) (gogo.Future, []string) {
 	if len(pkg.CgoFiles) == 0 {
 		return new(nilFuture), nil
 	}
+	srcdir := pkg.Srcdir()
 	objdir := pkg.Objdir()
 
 	var args = []string{"-objdir", objdir, "--", "-I", pkg.Srcdir(), "-I", objdir}
 	args = append(args, pkg.CgoCFLAGS...)
-	var gofiles []string
+	var gofiles = []string{filepath.Join(objdir, "_cgo_gotypes.go")}
 	var gccfiles = []string{filepath.Join(objdir, "_cgo_main.c"), filepath.Join(objdir, "_cgo_export.c")}
 	for _, cgofile := range pkg.CgoFiles {
 		args = append(args, cgofile)
 		gofiles = append(gofiles, filepath.Join(objdir, strings.Replace(cgofile, ".go", ".cgo1.go", 1)))
 		gccfiles = append(gccfiles, filepath.Join(objdir, strings.Replace(cgofile, ".go", ".cgo2.c", 1)))
 	}
-	gccfiles = append(gccfiles, pkg.CFiles...)
+	for _, cfile := range pkg.CFiles {
+		gccfiles = append(gccfiles, filepath.Join(srcdir, cfile))
+	}
 	cgo := Cgo(pkg, deps, args)
 
 	cgodefun := Cc(pkg, cgo, "_cgo_defun.c")
 
-	args = []string{"-fPIC", "-pthread", "-I", pkg.Srcdir(), "-I", pkg.Objdir()}
-	args = append(args, pkg.CgoCFLAGS...)
 	var ofiles []string
 	var deps2 []gogo.Future
 	for _, gccfile := range gccfiles {
-		ofile := filepath.Join(objdir, gccfile[:len(gccfile)-2]+".o")
+		args := []string{"-fPIC", "-pthread", "-I", srcdir, "-I", objdir}
+		args = append(args, pkg.CgoCFLAGS...)
+		ofile := gccfile[:len(gccfile)-2] + ".o"
 		ofiles = append(ofiles, ofile)
 		deps2 = append(deps2, Gcc(pkg, []gogo.Future{cgodefun}, append(args, "-o", ofile, "-c", gccfile)))
 	}
@@ -51,9 +54,9 @@ func cgo(pkg *gogo.Package, deps []gogo.Future) (gogo.Future, []string) {
 
 	gcc := Gcc(pkg, deps2, args)
 
-	cgo = Cgo(pkg, []gogo.Future{gcc}, []string{"-o", pkg.Objdir(), "-dynimport", filepath.Join(pkg.Objdir(), "_cgo_.o"), "-dynout", filepath.Join(pkg.Objdir(), "_cgo_import.c")})
+	cgo = Cgo(pkg, []gogo.Future{gcc}, []string{"-dynimport", filepath.Join(pkg.Objdir(), "_cgo_.o"), "-dynout", filepath.Join(pkg.Objdir(), "_cgo_import.c")})
 
-	cgoimport := Cc(pkg, cgo, filepath.Join(pkg.Objdir(), "_cgo_import.c"))
+	cgoimport := Cc(pkg, cgo, "_cgo_import.c") // _cgo_import.c is relative to objdir
 
 	return cgoimport, gofiles
 }
