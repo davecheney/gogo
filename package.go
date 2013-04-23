@@ -181,9 +181,7 @@ func (p *Package) scanFiles(files []os.FileInfo) error {
 						}
 						switch path {
 						case "":
-							return fmt.Errorf("package %q imported blank path: %s", p.Name(), spec.Pos())
-						case ".":
-							return fmt.Errorf("package %q imported dot path: %s", p.Name(), spec.Pos())
+							return fmt.Errorf("package %q imported blank path: %v", p.Name(), spec.Pos())
 						case "C":
 							if isTest {
 								return fmt.Errorf("use of cgo in test %s not supported", filename)

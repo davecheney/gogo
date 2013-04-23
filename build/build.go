@@ -51,16 +51,19 @@ func buildCommand(pkg *gogo.Package) gogo.Future {
 // compile is a helper which combines all the steps required
 // to build a go package
 func compile(pkg *gogo.Package, deps []gogo.Future, includeTests bool) gogo.Future {
-	gofiles := pkg.GoFiles
-	cgo, cgofiles := cgo(pkg, deps)
-
-	// warning
-	deps = append(deps, cgo)
-	gofiles = append(gofiles, cgofiles...)
+	var gofiles []string
+	gofiles = append(gofiles, pkg.GoFiles...)
+	var objs []objFuture
+	if len(pkg.CgoFiles) > 0 {
+		cgo, cgofiles := cgo(pkg, deps)
+		deps = append(deps, cgo[0])
+		objs = append(objs, cgo...)
+		gofiles = append(gofiles, cgofiles...)
+	}
 	if includeTests {
 		gofiles = append(gofiles, pkg.TestGoFiles...)
 	}
-	objs := []objFuture{Gc(pkg, deps, gofiles)}
+	objs = append(objs, Gc(pkg, deps, gofiles))
 	for _, sfile := range pkg.SFiles {
 		objs = append(objs, Asm(pkg, sfile))
 	}

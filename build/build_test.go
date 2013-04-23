@@ -23,7 +23,7 @@ var buildPackageTests = []struct {
 	{"b"}, // imports a
 	{"helloworld"},
 	{"stdlib/bytes"}, // uses build tags, has .s files
-	{"stdio"}, // imports "C"
+	{"stdio"},        // imports "C"
 }
 
 func TestBuildPackage(t *testing.T) {

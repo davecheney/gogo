@@ -15,10 +15,7 @@ import (
 // which would be produced from the source CgoFiles.
 // These filenames are only valid of the Result of the
 // cgo Future is nil.
-func cgo(pkg *gogo.Package, deps []gogo.Future) (gogo.Future, []string) {
-	if len(pkg.CgoFiles) == 0 {
-		return new(nilFuture), nil
-	}
+func cgo(pkg *gogo.Package, deps []gogo.Future) ([]objFuture, []string) {
 	srcdir := pkg.Srcdir()
 	objdir := pkg.Objdir()
 
@@ -50,15 +47,42 @@ func cgo(pkg *gogo.Package, deps []gogo.Future) (gogo.Future, []string) {
 
 	args = []string{"-pthread", "-o", filepath.Join(pkg.Objdir(), "_cgo_.o")}
 	args = append(args, ofiles...)
-	args = append(args, "-pie")
-
 	gcc := Gcc(pkg, deps2, args)
 
 	cgo = Cgo(pkg, []gogo.Future{gcc}, []string{"-dynimport", filepath.Join(pkg.Objdir(), "_cgo_.o"), "-dynout", filepath.Join(pkg.Objdir(), "_cgo_import.c")})
 
 	cgoimport := Cc(pkg, cgo, "_cgo_import.c") // _cgo_import.c is relative to objdir
 
-	return cgoimport, gofiles
+	args = []string{"-I", srcdir, "-fPIC", "-pthread", "-o", filepath.Join(objdir, "_all.o")}
+	for _, ofile := range ofiles {
+		// hack
+		if strings.Contains(ofile, "_cgo_") {
+			continue
+		}
+		args = append(args, ofile)
+	}
+	args = append(args, "-Wl,-r", "-nostdlib", "/usr/lib/gcc/x86_64-linux-gnu/4.7/libgcc.a")
+	all := Gcc(pkg, []gogo.Future{cgoimport}, args)
+
+	f := &cgoFuture{
+		future: future{
+			err: make(chan error, 1),
+		},
+		dep:     all,
+		Package: pkg,
+	}
+	go func() { f.future.err <- f.dep.Result() }()
+	return []objFuture{f, cgoimport}, gofiles
+}
+
+type cgoFuture struct {
+	future
+	dep gogo.Future
+	*gogo.Package
+}
+
+func (f *cgoFuture) objfile() string {
+	return filepath.Join(f.Objdir(), "_all.o")
 }
 
 // nilFuture represents a future of no work which always
@@ -112,7 +136,7 @@ type ccTarget struct {
 	*gogo.Package
 }
 
-func Cc(pkg *gogo.Package, dep gogo.Future, cfile string) gogo.Future {
+func Cc(pkg *gogo.Package, dep gogo.Future, cfile string) objFuture {
 	cc := &ccTarget{
 		future: future{
 			err: make(chan error, 1),
@@ -125,7 +149,9 @@ func Cc(pkg *gogo.Package, dep gogo.Future, cfile string) gogo.Future {
 	return cc
 }
 
-func (t *ccTarget) objfile() string { return strings.Replace(t.cfile, ".c", ".6", 1) }
+func (t *ccTarget) objfile() string {
+	return filepath.Join(t.Objdir(), strings.Replace(t.cfile, ".c", ".6", 1))
+}
 
 func (t *ccTarget) execute() {
 	if err := t.dep.Result(); err != nil {
