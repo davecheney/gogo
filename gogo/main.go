@@ -39,7 +39,7 @@ func findProjectRoot(path string) (string, error) {
 		}
 		return path, nil
 	}
-	return "", fmt.Errorf("could not find project root in %q or it's parents", start)
+	return "", fmt.Errorf("could not find project root in %q or its parents", start)
 }
 
 func main() {
