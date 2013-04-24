@@ -1,16 +1,31 @@
 package gogo
 
 import (
+	"os"
 	"path/filepath"
 )
 
+// Project represents a gogo project.
+// A gogo project has a simlar layout to a $GOPATH workspace.
+// Each gogo project has a standard directory layout starting
+// at the project root, which we'll refer too as $PROJECT.
+//
+// 	$PROJECT/			- the project root
+// 	$PROJECT/.gogo/			- used internally by gogo and identifies
+//					  the root of the project.
+// 	$PROJECT/src/			- base directory for the source of packages
+// 	$PROJECT/bin/			- base directory for the compiled binaries
 type Project struct {
 	root string
 }
 
+// NewProject returns a *Project if root represents a valid gogo project.
 func NewProject(root string) (*Project, error) {
 	root, err := filepath.Abs(root)
 	if err != nil {
+		return nil, err
+	}
+	if _, err := os.Stat(filepath.Join(root, ".gogo")); err != nil {
 		return nil, err
 	}
 	return &Project{

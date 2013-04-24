@@ -1,7 +1,6 @@
 package gogo
 
 import (
-	"bytes"
 	"fmt"
 	"go/ast"
 	"go/build"
@@ -16,6 +15,8 @@ import (
 )
 
 // Package describes a Go package.
+// The contents of a Package will be influenced by the Context from which
+// they are resolved.
 type Package struct {
 	// The Context that resolved this package.
 	*Context
@@ -240,77 +241,6 @@ func (p *Package) scanFiles(files []os.FileInfo) error {
 }
 
 // from $GOROOT/src/pkg/go/build/build.go
-
-var slashslash = []byte("//")
-
-// shouldBuild reports whether it is okay to use this file,
-// The rule is that in the file's leading run of // comments
-// and blank lines, which must be followed by a blank line
-// (to avoid including a Go package clause doc comment),
-// lines beginning with '// +build' are taken as build directives.
-//
-// The file is accepted only if each such line lists something
-// matching the file.  For example:
-//
-//      // +build windows linux
-//
-// marks the file as applicable only on Windows and Linux.
-//
-func (ctxt *Context) shouldBuild(content []byte) bool {
-	// Pass 1. Identify leading run of // comments and blank lines,
-	// which must be followed by a blank line.
-	end := 0
-	p := content
-	for len(p) > 0 {
-		line := p
-		if i := bytes.IndexByte(line, '\n'); i >= 0 {
-			line, p = line[:i], p[i+1:]
-		} else {
-			p = p[len(p):]
-		}
-		line = bytes.TrimSpace(line)
-		if len(line) == 0 { // Blank line
-			end = len(content) - len(p)
-			continue
-		}
-		if !bytes.HasPrefix(line, slashslash) { // Not comment line
-			break
-		}
-	}
-	content = content[:end]
-
-	// Pass 2.  Process each line in the run.
-	p = content
-	for len(p) > 0 {
-		line := p
-		if i := bytes.IndexByte(line, '\n'); i >= 0 {
-			line, p = line[:i], p[i+1:]
-		} else {
-			p = p[len(p):]
-		}
-		line = bytes.TrimSpace(line)
-		if bytes.HasPrefix(line, slashslash) {
-			line = bytes.TrimSpace(line[len(slashslash):])
-			if len(line) > 0 && line[0] == '+' {
-				// Looks like a comment +line.
-				f := strings.Fields(string(line))
-				if f[0] == "+build" {
-					ok := false
-					for _, tok := range f[1:] {
-						if ctxt.match(tok) {
-							ok = true
-							break
-						}
-					}
-					if !ok {
-						return false // this one doesn't match
-					}
-				}
-			}
-		}
-	}
-	return true // everything matches
-}
 
 // saveCgo saves the information from the #cgo lines in the import "C" comment.
 // These lines set CFLAGS and LDFLAGS and pkg-config directives that affect

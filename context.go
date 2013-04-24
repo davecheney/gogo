@@ -1,6 +1,7 @@
 package gogo
 
 import (
+	"bytes"
 	"go/build"
 	"io/ioutil"
 	"os"
@@ -10,8 +11,7 @@ import (
 	"unicode"
 )
 
-// Context represents the execution of a series of Targets
-// for a Project.
+// Context represents a view over a set of Packages for a Project.
 type Context struct {
 	*Project
 	goroot, goos, goarch string
@@ -38,7 +38,7 @@ type Context struct {
 }
 
 // NewDefaultContext returns a Context that represents the version
-// of Go that compiled this package.
+// of Go that compiled gogo.
 func NewDefaultContext(p *Project) (*Context, error) {
 	return newContext(p, runtime.GOROOT(), runtime.GOOS, runtime.GOARCH)
 }
@@ -90,12 +90,20 @@ func (ctx *Context) Destroy() error {
 	return os.RemoveAll(ctx.workdir)
 }
 
+// Workdir returns the path to the temporary working directory for this context.
+// The contents of Workdir are removed when the Destroy method is invoked.
 func (ctx *Context) Workdir() string { return ctx.workdir }
 
+// Pkgdir returns the path to the temporary location where intermediary packages
+// are created during build and test phases.
 func (ctx *Context) Pkgdir() string { return filepath.Join(ctx.workdir, "pkg", ctx.goos, ctx.goarch) }
+
+// Bindir returns the path when final binary executables will be stored.
 func (ctx *Context) Bindir() string {
 	return filepath.Join(ctx.Project.Bindir(), ctx.goos, ctx.goarch)
 }
+
+// stdlib returns the path to the standard library packages.
 func (ctx *Context) stdlib() string { return filepath.Join(ctx.goroot, "pkg", ctx.goos+"_"+ctx.goarch) }
 
 // from $GOROOT/src/pkg/go/build/build.go
@@ -200,4 +208,75 @@ func (c *Context) match(name string) bool {
 	}
 
 	return false
+}
+
+var slashslash = []byte("//")
+
+// shouldBuild reports whether it is okay to use this file,
+// The rule is that in the file's leading run of // comments
+// and blank lines, which must be followed by a blank line
+// (to avoid including a Go package clause doc comment),
+// lines beginning with '// +build' are taken as build directives.
+//
+// The file is accepted only if each such line lists something
+// matching the file.  For example:
+//
+//      // +build windows linux
+//
+// marks the file as applicable only on Windows and Linux.
+//
+func (ctxt *Context) shouldBuild(content []byte) bool {
+	// Pass 1. Identify leading run of // comments and blank lines,
+	// which must be followed by a blank line.
+	end := 0
+	p := content
+	for len(p) > 0 {
+		line := p
+		if i := bytes.IndexByte(line, '\n'); i >= 0 {
+			line, p = line[:i], p[i+1:]
+		} else {
+			p = p[len(p):]
+		}
+		line = bytes.TrimSpace(line)
+		if len(line) == 0 { // Blank line
+			end = len(content) - len(p)
+			continue
+		}
+		if !bytes.HasPrefix(line, slashslash) { // Not comment line
+			break
+		}
+	}
+	content = content[:end]
+
+	// Pass 2.  Process each line in the run.
+	p = content
+	for len(p) > 0 {
+		line := p
+		if i := bytes.IndexByte(line, '\n'); i >= 0 {
+			line, p = line[:i], p[i+1:]
+		} else {
+			p = p[len(p):]
+		}
+		line = bytes.TrimSpace(line)
+		if bytes.HasPrefix(line, slashslash) {
+			line = bytes.TrimSpace(line[len(slashslash):])
+			if len(line) > 0 && line[0] == '+' {
+				// Looks like a comment +line.
+				f := strings.Fields(string(line))
+				if f[0] == "+build" {
+					ok := false
+					for _, tok := range f[1:] {
+						if ctxt.match(tok) {
+							ok = true
+							break
+						}
+					}
+					if !ok {
+						return false // this one doesn't match
+					}
+				}
+			}
+		}
+	}
+	return true // everything matches
 }

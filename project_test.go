@@ -13,8 +13,7 @@ func TestNewProject(t *testing.T) {
 	}
 }
 
-// disabled
-func testProjectError(t *testing.T) {
+func TestProjectError(t *testing.T) {
 	cwd := getwd(t)
 	// assumes $CWD/missing is missing
 	if _, err := NewProject(filepath.Join(cwd, "missing")); err == nil {
