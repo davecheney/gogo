@@ -1,3 +1,5 @@
+// Package gogo/build provides functions for building and testing
+// Go packages.
 package build
 
 import (

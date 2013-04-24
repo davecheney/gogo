@@ -1,3 +1,11 @@
+// gogo is an alternative build tool for the Go programming language.
+//
+// Package gogo provides the basic types and interfaces to describe Projects and
+// Packages.
+//
+// The gogo command can be installed with go get
+//
+//	go get github.com/davecheney/gogo
 package gogo
 
 // A Future represents some work to be performed.

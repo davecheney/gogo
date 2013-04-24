@@ -11,7 +11,7 @@ import (
 )
 
 // Test returns a Future representing the result of compiling the
-// package pkg, and its dependencies, and linking it with the 
+// package pkg, and its dependencies, and linking it with the
 // test runner.
 func Test(pkg *gogo.Package) gogo.Future {
 	// commands are built as packages for testing.
