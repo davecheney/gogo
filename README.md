@@ -5,9 +5,9 @@
 
 ## goals
 
- 1. An alternative build tool that is independent of Go itself
+ 1. An alternative build tool that is independent of Go itself.
 
- 2. Extensible, ie other go program's should be able to build Go code without having to shell out to the `go` tool, and other code can reuse `gogo` components to make their own build automation.
+ 2. Extensible, ie. other Go programs should be able to build Go code without having to shell out to the `go` tool, other code can reuse `gogo` components to make their own build automation.
 
  3. Project based, not package based, supporting some (as yet to be defined) package version system.
 
@@ -32,11 +32,11 @@ Inside your `gogo` project, you should arrange your Go source, and its dependenc
 `gogo` can build a package or a command, using the `build` subcommand. When commands are built, they are placed in `$PROJECT/bin/$GOOS/$GOARCH/` (this path is subject to change)
 
     cd $PROJECT   # or a subdirectory of your project
-    gogo build $SOME_PACKAGE_OR_COMMAND    # . is not supported yet
+    gogo build $SOME_PACKAGE_OR_COMMAND
 
 ### gogo test
 
-`gogo` can invoke the standard `testing` package tests. 
+`gogo` can invoke the standard `testing` package tests. Note, external tests are not yet supported.
 
     cd $PROJECT
     gogo test $SOME_PACKAGE
@@ -51,7 +51,7 @@ Inside your `gogo` project, you should arrange your Go source, and its dependenc
 
 ## faq
 
- * Q. Will `gogo` build Go itself ? A. No.
+ * Q. Can `gogo` build to Go standard library ? A. No.
  * Q. Will relative imports be supported ? A. No, they are evil.
 
 ## todo
