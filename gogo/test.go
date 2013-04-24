@@ -9,7 +9,7 @@ import (
 
 var TestCmd = &Command{
 	Run: func(project *gogo.Project, args []string) error {
-		ctx, err := gogo.NewDefaultContext(project)
+		ctx, err := gogo.NewContext(project, *goroot, *goos, *goarch)
 		if err != nil {
 			return err
 		}

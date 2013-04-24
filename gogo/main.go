@@ -6,6 +6,7 @@ import (
 	"log"
 	"os"
 	"path/filepath"
+	"runtime"
 
 	"github.com/davecheney/gogo"
 )
@@ -42,8 +43,18 @@ func findProjectRoot(path string) (string, error) {
 	return "", fmt.Errorf("could not find project root in %q or its parents", start)
 }
 
+var (
+	fs     = flag.NewFlagSet("gogo", flag.ContinueOnError)
+	goos   = fs.String("goos", runtime.GOOS, "override GOOS")
+	goarch = fs.String("goarch", runtime.GOARCH, "override GOARCH")
+	goroot = fs.String("goroot", runtime.GOROOT(), "override GOROOT")
+)
+
 func main() {
-	flag.Parse()
+	if err := fs.Parse(os.Args[1:]); err != nil {
+		log.Fatalf("could not parse flags: %v", err)
+	}
+
 	root, err := findProjectRoot(mustGetwd())
 	if err != nil {
 		log.Fatalf("could not locate project root: %v", err)
@@ -55,10 +66,10 @@ func main() {
 	if err != nil {
 		log.Fatalf("unable to construct project: %v", err)
 	}
-	if flag.NArg() < 1 {
+	if fs.NArg() < 1 {
 		log.Fatalf("no command supplied")
 	}
-	first, rest := flag.Arg(0), flag.Args()[1:]
+	first, rest := fs.Arg(0), fs.Args()[1:]
 	var cmd *Command
 	switch first {
 	case "build":

@@ -40,10 +40,12 @@ type Context struct {
 // NewDefaultContext returns a Context that represents the version
 // of Go that compiled gogo.
 func NewDefaultContext(p *Project) (*Context, error) {
-	return newContext(p, runtime.GOROOT(), runtime.GOOS, runtime.GOARCH)
+	return NewContext(p, runtime.GOROOT(), runtime.GOOS, runtime.GOARCH)
 }
 
-func newContext(p *Project, goroot, goos, goarch string) (*Context, error) {
+// NewContext returns a Context that can be used to build *Project
+// using the specified goroot, goos, and goarch.
+func NewContext(p *Project, goroot, goos, goarch string) (*Context, error) {
 	workdir, err := ioutil.TempDir("", "gogo")
 	if err != nil {
 		return nil, err
