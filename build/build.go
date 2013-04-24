@@ -19,6 +19,10 @@ func (f *future) Result() error {
 	return result
 }
 
+// Build returns a Future representing the result of compiling the
+// package pkg, and its dependencies.
+// If pkg is a a command, then the results of build include linking
+// the final binary into pkg.Context.Bindir().
 func Build(pkg *gogo.Package) gogo.Future {
 	if pkg.Name() == "main" {
 		return buildCommand(pkg)
@@ -26,6 +30,8 @@ func Build(pkg *gogo.Package) gogo.Future {
 	return buildPackage(pkg)
 }
 
+// buildPackage returns a Future repesenting the results of compiling
+// pkg and its dependencies.
 func buildPackage(pkg *gogo.Package) gogo.Future {
 	var deps []gogo.Future
 	for _, dep := range pkg.Imports {
@@ -38,6 +44,8 @@ func buildPackage(pkg *gogo.Package) gogo.Future {
 	return pkg.Context.Targets[pkg]
 }
 
+// buildCommand returns a Future repesenting the results of compiling
+// pkg as a command and linking the result into pkg.Context.Bindir().
 func buildCommand(pkg *gogo.Package) gogo.Future {
 	var deps []gogo.Future
 	for _, dep := range pkg.Imports {
