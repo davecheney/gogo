@@ -49,6 +49,10 @@ Inside your `gogo` project, you should arrange your Go source, and its dependenc
 
 [![Build Status](https://drone.io/github.com/davecheney/gogo/status.png)](https://drone.io/github.com/davecheney/gogo/latest)
 
+## mailing list
+
+A mailing list for `gogo`, `gogo-users` has been created, [https://groups.google.com/d/forum/gogo-users](https://groups.google.com/d/forum/gogo-users)
+
 ## faq
 
  * Q. Can `gogo` build to Go standard library ? A. No.
