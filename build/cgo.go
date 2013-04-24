@@ -106,6 +106,8 @@ type cgoTarget struct {
 	*gogo.Package
 }
 
+// Cgo returns a Future representing the result of running the
+// cgo command.
 func Cgo(pkg *gogo.Package, deps []gogo.Future, args []string) gogo.Future {
 	cgo := &cgoTarget{
 		future: future{
@@ -144,6 +146,8 @@ type ccTarget struct {
 	*gogo.Package
 }
 
+// Cc returns a Future representing the result of compiling a
+// .c source file with the Context specified cc compiler.
 func Cc(pkg *gogo.Package, dep gogo.Future, cfile string) objFuture {
 	cc := &ccTarget{
 		future: future{
@@ -177,6 +181,8 @@ type gccTarget struct {
 	*gogo.Package
 }
 
+// Gcc returns a Future representing the result of invoking the
+// system gcc compiler.
 func Gcc(pkg *gogo.Package, deps []gogo.Future, args []string) gogo.Future {
 	gcc := &gccTarget{
 		future: future{
