@@ -69,4 +69,4 @@ A mailing list for `gogo`, `gogo-users` has been created, [https://groups.google
 
 ## licence
 
-`gogo` is licenced under a BSD licence. Various parts of gogo are copyright the Go Authors 2012.
+`gogo` is licenced under a BSD licence. Various parts of `gogo` are copyright the Go Authors 2012.
