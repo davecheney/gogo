@@ -21,7 +21,7 @@ func (f *future) Result() error {
 
 // Build returns a Future representing the result of compiling the
 // package pkg, and its dependencies.
-// If pkg is a a command, then the results of build include linking
+// If pkg is a command, then the results of build include linking
 // the final binary into pkg.Context.Bindir().
 func Build(pkg *gogo.Package) gogo.Future {
 	if pkg.Name() == "main" {
