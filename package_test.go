@@ -49,6 +49,18 @@ var newPackageTests = []struct {
 			"a/b": {"b", "src/a/b"},
 		},
 	},
+	/**
+	{
+		// d imports d/e, d should not import d/f as that is a test dep
+		"d",
+		map[string]struct { name, srcdir string }{
+			"a":   {"a", "src/a"},
+			"a/b": {"b", "src/a/b"},
+			"d":	{ "d", "src/d"},
+			"d/e":	{ "e", "src/d/e"},
+		},
+	},
+	**/
 }
 
 func TestNewPackage(t *testing.T) {
