@@ -20,6 +20,7 @@ type Toolchain interface {
 
 	Cgo(string, []string) error
 	Gcc(string, []string) error
+	Libgcc() (string, error)
 
 	name() string
 }
@@ -36,6 +37,11 @@ func (t *toolchain) Cgo(cwd string, args []string) error {
 
 func (t *toolchain) Gcc(cwd string, args []string) error {
 	return run(cwd, t.gcc, args...)
+}
+
+func (t *toolchain) Libgcc() (string, error) {
+	libgcc, err := runOut(".", t.gcc, "-print-libgcc-file-name")
+	return strings.Trim(string(libgcc), "\r\n"), err
 }
 
 type gcToolchain struct {
@@ -103,6 +109,11 @@ func (t *gcToolchain) Ld(outfile, afile string) error {
 }
 
 func run(dir, command string, args ...string) error {
+	_, err := runOut(dir, command, args...)
+	return err
+}
+
+func runOut(dir, command string, args ...string) ([]byte, error) {
 	cmd := exec.Command(command, args...)
 	cmd.Dir = dir
 	output, err := cmd.CombinedOutput()
@@ -110,5 +121,5 @@ func run(dir, command string, args ...string) error {
 		log.Printf("cd %s; %s %s", dir, command, strings.Join(args, " "))
 		log.Printf("%s", output)
 	}
-	return err
+	return output, err
 }

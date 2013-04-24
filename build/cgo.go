@@ -4,7 +4,6 @@ import (
 	"github.com/davecheney/gogo"
 	"log"
 	"os"
-	"os/exec"
 	"path/filepath"
 	"strings"
 )
@@ -65,12 +64,12 @@ func cgo(pkg *gogo.Package, deps []gogo.Future) ([]objFuture, []string) {
 	}
 
 	// more hacking
-	libgcc, err := runOut(srcdir, "gcc", "-I", srcdir, "-print-libgcc-file-name")
+	libgcc, err := pkg.Libgcc()
 	if err != nil {
 		panic(err)
 	}
 
-	args = append(args, "-Wl,-r", "-nostdlib", strings.Trim(string(libgcc), "\r\n"))
+	args = append(args, "-Wl,-r", "-nostdlib", libgcc)
 	all := Gcc(pkg, []gogo.Future{cgoimport}, args)
 
 	f := &cgoFuture{
@@ -200,15 +199,4 @@ func (t *gccTarget) execute() {
 	}
 	log.Printf("gcc %q: %s", t.Package.ImportPath(), t.args)
 	t.future.err <- t.Gcc(t.Srcdir(), t.args)
-}
-
-func runOut(dir, command string, args ...string) ([]byte, error) {
-	cmd := exec.Command(command, args...)
-	cmd.Dir = dir
-	output, err := cmd.CombinedOutput()
-	if err != nil {
-		log.Printf("cd %s; %s %s", dir, command, strings.Join(args, " "))
-		log.Printf("%s", output)
-	}
-	return output, err
 }
