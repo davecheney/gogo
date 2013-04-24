@@ -49,6 +49,7 @@ var newPackageTests = []struct {
 			"a/b": {"b", "src/a/b"},
 		},
 	},
+	// TODO(dfc) fix this test
 	/**
 	{
 		// d imports d/e, d should not import d/f as that is a test dep

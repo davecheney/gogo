@@ -21,18 +21,18 @@ The `gogo` command is `go get`able
 
 ## usage
 
-`gogo` is not ready for use, you'd be mad to use it. In the case that you _are_ mad, create a project workspace 
+`gogo` is not ready for use, you'd be mad to use it. In the case that you _are_ mad, create a project workspace and a `.gogo` subdirectory. The `.gogo` subdirectory is used by the `gogo` tool to locate the root of your project.
 
-    mkdir $PROJECT
+    mkdir -p $PROJECT/.gogo
 
-Inside your `gogo` project, you should arrange your Go source, and its dependencies into the usual `$PACKAGE/src` subfolder. You can also use your existing $GOPATH directory as a project location, `gogo` will not overwrite the output of the `go` tool.
+Inside your `gogo` project, you should arrange your Go source, and its dependencies into the usual `$PROJECT/src` subfolder. You can also use your existing $GOPATH directory as a project location, just `mkdir -p $GOPATH/.gogo`. `gogo` will not overwrite the output of the `go` tool.
 
 ### gogo build
 
 `gogo` can build a package or a command, using the `build` subcommand. When commands are built, they are placed in `$PROJECT/bin/$GOOS/$GOARCH/` (this path is subject to change)
 
-    cd $PROJECT
-    gogo build $SOME_PACKAGE_OR_COMMAND
+    cd $PROJECT   # or a subdirectory of your project
+    gogo build $SOME_PACKAGE_OR_COMMAND    # . is not supported yet
 
 ### gogo test
 
@@ -59,7 +59,6 @@ Inside your `gogo` project, you should arrange your Go source, and its dependenc
  * better package parsing (support all file types)
  * improve cgo support
  * use the correct archchar for 5,6, and 8g.
- * project auto discovery; be able to invoke `gogo` from anywhere inside the project.
  * build tags support
  * support external tests in package, XTestGoFiles
  * implement incremental builds; only build what needs to be built
