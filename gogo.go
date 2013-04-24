@@ -5,7 +5,8 @@
 //
 // The gogo command can be installed with go get
 //
-//	go get github.com/davecheney/gogo
+//	go get github.com/davecheney/gogo/gogo
+//
 package gogo
 
 // A Future represents some work to be performed.
