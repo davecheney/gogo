@@ -57,7 +57,8 @@ Inside your `gogo` project, you should arrange your Go source, and its dependenc
 ## todo
 
  * better package parsing (support all file types)
- * cgo support for build and test
+ * improve cgo support
+ * use the correct archchar for 5,6, and 8g.
  * project auto discovery; be able to invoke `gogo` from anywhere inside the project.
  * build tags support
  * support external tests in package, XTestGoFiles
