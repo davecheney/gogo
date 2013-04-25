@@ -45,7 +45,7 @@ func findProjectRoot(path string) (string, error) {
 }
 
 var (
-	fs     = flag.NewFlagSet("gogo", flag.ContinueOnError)
+	fs     = flag.NewFlagSet("gogo", flag.ExitOnError)
 	goos   = fs.String("goos", runtime.GOOS, "override GOOS")
 	goarch = fs.String("goarch", runtime.GOARCH, "override GOARCH")
 	goroot = fs.String("goroot", runtime.GOROOT(), "override GOROOT")
@@ -74,13 +74,16 @@ func main() {
 	if err != nil {
 		log.Fatalf("unable to construct project: %v", err)
 	}
+
 	args := os.Args
 	if len(args) < 2 {
 		log.Fatalf("no command supplied")
 	}
 	cmd, ok := commands[args[1]]
 	if !ok {
-		log.Fatalf("unknown command %q", args[1])
+		log.Errorf("unknown command %q", args[1])
+		fs.PrintDefaults()
+		os.Exit(1)
 	}
 	cmd.AddFlags(fs)
 	if err := fs.Parse(args[2:]); err != nil {
