@@ -3,6 +3,7 @@ package build
 import (
 	"path/filepath"
 	"strings"
+	"time"
 
 	"github.com/davecheney/gogo"
 	"github.com/davecheney/gogo/log"
@@ -133,10 +134,13 @@ func (t *cgoTarget) execute() {
 }
 
 func (t *cgoTarget) build() error {
+	t0 := time.Now()
 	if err := t.Mkdir(t.Objdir()); err != nil {
 		return err
 	}
-	return t.Cgo(t.Srcdir(), t.args)
+	err := t.Cgo(t.Srcdir(), t.args)
+	t.Record("cgo", time.Since(t0))
+	return err
 }
 
 type ccTarget struct {
@@ -166,12 +170,15 @@ func (t *ccTarget) objfile() string {
 }
 
 func (t *ccTarget) execute() {
+	t0 := time.Now()
 	if err := t.dep.Result(); err != nil {
 		t.future.err <- err
 		return
 	}
 	log.Debugf("cc %q: %s", t.Package.ImportPath(), t.cfile)
-	t.future.err <- t.Cc(t.Srcdir(), t.Objdir(), t.objfile(), filepath.Join(t.Objdir(), t.cfile))
+	err := t.Cc(t.Srcdir(), t.Objdir(), t.objfile(), filepath.Join(t.Objdir(), t.cfile))
+	t.Record("cc", time.Since(t0))
+	t.future.err <- err
 }
 
 type gccTarget struct {
@@ -203,6 +210,9 @@ func (t *gccTarget) execute() {
 			return
 		}
 	}
+	t0 := time.Now()
 	log.Debugf("gcc %q: %s", t.Package.ImportPath(), t.args)
-	t.future.err <- t.Gcc(t.Srcdir(), t.args)
+	err := t.Gcc(t.Srcdir(), t.args)
+	t.Record("gcc", time.Since(t0))
+	t.future.err <- err
 }

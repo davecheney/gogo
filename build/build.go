@@ -4,6 +4,7 @@ package build
 
 import (
 	"path/filepath"
+	"time"
 
 	"github.com/davecheney/gogo"
 	"github.com/davecheney/gogo/log"
@@ -135,12 +136,15 @@ func (t *packTarget) execute() {
 func (t *packTarget) pkgfile() string { return t.Package.ImportPath() + ".a" }
 
 func (t *packTarget) build() error {
+	t0 := time.Now()
 	ofile := t.pkgfile()
 	pkgdir := filepath.Dir(filepath.Join(t.Pkgdir(), ofile))
 	if err := t.Mkdir(pkgdir); err != nil {
 		return err
 	}
-	return t.Pack(ofile, t.Pkgdir(), t.objfiles...)
+	err := t.Pack(ofile, t.Pkgdir(), t.objfiles...)
+	t.Record("pack", time.Since(t0))
+	return err
 }
 
 type gcTarget struct {
@@ -179,10 +183,13 @@ func Gc(pkg *gogo.Package, deps []gogo.Future, gofiles []string) objFuture {
 func (t *gcTarget) objfile() string { return filepath.Join(t.Objdir(), "_go_.6") }
 
 func (t *gcTarget) build() error {
+	t0 := time.Now()
 	if err := t.Mkdir(t.Objdir()); err != nil {
 		return err
 	}
-	return t.Gc(t.ImportPath(), t.Srcdir(), t.objfile(), t.gofiles)
+	err := t.Gc(t.ImportPath(), t.Srcdir(), t.objfile(), t.gofiles)
+	t.Record("gc", time.Since(t0))
+	return err
 }
 
 type asmTarget struct {
@@ -215,10 +222,13 @@ func (t *asmTarget) objfile() string {
 }
 
 func (t *asmTarget) build() error {
+	t0 := time.Now()
 	if err := t.Mkdir(t.Objdir()); err != nil {
 		return err
 	}
-	return t.Asm(t.Srcdir(), t.objfile(), t.sfile)
+	err := t.Asm(t.Srcdir(), t.objfile(), t.sfile)
+	t.Record("asm", time.Since(t0))
+	return err
 }
 
 type ldTarget struct {
@@ -255,9 +265,12 @@ func Ld(pkg *gogo.Package, deps ...gogo.Future) gogo.Future {
 func (t *ldTarget) pkgfile() string { return filepath.Join(t.Workdir(), t.Package.ImportPath()+".a") }
 
 func (t *ldTarget) build() error {
+	t0 := time.Now()
 	bindir := t.Package.Context.Bindir()
 	if err := t.Mkdir(bindir); err != nil {
 		return err
 	}
-	return t.Ld(filepath.Join(bindir, filepath.Base(t.Package.ImportPath())), t.pkgfile())
+	err := t.Ld(filepath.Join(bindir, filepath.Base(t.Package.ImportPath())), t.pkgfile())
+	t.Record("ld", time.Since(t0))
+	return err
 }
