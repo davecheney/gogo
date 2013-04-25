@@ -1,13 +1,13 @@
 package build
 
 import (
-	"log"
 	"os"
 	"os/exec"
 	"path/filepath"
 	"strings"
 
 	"github.com/davecheney/gogo"
+	"github.com/davecheney/gogo/log"
 )
 
 // Test returns a Future representing the result of compiling the
@@ -86,7 +86,7 @@ func (t *runTestTarget) execute() {
 			return
 		}
 	}
-	log.Printf("test %q", t.Package.ImportPath())
+	log.Infof("test %q", t.Package.ImportPath())
 	t.future.err <- t.build()
 }
 
@@ -95,7 +95,7 @@ func (t *runTestTarget) build() error {
 	cmd.Dir = t.Package.Srcdir()
 	cmd.Stdout = os.Stdout
 	cmd.Stderr = os.Stderr
-	log.Printf("cd %s; %s", cmd.Dir, strings.Join(cmd.Args, " "))
+	log.Infof("cd %s; %s", cmd.Dir, strings.Join(cmd.Args, " "))
 	return cmd.Run()
 }
 

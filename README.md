@@ -27,6 +27,16 @@ The `gogo` command is `go get`able
 
 Inside your `gogo` project, you should arrange your Go source, and its dependencies into the usual `$PROJECT/src` subfolder. You can also use your existing $GOPATH directory as a project location, just `mkdir -p $GOPATH/.gogo`. `gogo` will not overwrite the output of the `go` tool.
 
+### common flags
+
+#### logging output
+
+`gogo` has three logging levels, DEBUG, INFO, and ERROR. The following flags control logging output.
+
+    -q suppresses log messages below ERROR level
+
+    -v enables log messges below INFO level
+
 ### gogo build
 
 `gogo` can build a package or a command, using the `build` subcommand. When commands are built, they are placed in `$PROJECT/bin/$GOOS/$GOARCH/` (this path is subject to change)

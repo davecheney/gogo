@@ -3,12 +3,12 @@ package main
 import (
 	"flag"
 	"fmt"
-	"log"
 	"os"
 	"path/filepath"
 	"runtime"
 
 	"github.com/davecheney/gogo"
+	"github.com/davecheney/gogo/log"
 )
 
 const projectdir = ".gogo"
@@ -50,26 +50,26 @@ var (
 	goroot = fs.String("goroot", runtime.GOROOT(), "override GOROOT")
 )
 
-func main() {
-	if err := fs.Parse(os.Args[1:]); err != nil {
-		log.Fatalf("could not parse flags: %v", err)
-	}
+func init() {
+	fs.BoolVar(&log.Quiet, "q", log.Quiet, "suppress log messages below ERROR level")
+	fs.BoolVar(&log.Verbose, "v", log.Verbose, "enable log levels below INFO level")
+}
 
+func main() {
 	root, err := findProjectRoot(mustGetwd())
 	if err != nil {
 		log.Fatalf("could not locate project root: %v", err)
 	}
 
-	log.Printf("project root %q", root)
-
 	project, err := gogo.NewProject(root)
 	if err != nil {
 		log.Fatalf("unable to construct project: %v", err)
 	}
-	if fs.NArg() < 1 {
+	args := os.Args
+	if len(args) < 2 {
 		log.Fatalf("no command supplied")
 	}
-	first, rest := fs.Arg(0), fs.Args()[1:]
+	first, args := args[1], args[2:]
 	var cmd *Command
 	switch first {
 	case "build":
@@ -79,7 +79,13 @@ func main() {
 	default:
 		log.Fatalf("unknown command %q", first)
 	}
-	if err := cmd.Run(project, rest); err != nil {
-		log.Fatal(err)
+	if err := fs.Parse(args); err != nil {
+		log.Fatalf("could not parse flags: %v", err)
+	}
+
+	// must be below fs.Parse because the -q and -v flags will log.Infof
+	log.Infof("project root %q", root)
+	if err := cmd.Run(project, fs.Args()); err != nil {
+		log.Fatalf("failed to run command %q: %v", first, err)
 	}
 }

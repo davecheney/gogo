@@ -1,11 +1,12 @@
 package build
 
 import (
-	"github.com/davecheney/gogo"
-	"log"
 	"os"
 	"path/filepath"
 	"strings"
+
+	"github.com/davecheney/gogo"
+	"github.com/davecheney/gogo/log"
 )
 
 // cgo support functions
@@ -128,7 +129,7 @@ func (t *cgoTarget) execute() {
 			return
 		}
 	}
-	log.Printf("cgo %q: %s", t.Package.ImportPath(), t.args)
+	log.Debugf("cgo %q: %s", t.Package.ImportPath(), t.args)
 	t.future.err <- t.build()
 }
 
@@ -170,7 +171,7 @@ func (t *ccTarget) execute() {
 		t.future.err <- err
 		return
 	}
-	log.Printf("cc %q: %s", t.Package.ImportPath(), t.cfile)
+	log.Debugf("cc %q: %s", t.Package.ImportPath(), t.cfile)
 	t.future.err <- t.Cc(t.Srcdir(), t.Objdir(), t.objfile(), filepath.Join(t.Objdir(), t.cfile))
 }
 
@@ -203,6 +204,6 @@ func (t *gccTarget) execute() {
 			return
 		}
 	}
-	log.Printf("gcc %q: %s", t.Package.ImportPath(), t.args)
+	log.Debugf("gcc %q: %s", t.Package.ImportPath(), t.args)
 	t.future.err <- t.Gcc(t.Srcdir(), t.args)
 }

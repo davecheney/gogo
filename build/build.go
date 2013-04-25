@@ -3,11 +3,11 @@
 package build
 
 import (
-	"log"
 	"os"
 	"path/filepath"
 
 	"github.com/davecheney/gogo"
+	"github.com/davecheney/gogo/log"
 )
 
 // future implements a gogo.Future
@@ -129,7 +129,7 @@ func (t *packTarget) execute() {
 		// collect successful objfiles for packing
 		t.objfiles = append(t.objfiles, dep.objfile())
 	}
-	log.Printf("pack %q: %s", t.Package.ImportPath(), t.objfiles)
+	log.Infof("pack %q: %s", t.Package.ImportPath(), t.objfiles)
 	t.future.err <- t.build()
 }
 
@@ -158,7 +158,7 @@ func (t *gcTarget) execute() {
 			return
 		}
 	}
-	log.Printf("gc %q: %s", t.Package.ImportPath(), t.gofiles)
+	log.Debugf("gc %q: %s", t.Package.ImportPath(), t.gofiles)
 	t.future.err <- t.build()
 }
 
@@ -193,7 +193,7 @@ type asmTarget struct {
 }
 
 func (t *asmTarget) execute() {
-	log.Printf("as %q: %s", t.Package.ImportPath(), t.sfile)
+	log.Debugf("as %q: %s", t.Package.ImportPath(), t.sfile)
 	t.future.err <- t.build()
 }
 
@@ -235,7 +235,7 @@ func (t *ldTarget) execute() {
 			return
 		}
 	}
-	log.Printf("ld %q", t.Package.ImportPath())
+	log.Infof("ld %q", t.Package.ImportPath())
 	t.future.err <- t.build()
 }
 
