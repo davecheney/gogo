@@ -73,6 +73,20 @@ func TestContextDestroy(t *testing.T) {
 	}
 }
 
+func TestContextMkdir(t *testing.T) {
+	ctx := newTestContext(t)
+	defer ctx.Destroy()
+	dir := filepath.Join(ctx.Workdir(), "a/b/c", "test")
+	if err := ctx.Mkdir(dir); err != nil {
+		t.Fatal(err)
+	}
+	if _, err := os.Stat(dir); err != nil {
+		t.Fatal(err)
+	}
+	// TODO(dfc) add a test where we replace dir with a file
+	// then invoke ctx.Mkdir() again to expose the cache.
+}
+
 var matchTests = []struct {
 	tag   string
 	match bool

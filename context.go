@@ -108,6 +108,14 @@ func (ctx *Context) Bindir() string {
 // stdlib returns the path to the standard library packages.
 func (ctx *Context) stdlib() string { return filepath.Join(ctx.goroot, "pkg", ctx.goos+"_"+ctx.goarch) }
 
+// Mkdir creates a directory named path, along with any necessary
+// parents, and returns nil, or else returns an error.  If path is
+// already a directory, MkdirAll does nothing and returns nil.
+func (c *Context) Mkdir(path string) error {
+	// TODO(dfc) insert cache
+	return os.MkdirAll(path, 0777)
+}
+
 // from $GOROOT/src/pkg/go/build/build.go
 
 // goodOSArchFile returns false if the name contains a $GOOS or $GOARCH
