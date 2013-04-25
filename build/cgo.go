@@ -1,7 +1,6 @@
 package build
 
 import (
-	"os"
 	"path/filepath"
 	"strings"
 
@@ -134,7 +133,7 @@ func (t *cgoTarget) execute() {
 }
 
 func (t *cgoTarget) build() error {
-	if err := os.MkdirAll(t.Objdir(), 0777); err != nil {
+	if err := t.Mkdir(t.Objdir()); err != nil {
 		return err
 	}
 	return t.Cgo(t.Srcdir(), t.args)

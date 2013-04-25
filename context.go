@@ -9,6 +9,8 @@ import (
 	"runtime"
 	"strings"
 	"unicode"
+
+	"github.com/davecheney/gogo/log"
 )
 
 // Context represents a view over a set of Packages for a Project.
@@ -113,6 +115,7 @@ func (ctx *Context) stdlib() string { return filepath.Join(ctx.goroot, "pkg", ct
 // already a directory, MkdirAll does nothing and returns nil.
 func (c *Context) Mkdir(path string) error {
 	// TODO(dfc) insert cache
+	log.Debugf("mkdir %q", path)
 	return os.MkdirAll(path, 0777)
 }
 

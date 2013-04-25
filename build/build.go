@@ -3,7 +3,6 @@
 package build
 
 import (
-	"os"
 	"path/filepath"
 
 	"github.com/davecheney/gogo"
@@ -138,7 +137,7 @@ func (t *packTarget) pkgfile() string { return t.Package.ImportPath() + ".a" }
 func (t *packTarget) build() error {
 	ofile := t.pkgfile()
 	pkgdir := filepath.Dir(filepath.Join(t.Pkgdir(), ofile))
-	if err := os.MkdirAll(pkgdir, 0777); err != nil {
+	if err := t.Mkdir(pkgdir); err != nil {
 		return err
 	}
 	return t.Pack(ofile, t.Pkgdir(), t.objfiles...)
@@ -180,7 +179,7 @@ func Gc(pkg *gogo.Package, deps []gogo.Future, gofiles []string) objFuture {
 func (t *gcTarget) objfile() string { return filepath.Join(t.Objdir(), "_go_.6") }
 
 func (t *gcTarget) build() error {
-	if err := os.MkdirAll(t.Objdir(), 0777); err != nil {
+	if err := t.Mkdir(t.Objdir()); err != nil {
 		return err
 	}
 	return t.Gc(t.ImportPath(), t.Srcdir(), t.objfile(), t.gofiles)
@@ -216,7 +215,7 @@ func (t *asmTarget) objfile() string {
 }
 
 func (t *asmTarget) build() error {
-	if err := os.MkdirAll(t.Objdir(), 0777); err != nil {
+	if err := t.Mkdir(t.Objdir()); err != nil {
 		return err
 	}
 	return t.Asm(t.Srcdir(), t.objfile(), t.sfile)
@@ -257,7 +256,7 @@ func (t *ldTarget) pkgfile() string { return filepath.Join(t.Workdir(), t.Packag
 
 func (t *ldTarget) build() error {
 	bindir := t.Package.Context.Bindir()
-	if err := os.MkdirAll(bindir, 0777); err != nil {
+	if err := t.Mkdir(bindir); err != nil {
 		return err
 	}
 	return t.Ld(filepath.Join(bindir, filepath.Base(t.Package.ImportPath())), t.pkgfile())
