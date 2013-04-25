@@ -3,17 +3,18 @@ package gogo
 // build statistics
 
 import (
+	"fmt"
 	"sync"
 	"time"
 )
 
-// statistics records the various Durations
-type statistics struct {
+// Statistics records the various Durations
+type Statistics struct {
 	sync.Mutex
 	stats map[string]time.Duration
 }
 
-func (s *statistics) Record(name string, d time.Duration) {
+func (s *Statistics) Record(name string, d time.Duration) {
 	s.Lock()
 	defer s.Unlock()
 	if s.stats == nil {
@@ -24,7 +25,7 @@ func (s *statistics) Record(name string, d time.Duration) {
 	s.stats[name] = acc
 }
 
-func (s *statistics) Total() time.Duration {
+func (s *Statistics) Total() time.Duration {
 	s.Lock()
 	defer s.Unlock()
 	var d time.Duration
@@ -32,4 +33,10 @@ func (s *statistics) Total() time.Duration {
 		d += v
 	}
 	return d
+}
+
+func (s *Statistics) String() string {
+	s.Lock()
+	defer s.Unlock()
+	return fmt.Sprintf("%v", s.stats)
 }

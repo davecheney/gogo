@@ -3,9 +3,11 @@ package main
 import (
 	"flag"
 	"fmt"
+	"time"
 
 	"github.com/davecheney/gogo"
 	"github.com/davecheney/gogo/build"
+	"github.com/davecheney/gogo/log"
 )
 
 func init() {
@@ -31,10 +33,17 @@ func addBuildFlags(fs *flag.FlagSet) {
 
 var BuildCmd = &Command{
 	Run: func(project *gogo.Project, args []string) error {
+		t0 := time.Now()
+		defer func() {
+			log.Infof("build duration: %v", time.Since(t0))
+		}()
 		ctx, err := gogo.NewContext(project, *goroot, *goos, *goarch)
 		if err != nil {
 			return err
 		}
+		defer func() {
+			log.Debugf("build statistics: %v", ctx.Statistics.String())
+		}()
 		var pkgs []*gogo.Package
 		for _, arg := range args {
 			pkg, err := ctx.ResolvePackage(arg)

@@ -38,7 +38,7 @@ type Context struct {
 	SearchPaths []string
 	cgoEnabled  bool
 
-	statistics
+	Statistics
 }
 
 // NewDefaultContext returns a Context that represents the version
