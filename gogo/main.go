@@ -14,7 +14,8 @@ import (
 const projectdir = ".gogo"
 
 type Command struct {
-	Run func(project *gogo.Project, args []string) error
+	Run      func(project *gogo.Project, args []string) error
+	AddFlags func(fs *flag.FlagSet)
 }
 
 func mustGetwd() string {
@@ -55,6 +56,14 @@ func init() {
 	fs.BoolVar(&log.Verbose, "v", log.Verbose, "enable log levels below INFO level")
 }
 
+var commands = make(map[string]*Command)
+
+// registerCommand registers a command for main.
+// registerCommand should only be called from init().
+func registerCommand(name string, command *Command) {
+	commands[name] = command
+}
+
 func main() {
 	root, err := findProjectRoot(mustGetwd())
 	if err != nil {
@@ -69,23 +78,18 @@ func main() {
 	if len(args) < 2 {
 		log.Fatalf("no command supplied")
 	}
-	first, args := args[1], args[2:]
-	var cmd *Command
-	switch first {
-	case "build":
-		cmd = BuildCmd
-	case "test":
-		cmd = TestCmd
-	default:
-		log.Fatalf("unknown command %q", first)
+	cmd, ok := commands[args[1]]
+	if !ok {
+		log.Fatalf("unknown command %q", args[1])
 	}
-	if err := fs.Parse(args); err != nil {
+	cmd.AddFlags(fs)
+	if err := fs.Parse(args[2:]); err != nil {
 		log.Fatalf("could not parse flags: %v", err)
 	}
 
 	// must be below fs.Parse because the -q and -v flags will log.Infof
 	log.Infof("project root %q", root)
 	if err := cmd.Run(project, fs.Args()); err != nil {
-		log.Fatalf("failed to run command %q: %v", first, err)
+		log.Fatalf("command %q failed: %v", args[1], err)
 	}
 }

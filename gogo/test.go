@@ -7,6 +7,10 @@ import (
 	"github.com/davecheney/gogo/build"
 )
 
+func init() {
+	registerCommand("test", TestCmd)
+}
+
 var TestCmd = &Command{
 	Run: func(project *gogo.Project, args []string) error {
 		ctx, err := gogo.NewContext(project, *goroot, *goos, *goarch)
@@ -28,4 +32,5 @@ var TestCmd = &Command{
 		}
 		return ctx.Destroy()
 	},
+	AddFlags: addBuildFlags,
 }
