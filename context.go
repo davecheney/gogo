@@ -83,7 +83,7 @@ func (c *Context) ResolvePackage(path string) (*Package, error) {
 	if pkg, ok := c.pkgs[path]; ok {
 		return pkg, nil
 	}
-	pkg, err := newPackage(c, path)
+	pkg, err := newPackage(c, c.SrcPaths[0], path)
 	if err != nil {
 		return nil, err
 	}

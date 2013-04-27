@@ -17,6 +17,9 @@ import (
 // 	$PROJECT/bin/			- base directory for the compiled binaries
 type Project struct {
 	root string
+
+	// SrcPaths represents the location of package sources.
+	SrcPaths []SrcPath
 }
 
 // NewProject returns a *Project if root represents a valid gogo project.
@@ -28,9 +31,11 @@ func NewProject(root string) (*Project, error) {
 	if _, err := os.Stat(filepath.Join(root, ".gogo")); err != nil {
 		return nil, err
 	}
-	return &Project{
+	p := &Project{
 		root: root,
-	}, nil
+	}
+	p.SrcPaths = []SrcPath{SrcPath{p, "src"}}
+	return p, nil
 }
 
 // Root returns the top level directory representing this project.
@@ -39,3 +44,13 @@ func (p *Project) Root() string { return p.root }
 // Bindir returns the top level directory representing the binary
 // directory of this project.
 func (p *Project) Bindir() string { return filepath.Join(p.root, "bin") }
+
+// SrcPath represents a directory containing the source of
+// some packages.
+type SrcPath struct {
+	*Project
+	path string
+}
+
+// Srcdir returns the path to the root of this SrcPaths src.
+func (s *SrcPath) Srcdir() string { return filepath.Join(s.root, s.path) }

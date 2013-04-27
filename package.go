@@ -21,14 +21,13 @@ type Package struct {
 	// The Context that resolved this package.
 	*Context
 
+	SrcPath
+
 	// The name of the package
 	name string
 
 	// The import path of the package.
 	importPath string
-
-	// The path to the source of this package relative to Project.Root()
-	srcdir string
 
 	// Source files
 	GoFiles        []string // .go source files (excluding CgoFiles, TestGoFiles, XTestGoFiles)
@@ -51,11 +50,11 @@ type Package struct {
 }
 
 // newPackage constructs a new Package for the Context context.
-func newPackage(context *Context, path string) (*Package, error) {
+func newPackage(context *Context, srcpath SrcPath, path string) (*Package, error) {
 	pkg := &Package{
 		Context:    context,
+		SrcPath:    srcpath,
 		importPath: path,
-		srcdir:     filepath.Join("src", path),
 	}
 	files, err := ioutil.ReadDir(pkg.Srcdir())
 	if err != nil {
@@ -71,7 +70,7 @@ func (p *Package) Name() string { return p.name }
 func (p *Package) ImportPath() string { return p.importPath }
 
 // Srcdir returns the path to this package.
-func (p *Package) Srcdir() string { return filepath.Join(p.Project.Root(), p.srcdir) }
+func (p *Package) Srcdir() string { return filepath.Join(p.SrcPath.Srcdir(), p.importPath) }
 
 func (p *Package) openFile(name string) (io.ReadCloser, error) {
 	return os.Open(filepath.Join(p.Srcdir(), name))
