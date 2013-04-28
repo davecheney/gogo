@@ -26,8 +26,8 @@ type Package struct {
 	// The name of the package
 	name string
 
-	// The import path of the package.
-	importPath string
+	// ImportPath represents the import path that would is used to import this package into another.
+	ImportPath string
 
 	// Source files
 	GoFiles        []string // .go source files (excluding CgoFiles, TestGoFiles, XTestGoFiles)
@@ -54,7 +54,7 @@ func newPackage(context *Context, srcpath SrcPath, path string) (*Package, error
 	pkg := &Package{
 		Context:    context,
 		SrcPath:    srcpath,
-		importPath: path,
+		ImportPath: path,
 	}
 	files, err := ioutil.ReadDir(pkg.Srcdir())
 	if err != nil {
@@ -66,11 +66,8 @@ func newPackage(context *Context, srcpath SrcPath, path string) (*Package, error
 // Name returns the name of the package.
 func (p *Package) Name() string { return p.name }
 
-// ImportPath returns the import path that would is used to import this package into another.
-func (p *Package) ImportPath() string { return p.importPath }
-
 // Srcdir returns the path to this package.
-func (p *Package) Srcdir() string { return filepath.Join(p.SrcPath.Srcdir(), p.importPath) }
+func (p *Package) Srcdir() string { return filepath.Join(p.SrcPath.Srcdir(), p.ImportPath) }
 
 func (p *Package) openFile(name string) (io.ReadCloser, error) {
 	return os.Open(filepath.Join(p.Srcdir(), name))
@@ -165,7 +162,7 @@ func (p *Package) scanFiles(files []os.FileInfo) error {
 			p.name = pkg
 			firstFile = filename
 		} else if pkg != p.name {
-			return fmt.Errorf("found packages %s (%s) and %s (%s) in %s", p.name, firstFile, pkg, filename, p.importPath)
+			return fmt.Errorf("found packages %s (%s) and %s (%s) in %s", p.name, firstFile, pkg, filename, p.ImportPath)
 		}
 		var isCgo bool
 		for _, decl := range pf.Decls {
@@ -223,7 +220,7 @@ func (p *Package) scanFiles(files []os.FileInfo) error {
 		}
 	}
 	if p.name == "" {
-		return &build.NoGoError{p.importPath}
+		return &build.NoGoError{p.ImportPath}
 	}
 	for i := range imports {
 		if stdlib[i] {
@@ -314,10 +311,10 @@ func (p *Package) saveCgo(filename string, cg *ast.CommentGroup) error {
 
 // Objdir returns the destination for object files compiled for this Package.
 func (p *Package) Objdir() string {
-	return filepath.Join(p.Context.workdir, filepath.FromSlash(p.ImportPath()), "_obj")
+	return filepath.Join(p.Context.workdir, filepath.FromSlash(p.ImportPath), "_obj")
 }
 
 // TestObjDir returns the destination for test object files compiled for this Package.
 func (p *Package) TestObjdir() string {
-	return filepath.Join(p.Context.workdir, filepath.FromSlash(p.ImportPath()), "_test")
+	return filepath.Join(p.Context.workdir, filepath.FromSlash(p.ImportPath), "_test")
 }

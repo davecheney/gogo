@@ -129,11 +129,11 @@ func (t *packTarget) execute() {
 		// collect successful objfiles for packing
 		t.objfiles = append(t.objfiles, dep.objfile())
 	}
-	log.Infof("pack %q: %s", t.Package.ImportPath(), t.objfiles)
+	log.Infof("pack %q: %s", t.Package.ImportPath, t.objfiles)
 	t.future.err <- t.build()
 }
 
-func (t *packTarget) pkgfile() string { return t.Package.ImportPath() + ".a" }
+func (t *packTarget) pkgfile() string { return t.Package.ImportPath + ".a" }
 
 func (t *packTarget) build() error {
 	t0 := time.Now()
@@ -161,7 +161,7 @@ func (t *gcTarget) execute() {
 			return
 		}
 	}
-	log.Debugf("gc %q: %s", t.Package.ImportPath(), t.gofiles)
+	log.Debugf("gc %q: %s", t.Package.ImportPath, t.gofiles)
 	t.future.err <- t.build()
 }
 
@@ -187,7 +187,7 @@ func (t *gcTarget) build() error {
 	if err := t.Mkdir(t.Objdir()); err != nil {
 		return err
 	}
-	err := t.Gc(t.ImportPath(), t.Srcdir(), t.objfile(), t.gofiles)
+	err := t.Gc(t.ImportPath, t.Srcdir(), t.objfile(), t.gofiles)
 	t.Record("gc", time.Since(t0))
 	return err
 }
@@ -199,7 +199,7 @@ type asmTarget struct {
 }
 
 func (t *asmTarget) execute() {
-	log.Debugf("as %q: %s", t.Package.ImportPath(), t.sfile)
+	log.Debugf("as %q: %s", t.Package.ImportPath, t.sfile)
 	t.future.err <- t.build()
 }
 
@@ -244,7 +244,7 @@ func (t *ldTarget) execute() {
 			return
 		}
 	}
-	log.Infof("ld %q", t.Package.ImportPath())
+	log.Infof("ld %q", t.Package.ImportPath)
 	t.future.err <- t.build()
 }
 
@@ -262,7 +262,7 @@ func Ld(pkg *gogo.Package, deps ...gogo.Future) gogo.Future {
 	return &t.future
 }
 
-func (t *ldTarget) pkgfile() string { return filepath.Join(t.Workdir(), t.Package.ImportPath()+".a") }
+func (t *ldTarget) pkgfile() string { return filepath.Join(t.Workdir(), t.Package.ImportPath+".a") }
 
 func (t *ldTarget) build() error {
 	t0 := time.Now()
@@ -270,7 +270,7 @@ func (t *ldTarget) build() error {
 	if err := t.Mkdir(bindir); err != nil {
 		return err
 	}
-	err := t.Ld(filepath.Join(bindir, filepath.Base(t.Package.ImportPath())), t.pkgfile())
+	err := t.Ld(filepath.Join(bindir, filepath.Base(t.Package.ImportPath)), t.pkgfile())
 	t.Record("ld", time.Since(t0))
 	return err
 }

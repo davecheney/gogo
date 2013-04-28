@@ -26,7 +26,7 @@ func TestPackageImports(t *testing.T) {
 		}
 		for i, im := range pkg.Imports {
 			if im.Name() != tt.imports[i] {
-				t.Fatalf("Package %q: expecting import %q, got %q", pkg.ImportPath(), im.Name(), tt.imports[i])
+				t.Fatalf("Package %q: expecting import %q, got %q", pkg.ImportPath, im.Name(), tt.imports[i])
 			}
 		}
 	}
@@ -94,8 +94,8 @@ func TestPackageObjdir(t *testing.T) {
 	if err != nil {
 		t.Fatalf("project.ResolvePackage(): %v", err)
 	}
-	if objdir := pkg.Objdir(); objdir != filepath.Join(ctx.Workdir(), pkg.ImportPath(), "_obj") {
-		t.Fatalf("pkg.Objdir(): expected %q, got %q", filepath.Join(ctx.Workdir(), pkg.ImportPath(), "_obj"), objdir)
+	if objdir := pkg.Objdir(); objdir != filepath.Join(ctx.Workdir(), pkg.ImportPath, "_obj") {
+		t.Fatalf("pkg.Objdir(): expected %q, got %q", filepath.Join(ctx.Workdir(), pkg.ImportPath, "_obj"), objdir)
 	}
 }
 
@@ -106,8 +106,8 @@ func TestPackageTestObjdir(t *testing.T) {
 	if err != nil {
 		t.Fatalf("project.ResolvePackage(): %v", err)
 	}
-	if testdir := pkg.TestObjdir(); testdir != filepath.Join(ctx.Workdir(), pkg.ImportPath(), "_test") {
-		t.Fatalf("pkg.Objdir(): expected %q, got %q", filepath.Join(ctx.Workdir(), pkg.ImportPath(), "_test"), testdir)
+	if testdir := pkg.TestObjdir(); testdir != filepath.Join(ctx.Workdir(), pkg.ImportPath, "_test") {
+		t.Fatalf("pkg.Objdir(): expected %q, got %q", filepath.Join(ctx.Workdir(), pkg.ImportPath, "_test"), testdir)
 	}
 }
 

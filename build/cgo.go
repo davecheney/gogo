@@ -129,7 +129,7 @@ func (t *cgoTarget) execute() {
 			return
 		}
 	}
-	log.Debugf("cgo %q: %s", t.Package.ImportPath(), t.args)
+	log.Debugf("cgo %q: %s", t.Package.ImportPath, t.args)
 	t.future.err <- t.build()
 }
 
@@ -175,7 +175,7 @@ func (t *ccTarget) execute() {
 		t.future.err <- err
 		return
 	}
-	log.Debugf("cc %q: %s", t.Package.ImportPath(), t.cfile)
+	log.Debugf("cc %q: %s", t.Package.ImportPath, t.cfile)
 	err := t.Cc(t.Srcdir(), t.Objdir(), t.objfile(), filepath.Join(t.Objdir(), t.cfile))
 	t.Record("cc", time.Since(t0))
 	t.future.err <- err
@@ -211,7 +211,7 @@ func (t *gccTarget) execute() {
 		}
 	}
 	t0 := time.Now()
-	log.Debugf("gcc %q: %s", t.Package.ImportPath(), t.args)
+	log.Debugf("gcc %q: %s", t.Package.ImportPath, t.args)
 	err := t.Gcc(t.Srcdir(), t.args)
 	t.Record("gcc", time.Since(t0))
 	t.future.err <- err
