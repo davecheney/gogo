@@ -51,10 +51,10 @@ func (t *buildTestTarget) build() error {
 	if err := t.buildTestMain(objdir); err != nil {
 		return err
 	}
-	if err := t.Gc(objdir, objdir, t.Package.Name()+".6", []string{"_testmain.go"}); err != nil {
+	if err := t.Gc(objdir, objdir, t.Package.Name+".6", []string{"_testmain.go"}); err != nil {
 		return err
 	}
-	return t.Ld(filepath.Join(objdir, t.Package.Name()+".test"), filepath.Join(objdir, t.Package.Name()+".6"))
+	return t.Ld(filepath.Join(objdir, t.Package.Name+".test"), filepath.Join(objdir, t.Package.Name+".6"))
 }
 
 func (t *buildTestTarget) buildTestMain(objdir string) error {
@@ -91,7 +91,7 @@ func (t *runTestTarget) execute() {
 }
 
 func (t *runTestTarget) build() error {
-	cmd := exec.Command(filepath.Join(t.Objdir(), t.Package.Name()+".test"))
+	cmd := exec.Command(filepath.Join(t.Objdir(), t.Package.Name+".test"))
 	cmd.Dir = t.Package.Srcdir()
 	cmd.Stdout = os.Stdout
 	cmd.Stderr = os.Stderr

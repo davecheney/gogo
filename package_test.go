@@ -25,8 +25,8 @@ func TestPackageImports(t *testing.T) {
 			t.Fatalf("Project.ResolvePackage(): %v", err)
 		}
 		for i, im := range pkg.Imports {
-			if im.Name() != tt.imports[i] {
-				t.Fatalf("Package %q: expecting import %q, got %q", pkg.ImportPath, im.Name(), tt.imports[i])
+			if im.Name != tt.imports[i] {
+				t.Fatalf("Package %q: expecting import %q, got %q", pkg.ImportPath, im.Name, tt.imports[i])
 			}
 		}
 	}
@@ -74,8 +74,8 @@ func TestNewPackage(t *testing.T) {
 		}
 		for importpath, pkg := range ctx.pkgs {
 			if expected, ok := tt.expected[importpath]; ok {
-				if pkg.Name() != expected.name {
-					t.Fatalf("pkg.Name(): expected %q, got %q", expected.name, pkg.Name())
+				if pkg.Name != expected.name {
+					t.Fatalf("pkg.Name: expected %q, got %q", expected.name, pkg.Name)
 				}
 				if expected := abs(t, filepath.Join(ctx.Project.Root(), expected.srcdir)); expected != pkg.Srcdir() {
 					t.Fatalf("pkg.Srcdir(): expected %q, got %q", expected, pkg.Srcdir())

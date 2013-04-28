@@ -26,7 +26,7 @@ func (f *future) Result() error {
 // If pkg is a command, then the results of build include linking
 // the final binary into pkg.Context.Bindir().
 func Build(pkg *gogo.Package) gogo.Future {
-	if pkg.Name() == "main" {
+	if pkg.Name == "main" {
 		return buildCommand(pkg)
 	}
 	return buildPackage(pkg)

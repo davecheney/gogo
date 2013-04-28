@@ -23,8 +23,8 @@ type Package struct {
 
 	SrcPath
 
-	// The name of the package
-	name string
+	// Name returns the name of the package.
+	Name string
 
 	// ImportPath represents the import path that would is used to import this package into another.
 	ImportPath string
@@ -62,9 +62,6 @@ func newPackage(context *Context, srcpath SrcPath, path string) (*Package, error
 	}
 	return pkg, pkg.scanFiles(files)
 }
-
-// Name returns the name of the package.
-func (p *Package) Name() string { return p.name }
 
 // Srcdir returns the path to this package.
 func (p *Package) Srcdir() string { return filepath.Join(p.SrcPath.Srcdir(), p.ImportPath) }
@@ -158,11 +155,11 @@ func (p *Package) scanFiles(files []os.FileInfo) error {
 			isXTest = true
 			pkg = pkg[:len(pkg)-len("_test")]
 		}
-		if p.name == "" {
-			p.name = pkg
+		if p.Name == "" {
+			p.Name = pkg
 			firstFile = filename
-		} else if pkg != p.name {
-			return fmt.Errorf("found packages %s (%s) and %s (%s) in %s", p.name, firstFile, pkg, filename, p.ImportPath)
+		} else if pkg != p.Name {
+			return fmt.Errorf("found packages %s (%s) and %s (%s) in %s", p.Name, firstFile, pkg, filename, p.ImportPath)
 		}
 		var isCgo bool
 		for _, decl := range pf.Decls {
@@ -178,7 +175,7 @@ func (p *Package) scanFiles(files []os.FileInfo) error {
 						}
 						switch path {
 						case "":
-							return fmt.Errorf("package %q imported blank path: %v", p.Name(), spec.Pos())
+							return fmt.Errorf("package %q imported blank path: %v", p.Name, spec.Pos())
 						case "C":
 							if isTest {
 								return fmt.Errorf("use of cgo in test %s not supported", filename)
@@ -219,7 +216,7 @@ func (p *Package) scanFiles(files []os.FileInfo) error {
 			p.GoFiles = append(p.GoFiles, filename)
 		}
 	}
-	if p.name == "" {
+	if p.Name == "" {
 		return &build.NoGoError{p.ImportPath}
 	}
 	for i := range imports {
