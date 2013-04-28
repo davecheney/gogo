@@ -44,7 +44,7 @@ Inside your `gogo` project, you should arrange your Go source, and its dependenc
     cd $PROJECT   # or a subdirectory of your project
     gogo build $SOME_PACKAGE_OR_COMMAND
 
-`gogo` also supports a `-a` flag which will build all packages inside your $PROJECT/src directory
+`gogo` also supports a `-a` flag which will build all packages inside your $PROJECT/src directory.
 
     cd $PROJECT
     gogo build -a
@@ -55,6 +55,11 @@ Inside your `gogo` project, you should arrange your Go source, and its dependenc
 
     cd $PROJECT
     gogo test $SOME_PACKAGE
+
+`gogo` also supports the `-a` flag which will build and test each package inside your $PROJECT/src directory.
+
+    cd $PROJECT
+    gogo test -a
 
 ## documentation
 
