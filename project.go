@@ -2,6 +2,7 @@ package gogo
 
 import (
 	"os"
+	"path"
 	"path/filepath"
 )
 
@@ -54,3 +55,37 @@ type SrcPath struct {
 
 // Srcdir returns the path to the root of this SrcPaths src.
 func (s *SrcPath) Srcdir() string { return filepath.Join(s.root, s.path) }
+
+// AllPackages returns the import paths of all the packages
+// inside this SrcPath.
+func (s *SrcPath) AllPackages() ([]string, error) {
+	return allPackages(s.Srcdir(), "")
+}
+
+func allPackages(dir, prefix string) ([]string, error) {
+	var pkgs []string
+	d, err := os.Open(dir)
+	if err != nil {
+		return nil, err
+	}
+	defer d.Close()
+	files, err := d.Readdir(-1)
+	if err != nil {
+		return nil, err
+	}
+	for _, f := range files {
+		name := f.Name()
+		if name[0] == '.' {
+			continue
+		}
+		if f.IsDir() {
+			pkgs = append(pkgs, path.Join(prefix, name))
+			pp, err := allPackages(filepath.Join(dir, name), path.Join(prefix, name))
+			if err != nil {
+				return nil, err
+			}
+			pkgs = append(pkgs, pp...)
+		}
+	}
+	return pkgs, nil
+}

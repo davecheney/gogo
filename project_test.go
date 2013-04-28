@@ -2,6 +2,8 @@ package gogo
 
 import (
 	"path/filepath"
+	"reflect"
+	"sort"
 	"testing"
 )
 
@@ -50,5 +52,21 @@ func TestResolvePackage(t *testing.T) {
 		if pkg.ImportPath() != tt.path {
 			t.Fatalf("Package.path: expected %q, got %q", tt.path, pkg.ImportPath())
 		}
+	}
+}
+
+func TestSrcPathAllPackages(t *testing.T) {
+	p := newProject(t)
+	pkgs, err := p.SrcPaths[0].AllPackages()
+	if err != nil {
+		t.Fatal(err)
+	}
+	expected := []string{"a", "a/a", "a/b", "b", "blankimport", "c",
+		"cgotest", "d", "d/e", "d/f", "doublepkg", "empty", "empty2", "empty2/empty3", "extdata", "hellocgo",
+		"helloworld", "k", "scanfiles", "stdio", "stdlib", "stdlib/bytes"}
+	sort.StringSlice(pkgs).Sort()
+	sort.StringSlice(expected).Sort()
+	if !reflect.DeepEqual(pkgs, expected) {
+		t.Fatalf("AllPackages: expected %s, got %s", expected, pkgs)
 	}
 }

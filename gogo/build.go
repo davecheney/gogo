@@ -3,6 +3,7 @@ package main
 import (
 	"flag"
 	"fmt"
+	stdbuild "go/build"
 	"time"
 
 	"github.com/davecheney/gogo"
@@ -45,9 +46,20 @@ var BuildCmd = &Command{
 			log.Debugf("build statistics: %v", ctx.Statistics.String())
 		}()
 		var pkgs []*gogo.Package
+		if A {
+			var err error
+			args, err = project.SrcPaths[0].AllPackages()
+			if err != nil {
+				return fmt.Errorf("could not fetch packages in srcpath %v: %v", project.SrcPaths[0], err)
+			}
+		}
 		for _, arg := range args {
 			pkg, err := ctx.ResolvePackage(arg)
 			if err != nil {
+				if _, ok := err.(*stdbuild.NoGoError); ok {
+					log.Debugf("skipping %q", arg)
+					continue
+				}
 				return fmt.Errorf("failed to resolve package %q: %v", arg, err)
 			}
 			pkgs = append(pkgs, pkg)
