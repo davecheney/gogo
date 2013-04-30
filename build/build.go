@@ -186,7 +186,7 @@ func (t *gcTarget) build() error {
 	if err := t.Mkdir(t.Objdir()); err != nil {
 		return err
 	}
-	err := t.Gc(t.ImportPath, t.Srcdir(), t.objfile(), t.gofiles)
+	err := t.Gc(t.ImportPath, t.Srcdir, t.objfile(), t.gofiles)
 	t.Record("gc", time.Since(t0))
 	return err
 }
@@ -225,7 +225,7 @@ func (t *asmTarget) build() error {
 	if err := t.Mkdir(t.Objdir()); err != nil {
 		return err
 	}
-	err := t.Asm(t.Srcdir(), t.objfile(), t.sfile)
+	err := t.Asm(t.Srcdir, t.objfile(), t.sfile)
 	t.Record("asm", time.Since(t0))
 	return err
 }

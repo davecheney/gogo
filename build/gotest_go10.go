@@ -44,12 +44,12 @@ func writeTestmain(out string, p *gogo.Package) error {
 		Package: p,
 	}
 	for _, file := range p.TestGoFiles {
-		if err := t.load(filepath.Join(p.Srcdir(), file), "_test", &t.NeedTest); err != nil {
+		if err := t.load(filepath.Join(p.Srcdir, file), "_test", &t.NeedTest); err != nil {
 			return err
 		}
 	}
 	for _, file := range p.XTestGoFiles {
-		if err := t.load(filepath.Join(p.Srcdir(), file), "_xtest", &t.NeedXtest); err != nil {
+		if err := t.load(filepath.Join(p.Srcdir, file), "_xtest", &t.NeedXtest); err != nil {
 			return err
 		}
 	}

@@ -17,10 +17,10 @@ import (
 // These filenames are only valid of the Result of the
 // cgo Future is nil.
 func cgo(pkg *gogo.Package, deps []gogo.Future) ([]objFuture, []string) {
-	srcdir := pkg.Srcdir()
+	srcdir := pkg.Srcdir
 	objdir := pkg.Objdir()
 
-	var args = []string{"-objdir", objdir, "--", "-I", pkg.Srcdir(), "-I", objdir}
+	var args = []string{"-objdir", objdir, "--", "-I", srcdir, "-I", objdir}
 	args = append(args, pkg.CgoCFLAGS...)
 	var gofiles = []string{filepath.Join(objdir, "_cgo_gotypes.go")}
 	var gccfiles = []string{filepath.Join(objdir, "_cgo_main.c"), filepath.Join(objdir, "_cgo_export.c")}
@@ -46,12 +46,12 @@ func cgo(pkg *gogo.Package, deps []gogo.Future) ([]objFuture, []string) {
 		deps2 = append(deps2, Gcc(pkg, []gogo.Future{cgodefun}, append(args, "-o", ofile, "-c", gccfile)))
 	}
 
-	args = []string{"-pthread", "-o", filepath.Join(pkg.Objdir(), "_cgo_.o")}
+	args = []string{"-pthread", "-o", filepath.Join(objdir, "_cgo_.o")}
 	args = append(args, ofiles...)
 	args = append(args, pkg.CgoLDFLAGS...)
 	gcc := Gcc(pkg, deps2, args)
 
-	cgo = Cgo(pkg, []gogo.Future{gcc}, []string{"-dynimport", filepath.Join(pkg.Objdir(), "_cgo_.o"), "-dynout", filepath.Join(pkg.Objdir(), "_cgo_import.c")})
+	cgo = Cgo(pkg, []gogo.Future{gcc}, []string{"-dynimport", filepath.Join(objdir, "_cgo_.o"), "-dynout", filepath.Join(objdir, "_cgo_import.c")})
 
 	cgoimport := Cc(pkg, cgo, "_cgo_import.c") // _cgo_import.c is relative to objdir
 
@@ -138,7 +138,7 @@ func (t *cgoTarget) build() error {
 	if err := t.Mkdir(t.Objdir()); err != nil {
 		return err
 	}
-	err := t.Cgo(t.Srcdir(), t.args)
+	err := t.Cgo(t.Srcdir, t.args)
 	t.Record("cgo", time.Since(t0))
 	return err
 }
@@ -176,7 +176,7 @@ func (t *ccTarget) execute() {
 		return
 	}
 	log.Debugf("cc %q: %s", t.Package.ImportPath, t.cfile)
-	err := t.Cc(t.Srcdir(), t.Objdir(), t.objfile(), filepath.Join(t.Objdir(), t.cfile))
+	err := t.Cc(t.Srcdir, t.Objdir(), t.objfile(), filepath.Join(t.Objdir(), t.cfile))
 	t.Record("cc", time.Since(t0))
 	t.future.err <- err
 }
@@ -212,7 +212,7 @@ func (t *gccTarget) execute() {
 	}
 	t0 := time.Now()
 	log.Debugf("gcc %q: %s", t.Package.ImportPath, t.args)
-	err := t.Gcc(t.Srcdir(), t.args)
+	err := t.Gcc(t.Srcdir, t.args)
 	t.Record("gcc", time.Since(t0))
 	t.future.err <- err
 }

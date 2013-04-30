@@ -92,7 +92,7 @@ func (t *runTestTarget) execute() {
 
 func (t *runTestTarget) build() error {
 	cmd := exec.Command(filepath.Join(t.Objdir(), t.Package.Name+".test"))
-	cmd.Dir = t.Package.Srcdir()
+	cmd.Dir = t.Package.Srcdir
 	cmd.Stdout = os.Stdout
 	cmd.Stderr = os.Stderr
 	log.Infof("cd %s; %s", cmd.Dir, strings.Join(cmd.Args, " "))

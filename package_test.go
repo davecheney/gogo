@@ -77,8 +77,8 @@ func TestNewPackage(t *testing.T) {
 				if pkg.Name != expected.name {
 					t.Fatalf("pkg.Name: expected %q, got %q", expected.name, pkg.Name)
 				}
-				if expected := abs(t, filepath.Join(ctx.Project.Root(), expected.srcdir)); expected != pkg.Srcdir() {
-					t.Fatalf("pkg.Srcdir(): expected %q, got %q", expected, pkg.Srcdir())
+				if expected := abs(t, filepath.Join(ctx.Project.Root(), expected.srcdir)); expected != pkg.Srcdir {
+					t.Fatalf("pkg.Srcdir(): expected %q, got %q", expected, pkg.Srcdir)
 				}
 			} else {
 				t.Fatalf("pkg cache was missing %q", importpath)
