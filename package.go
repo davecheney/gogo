@@ -51,11 +51,11 @@ type Package struct {
 }
 
 // newPackage constructs a new Package for the Context context.
-func newPackage(context *Context, srcpath SrcPath, path string) (*Package, error) {
+func newPackage(context *Context, srcdir, importpath string) (*Package, error) {
 	pkg := &Package{
 		Context:    context,
-		ImportPath: path,
-		Srcdir:     filepath.Join(srcpath.Srcdir(), path),
+		ImportPath: importpath,
+		Srcdir:     srcdir,
 	}
 	files, err := ioutil.ReadDir(pkg.Srcdir)
 	if err != nil {

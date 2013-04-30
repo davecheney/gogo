@@ -83,7 +83,7 @@ func (c *Context) ResolvePackage(path string) (*Package, error) {
 	if pkg, ok := c.pkgs[path]; ok {
 		return pkg, nil
 	}
-	pkg, err := newPackage(c, c.SrcPaths[0], path)
+	pkg, err := newPackage(c, filepath.Join(c.SrcPaths[0].Srcdir(), path), path)
 	if err != nil {
 		return nil, err
 	}
