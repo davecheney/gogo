@@ -24,8 +24,8 @@ func testPackage(pkg *gogo.Package) gogo.Future {
 	for _, dep := range pkg.Imports {
 		deps = append(deps, Build(dep))
 	}
-	compile := compile(pkg, deps, true)
-	buildtest := buildTest(pkg, compile)
+	Compile := Compile(pkg, deps, true)
+	buildtest := buildTest(pkg, Compile)
 	runtest := runTest(pkg, buildtest)
 	return runtest
 }

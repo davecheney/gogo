@@ -40,8 +40,8 @@ func buildPackage(pkg *gogo.Package) gogo.Future {
 		deps = append(deps, buildPackage(dep))
 	}
 	if _, ok := pkg.Context.Targets[pkg]; !ok {
-		compile := compile(pkg, deps, false)
-		pkg.Context.Targets[pkg] = compile
+		Compile := Compile(pkg, deps, false)
+		pkg.Context.Targets[pkg] = Compile
 	}
 	return pkg.Context.Targets[pkg]
 }
@@ -53,14 +53,13 @@ func buildCommand(pkg *gogo.Package) gogo.Future {
 	for _, dep := range pkg.Imports {
 		deps = append(deps, buildPackage(dep))
 	}
-	compile := compile(pkg, deps, false)
-	ld := Ld(pkg, compile)
+	Compile := Compile(pkg, deps, false)
+	ld := Ld(pkg, Compile)
 	return ld
 }
 
-// compile is a helper which combines all the steps required
-// to build a go package
-func compile(pkg *gogo.Package, deps []gogo.Future, includeTests bool) gogo.Future {
+// Compile returns a Future representing all the steps required to build a go package.
+func Compile(pkg *gogo.Package, deps []gogo.Future, includeTests bool) gogo.Future {
 	var gofiles []string
 	gofiles = append(gofiles, pkg.GoFiles...)
 	var objs []objFuture
@@ -166,7 +165,7 @@ func (t *gcTarget) execute() {
 }
 
 // Gc returns a Future representing the result of compiling a
-// set of gofiles with the Context specified gc compiler.
+// set of gofiles with the Context specified gc Compiler.
 func Gc(pkg *gogo.Package, deps []gogo.Future, gofiles []string) objFuture {
 	t := &gcTarget{
 		future: future{
