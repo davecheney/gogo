@@ -24,9 +24,23 @@ func testPackage(ctx *gogo.Context, pkg *gogo.Package) gogo.Future {
 	for _, dep := range pkg.Imports {
 		deps = append(deps, Build(ctx, dep))
 	}
-	compile := Compile(ctx, pkg, deps, true)
-	buildtest := buildTest(ctx, pkg, compile)
-	runtest := runTest(ctx, pkg, buildtest)
+
+	var gofiles []string
+	gofiles = append(gofiles, pkg.GoFiles...)
+	gofiles = append(gofiles, pkg.CgoFiles...)
+
+	testpkg := &gogo.Package{
+		Name:       pkg.Name,
+		ImportPath: pkg.ImportPath,
+		Srcdir:     pkg.Srcdir,
+
+		GoFiles: gofiles,
+
+		Imports: pkg.Imports, // TODO
+	}
+	compile := Compile(ctx, testpkg, deps)
+	buildtest := buildTest(ctx, testpkg, compile)
+	runtest := runTest(ctx, testpkg, buildtest)
 	return runtest
 }
 

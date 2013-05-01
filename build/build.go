@@ -27,7 +27,7 @@ func buildPackage(ctx *gogo.Context, pkg *gogo.Package) gogo.Future {
 		deps = append(deps, buildPackage(ctx, dep))
 	}
 	if _, ok := ctx.Targets[pkg]; !ok {
-		Compile := Compile(ctx, pkg, deps, false)
+		Compile := Compile(ctx, pkg, deps)
 		ctx.Targets[pkg] = Compile
 	}
 	return ctx.Targets[pkg]
@@ -40,13 +40,13 @@ func buildCommand(ctx *gogo.Context, pkg *gogo.Package) gogo.Future {
 	for _, dep := range pkg.Imports {
 		deps = append(deps, buildPackage(ctx, dep))
 	}
-	Compile := Compile(ctx, pkg, deps, false)
+	Compile := Compile(ctx, pkg, deps)
 	ld := Ld(ctx, pkg, Compile)
 	return ld
 }
 
 // Compile returns a Future representing all the steps required to build a go package.
-func Compile(ctx *gogo.Context, pkg *gogo.Package, deps []gogo.Future, includeTests bool) gogo.Future {
+func Compile(ctx *gogo.Context, pkg *gogo.Package, deps []gogo.Future) gogo.Future {
 	var gofiles []string
 	gofiles = append(gofiles, pkg.GoFiles...)
 	var objs []ObjFuture
@@ -55,9 +55,6 @@ func Compile(ctx *gogo.Context, pkg *gogo.Package, deps []gogo.Future, includeTe
 		deps = append(deps, cgo[0])
 		objs = append(objs, cgo...)
 		gofiles = append(gofiles, cgofiles...)
-	}
-	if includeTests {
-		gofiles = append(gofiles, pkg.TestGoFiles...)
 	}
 	objs = append(objs, Gc(ctx, pkg, deps, gofiles))
 	for _, sfile := range pkg.SFiles {
