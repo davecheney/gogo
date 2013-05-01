@@ -12,6 +12,8 @@ import (
 // target implements a gogo.Future
 type target struct {
 	err chan error
+	*gogo.Package
+	*gogo.Context
 }
 
 func (t *target) Result() error {
@@ -20,14 +22,20 @@ func (t *target) Result() error {
 	return result
 }
 
+func newTarget(ctx *gogo.Context, pkg *gogo.Package) target {
+	return target{
+		err:     make(chan error, 1),
+		Context: ctx,
+		Package: pkg,
+	}
+}
+
 // gcTarget implements a gogo.Future that represents
 // compiling a set of Go files.
 type gcTarget struct {
 	target
 	deps    []gogo.Future
 	gofiles []string
-	*gogo.Package
-	*gogo.Context
 }
 
 func (t *gcTarget) execute() {
@@ -59,8 +67,6 @@ type ccTarget struct {
 	target
 	dep   gogo.Future
 	cfile string
-	*gogo.Package
-	*gogo.Context
 }
 
 func (t *ccTarget) Objfile() string {
@@ -85,8 +91,6 @@ type gccTarget struct {
 	target
 	deps []gogo.Future
 	args []string
-	*gogo.Package
-	*gogo.Context
 }
 
 func (t *gccTarget) execute() {
@@ -108,8 +112,6 @@ func (t *gccTarget) execute() {
 type asmTarget struct {
 	target
 	sfile string
-	*gogo.Package
-	*gogo.Context
 }
 
 func (t *asmTarget) execute() {
@@ -137,8 +139,6 @@ type cgoTarget struct {
 	target
 	deps []gogo.Future
 	args []string
-	*gogo.Package
-	*gogo.Context
 }
 
 func (t *cgoTarget) execute() {
@@ -168,8 +168,6 @@ type packTarget struct {
 	target
 	deps     []ObjFuture
 	objfiles []string
-	*gogo.Package
-	*gogo.Context
 }
 
 func (t *packTarget) execute() {
@@ -204,8 +202,6 @@ func (t *packTarget) build() error {
 type ldTarget struct {
 	target
 	deps []gogo.Future
-	*gogo.Package
-	*gogo.Context
 }
 
 func (t *ldTarget) execute() {

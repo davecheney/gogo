@@ -89,12 +89,8 @@ type pkgFuture interface {
 // set of Context specific object files into an archive.
 func Pack(ctx *gogo.Context, pkg *gogo.Package, deps []ObjFuture) pkgFuture {
 	t := &packTarget{
-		target: target{
-			err: make(chan error, 1),
-		},
-		deps:    deps,
-		Package: pkg,
-		Context: ctx,
+		target: newTarget(ctx, pkg),
+		deps:   deps,
 	}
 	go t.execute()
 	return t
@@ -104,13 +100,9 @@ func Pack(ctx *gogo.Context, pkg *gogo.Package, deps []ObjFuture) pkgFuture {
 // set of gofiles with the Context specified gc Compiler.
 func Gc(ctx *gogo.Context, pkg *gogo.Package, deps []gogo.Future, gofiles []string) ObjFuture {
 	t := &gcTarget{
-		target: target{
-			err: make(chan error, 1),
-		},
+		target:  newTarget(ctx, pkg),
 		deps:    deps,
 		gofiles: gofiles,
-		Package: pkg,
-		Context: ctx,
 	}
 	go t.execute()
 	return t
@@ -120,12 +112,8 @@ func Gc(ctx *gogo.Context, pkg *gogo.Package, deps []gogo.Future, gofiles []stri
 // sfile with the Context specified asssembler.
 func Asm(ctx *gogo.Context, pkg *gogo.Package, sfile string) ObjFuture {
 	t := &asmTarget{
-		target: target{
-			err: make(chan error, 1),
-		},
-		sfile:   sfile,
-		Package: pkg,
-		Context: ctx,
+		target: newTarget(ctx, pkg),
+		sfile:  sfile,
 	}
 	go t.execute()
 	return t
@@ -135,12 +123,8 @@ func Asm(ctx *gogo.Context, pkg *gogo.Package, sfile string) ObjFuture {
 // Package into a command with the Context provided linker.
 func Ld(ctx *gogo.Context, pkg *gogo.Package, deps ...gogo.Future) gogo.Future {
 	t := &ldTarget{
-		target: target{
-			err: make(chan error, 1),
-		},
-		deps:    deps,
-		Package: pkg,
-		Context: ctx,
+		target: newTarget(ctx, pkg),
+		deps:   deps,
 	}
 	go t.execute()
 	return t

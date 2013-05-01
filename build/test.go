@@ -33,8 +33,6 @@ func testPackage(ctx *gogo.Context, pkg *gogo.Package) gogo.Future {
 type buildTestTarget struct {
 	target
 	deps []gogo.Future
-	*gogo.Package
-	*gogo.Context
 }
 
 func (t *buildTestTarget) execute() {
@@ -64,12 +62,8 @@ func (t *buildTestTarget) buildTestMain(_ string) error {
 
 func buildTest(ctx *gogo.Context, pkg *gogo.Package, deps ...gogo.Future) gogo.Future {
 	t := &buildTestTarget{
-		target: target{
-			err: make(chan error, 1),
-		},
-		deps:    deps,
-		Package: pkg,
-		Context: ctx,
+		target: newTarget(ctx, pkg),
+		deps:   deps,
 	}
 	go t.execute()
 	return t
@@ -78,8 +72,6 @@ func buildTest(ctx *gogo.Context, pkg *gogo.Package, deps ...gogo.Future) gogo.F
 type runTestTarget struct {
 	target
 	deps []gogo.Future
-	*gogo.Package
-	*gogo.Context
 }
 
 func (t *runTestTarget) execute() {
@@ -104,12 +96,8 @@ func (t *runTestTarget) build() error {
 
 func runTest(ctx *gogo.Context, pkg *gogo.Package, deps ...gogo.Future) gogo.Future {
 	t := &runTestTarget{
-		target: target{
-			err: make(chan error, 1),
-		},
-		deps:    deps,
-		Package: pkg,
-		Context: ctx,
+		target: newTarget(ctx, pkg),
+		deps:   deps,
 	}
 	go t.execute()
 	return t

@@ -72,12 +72,8 @@ func cgo(ctx *gogo.Context, pkg *gogo.Package, deps []gogo.Future) ([]ObjFuture,
 	all := Gcc(ctx, pkg, []gogo.Future{cgoimport}, args)
 
 	f := &cgoFuture{
-		target: target{
-			err: make(chan error, 1),
-		},
-		dep:     all,
-		Package: pkg,
-		Context: ctx,
+		target: newTarget(ctx, pkg),
+		dep:    all,
 	}
 	go func() { f.err <- f.dep.Result() }()
 	return []ObjFuture{f, cgoimport, cgodefun}, gofiles
@@ -86,8 +82,6 @@ func cgo(ctx *gogo.Context, pkg *gogo.Package, deps []gogo.Future) ([]ObjFuture,
 type cgoFuture struct {
 	target
 	dep gogo.Future
-	*gogo.Package
-	*gogo.Context
 }
 
 func (f *cgoFuture) Objfile() string {
@@ -104,13 +98,9 @@ func (*nilFuture) Result() error { return nil }
 // cgo command.
 func Cgo(ctx *gogo.Context, pkg *gogo.Package, deps []gogo.Future, args []string) gogo.Future {
 	cgo := &cgoTarget{
-		target: target{
-			err: make(chan error, 1),
-		},
-		deps:    deps,
-		args:    args,
-		Package: pkg,
-		Context: ctx,
+		target: newTarget(ctx, pkg),
+		deps:   deps,
+		args:   args,
 	}
 	go cgo.execute()
 	return cgo
@@ -120,13 +110,9 @@ func Cgo(ctx *gogo.Context, pkg *gogo.Package, deps []gogo.Future, args []string
 // .c source file with the Context specified cc compiler.
 func Cc(ctx *gogo.Context, pkg *gogo.Package, dep gogo.Future, cfile string) ObjFuture {
 	cc := &ccTarget{
-		target: target{
-			err: make(chan error, 1),
-		},
-		dep:     dep,
-		cfile:   cfile,
-		Package: pkg,
-		Context: ctx,
+		target: newTarget(ctx, pkg),
+		dep:    dep,
+		cfile:  cfile,
 	}
 	go cc.execute()
 	return cc
@@ -136,13 +122,9 @@ func Cc(ctx *gogo.Context, pkg *gogo.Package, dep gogo.Future, cfile string) Obj
 // system gcc compiler.
 func Gcc(ctx *gogo.Context, pkg *gogo.Package, deps []gogo.Future, args []string) gogo.Future {
 	gcc := &gccTarget{
-		target: target{
-			err: make(chan error, 1),
-		},
-		deps:    deps,
-		args:    args,
-		Package: pkg,
-		Context: ctx,
+		target: newTarget(ctx, pkg),
+		deps:   deps,
+		args:   args,
 	}
 	go gcc.execute()
 	return gcc
