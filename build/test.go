@@ -27,14 +27,18 @@ func testPackage(ctx *gogo.Context, pkg *gogo.Package) gogo.Future {
 
 	var gofiles []string
 	gofiles = append(gofiles, pkg.GoFiles...)
-	gofiles = append(gofiles, pkg.CgoFiles...)
+	gofiles = append(gofiles, pkg.TestGoFiles...)
+
+	var cgofiles []string
+	cgofiles = append(cgofiles, pkg.CgoFiles...)
 
 	testpkg := &gogo.Package{
 		Name:       pkg.Name,
 		ImportPath: pkg.ImportPath,
 		Srcdir:     pkg.Srcdir,
 
-		GoFiles: gofiles,
+		GoFiles:  gofiles,
+		CgoFiles: cgofiles,
 
 		Imports: pkg.Imports, // TODO
 	}
