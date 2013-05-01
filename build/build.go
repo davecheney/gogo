@@ -28,7 +28,7 @@ func buildPackage(ctx *gogo.Context, pkg *gogo.Package) gogo.Future {
 		deps = append(deps, buildPackage(ctx, dep))
 	}
 	if _, ok := ctx.Targets[pkg]; !ok {
-		Compile := Compile(pkg, deps, false)
+		Compile := Compile(ctx, pkg, deps, false)
 		ctx.Targets[pkg] = Compile
 	}
 	return ctx.Targets[pkg]
@@ -41,13 +41,13 @@ func buildCommand(ctx *gogo.Context, pkg *gogo.Package) gogo.Future {
 	for _, dep := range pkg.Imports {
 		deps = append(deps, buildPackage(ctx, dep))
 	}
-	Compile := Compile(pkg, deps, false)
+	Compile := Compile(ctx, pkg, deps, false)
 	ld := Ld(pkg, Compile)
 	return ld
 }
 
 // Compile returns a Future representing all the steps required to build a go package.
-func Compile(pkg *gogo.Package, deps []gogo.Future, includeTests bool) gogo.Future {
+func Compile(ctx *gogo.Context, pkg *gogo.Package, deps []gogo.Future, includeTests bool) gogo.Future {
 	var gofiles []string
 	gofiles = append(gofiles, pkg.GoFiles...)
 	var objs []ObjFuture
@@ -64,7 +64,7 @@ func Compile(pkg *gogo.Package, deps []gogo.Future, includeTests bool) gogo.Futu
 	for _, sfile := range pkg.SFiles {
 		objs = append(objs, Asm(pkg, sfile))
 	}
-	pack := Pack(pkg, objs)
+	pack := Pack(ctx, pkg, objs)
 	return pack
 }
 
@@ -88,13 +88,14 @@ type pkgFuture interface {
 
 // Pack returns a Future representing the result of packing a
 // set of Context specific object files into an archive.
-func Pack(pkg *gogo.Package, deps []ObjFuture) pkgFuture {
+func Pack(ctx *gogo.Context, pkg *gogo.Package, deps []ObjFuture) pkgFuture {
 	t := &packTarget{
 		target: target{
 			err: make(chan error, 1),
 		},
 		deps:    deps,
 		Package: pkg,
+		Context: ctx,
 	}
 	go t.execute()
 	return t

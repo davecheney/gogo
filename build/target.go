@@ -164,6 +164,7 @@ type packTarget struct {
 	deps     []ObjFuture
 	objfiles []string
 	*gogo.Package
+	*gogo.Context
 }
 
 func (t *packTarget) execute() {
@@ -175,11 +176,11 @@ func (t *packTarget) execute() {
 		// collect successful objfiles for packing
 		t.objfiles = append(t.objfiles, dep.Objfile())
 	}
-	log.Infof("pack %q: %s", t.Package.ImportPath, t.objfiles)
+	log.Infof("pack %q: %s", t.ImportPath, t.objfiles)
 	t.err <- t.build()
 }
 
-func (t *packTarget) pkgfile() string { return t.Package.ImportPath + ".a" }
+func (t *packTarget) pkgfile() string { return t.ImportPath + ".a" }
 
 func (t *packTarget) build() error {
 	t0 := time.Now()
