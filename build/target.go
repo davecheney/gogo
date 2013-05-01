@@ -78,6 +78,36 @@ func (t *asmTarget) build() error {
 	return err
 }
 
+// cgoTarget implements a gogo.Future that represents
+// invoking the cgo command.
+type cgoTarget struct {
+	target
+	deps []gogo.Future
+	args []string
+	*gogo.Package
+}
+
+func (t *cgoTarget) execute() {
+	for _, dep := range t.deps {
+		if err := dep.Result(); err != nil {
+			t.err <- err
+			return
+		}
+	}
+	log.Debugf("cgo %q: %s", t.Package.ImportPath, t.args)
+	t.err <- t.build()
+}
+
+func (t *cgoTarget) build() error {
+	t0 := time.Now()
+	if err := t.Mkdir(objdir(t.Context, t.Package)); err != nil {
+		return err
+	}
+	err := t.Cgo(t.Srcdir, t.args)
+	t.Record("cgo", time.Since(t0))
+	return err
+}
+
 // packTarget implements a gogo.Future that represents
 // packing Go object files into a .a archive.
 type packTarget struct {

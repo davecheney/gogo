@@ -100,13 +100,6 @@ type nilFuture struct{}
 
 func (*nilFuture) Result() error { return nil }
 
-type cgoTarget struct {
-	target
-	deps []gogo.Future
-	args []string
-	*gogo.Package
-}
-
 // Cgo returns a Future representing the result of running the
 // cgo command.
 func Cgo(pkg *gogo.Package, deps []gogo.Future, args []string) gogo.Future {
@@ -120,27 +113,6 @@ func Cgo(pkg *gogo.Package, deps []gogo.Future, args []string) gogo.Future {
 	}
 	go cgo.execute()
 	return cgo
-}
-
-func (t *cgoTarget) execute() {
-	for _, dep := range t.deps {
-		if err := dep.Result(); err != nil {
-			t.err <- err
-			return
-		}
-	}
-	log.Debugf("cgo %q: %s", t.Package.ImportPath, t.args)
-	t.err <- t.build()
-}
-
-func (t *cgoTarget) build() error {
-	t0 := time.Now()
-	if err := t.Mkdir(objdir(t.Context, t.Package)); err != nil {
-		return err
-	}
-	err := t.Cgo(t.Srcdir, t.args)
-	t.Record("cgo", time.Since(t0))
-	return err
 }
 
 type ccTarget struct {
