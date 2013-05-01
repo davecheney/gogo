@@ -27,6 +27,7 @@ type gcTarget struct {
 	deps    []gogo.Future
 	gofiles []string
 	*gogo.Package
+	*gogo.Context
 }
 
 func (t *gcTarget) execute() {
@@ -36,7 +37,7 @@ func (t *gcTarget) execute() {
 			return
 		}
 	}
-	log.Debugf("gc %q: %s", t.Package.ImportPath, t.gofiles)
+	log.Debugf("gc %q: %s", t.ImportPath, t.gofiles)
 	t.err <- t.build()
 }
 

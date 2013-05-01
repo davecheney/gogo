@@ -60,7 +60,7 @@ func Compile(ctx *gogo.Context, pkg *gogo.Package, deps []gogo.Future, includeTe
 	if includeTests {
 		gofiles = append(gofiles, pkg.TestGoFiles...)
 	}
-	objs = append(objs, Gc(pkg, deps, gofiles))
+	objs = append(objs, Gc(ctx, pkg, deps, gofiles))
 	for _, sfile := range pkg.SFiles {
 		objs = append(objs, Asm(pkg, sfile))
 	}
@@ -103,7 +103,7 @@ func Pack(ctx *gogo.Context, pkg *gogo.Package, deps []ObjFuture) pkgFuture {
 
 // Gc returns a Future representing the result of compiling a
 // set of gofiles with the Context specified gc Compiler.
-func Gc(pkg *gogo.Package, deps []gogo.Future, gofiles []string) ObjFuture {
+func Gc(ctx *gogo.Context, pkg *gogo.Package, deps []gogo.Future, gofiles []string) ObjFuture {
 	t := &gcTarget{
 		target: target{
 			err: make(chan error, 1),
@@ -111,6 +111,7 @@ func Gc(pkg *gogo.Package, deps []gogo.Future, gofiles []string) ObjFuture {
 		deps:    deps,
 		gofiles: gofiles,
 		Package: pkg,
+		Context: ctx,
 	}
 	go t.execute()
 	return t
