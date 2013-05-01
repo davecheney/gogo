@@ -107,7 +107,7 @@ func newTestContext(t *testing.T) *gogo.Context {
 	return ctx
 }
 
-func TestPackageObjdir(t *testing.T) {
+func TestObjdir(t *testing.T) {
 	ctx := newTestContext(t)
 	defer ctx.Destroy()
 	pkg, err := ctx.ResolvePackage("a")
@@ -116,17 +116,5 @@ func TestPackageObjdir(t *testing.T) {
 	}
 	if objdir := objdir(ctx, pkg); objdir != filepath.Join(ctx.Workdir(), pkg.ImportPath, "_obj") {
 		t.Fatalf("pkg.Objdir(): expected %q, got %q", filepath.Join(ctx.Workdir(), pkg.ImportPath, "_obj"), objdir)
-	}
-}
-
-func TestPackageTestObjdir(t *testing.T) {
-	ctx := newTestContext(t)
-	defer ctx.Destroy()
-	pkg, err := ctx.ResolvePackage("a")
-	if err != nil {
-		t.Fatalf("project.ResolvePackage(): %v", err)
-	}
-	if testdir := testobjdir(ctx, pkg); testdir != filepath.Join(ctx.Workdir(), pkg.ImportPath, "_test") {
-		t.Fatalf("pkg.Objdir(): expected %q, got %q", filepath.Join(ctx.Workdir(), pkg.ImportPath, "_test"), testdir)
 	}
 }
