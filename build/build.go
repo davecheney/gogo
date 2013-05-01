@@ -116,17 +116,6 @@ func Gc(pkg *gogo.Package, deps []gogo.Future, gofiles []string) objFuture {
 	return t
 }
 
-type asmTarget struct {
-	target
-	sfile string
-	*gogo.Package
-}
-
-func (t *asmTarget) execute() {
-	log.Debugf("as %q: %s", t.Package.ImportPath, t.sfile)
-	t.err <- t.build()
-}
-
 // Asm returns a Future representing the result of assembling
 // sfile with the Context specified asssembler.
 func Asm(pkg *gogo.Package, sfile string) objFuture {
@@ -139,20 +128,6 @@ func Asm(pkg *gogo.Package, sfile string) objFuture {
 	}
 	go t.execute()
 	return t
-}
-
-func (t *asmTarget) objfile() string {
-	return filepath.Join(objdir(t.Context, t.Package), t.sfile[:len(t.sfile)-len(".s")]+".6")
-}
-
-func (t *asmTarget) build() error {
-	t0 := time.Now()
-	if err := t.Mkdir(objdir(t.Context, t.Package)); err != nil {
-		return err
-	}
-	err := t.Asm(t.Srcdir, t.objfile(), t.sfile)
-	t.Record("asm", time.Since(t0))
-	return err
 }
 
 type ldTarget struct {

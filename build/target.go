@@ -19,7 +19,7 @@ func (t *target) Result() error {
 	return result
 }
 
-// packTarget implements a gogo.Future that represents
+// gcTarget implements a gogo.Future that represents
 // compiling a set of Go files.
 type gcTarget struct {
 	target
@@ -48,6 +48,33 @@ func (t *gcTarget) build() error {
 	}
 	err := t.Gc(t.ImportPath, t.Srcdir, t.objfile(), t.gofiles)
 	t.Record("gc", time.Since(t0))
+	return err
+}
+
+// asmTarget implements a gogo.Future that represents
+// assembling a .s file.
+type asmTarget struct {
+	target
+	sfile string
+	*gogo.Package
+}
+
+func (t *asmTarget) execute() {
+	log.Debugf("as %q: %s", t.Package.ImportPath, t.sfile)
+	t.err <- t.build()
+}
+
+func (t *asmTarget) objfile() string {
+	return filepath.Join(objdir(t.Context, t.Package), t.sfile[:len(t.sfile)-len(".s")]+".6")
+}
+
+func (t *asmTarget) build() error {
+	t0 := time.Now()
+	if err := t.Mkdir(objdir(t.Context, t.Package)); err != nil {
+		return err
+	}
+	err := t.Asm(t.Srcdir, t.objfile(), t.sfile)
+	t.Record("asm", time.Since(t0))
 	return err
 }
 
