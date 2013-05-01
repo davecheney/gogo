@@ -10,17 +10,6 @@ import (
 	"github.com/davecheney/gogo/log"
 )
 
-// target implements a gogo.Future
-type target struct {
-	err chan error
-}
-
-func (t *target) Result() error {
-	result := <-t.err
-	t.err <- result
-	return result
-}
-
 // Build returns a Future representing the result of compiling the
 // package pkg, and its dependencies.
 // If pkg is a command, then the results of build include linking
@@ -98,13 +87,6 @@ type pkgFuture interface {
 	pkgfile() string
 }
 
-type packTarget struct {
-	target
-	deps     []objFuture
-	objfiles []string
-	*gogo.Package
-}
-
 // Pack returns a Future representing the result of packing a
 // set of Context specific object files into an archive.
 func Pack(pkg *gogo.Package, deps []objFuture) pkgFuture {
@@ -117,33 +99,6 @@ func Pack(pkg *gogo.Package, deps []objFuture) pkgFuture {
 	}
 	go t.execute()
 	return t
-}
-
-func (t *packTarget) execute() {
-	for _, dep := range t.deps {
-		if err := dep.Result(); err != nil {
-			t.err <- err
-			return
-		}
-		// collect successful objfiles for packing
-		t.objfiles = append(t.objfiles, dep.objfile())
-	}
-	log.Infof("pack %q: %s", t.Package.ImportPath, t.objfiles)
-	t.err <- t.build()
-}
-
-func (t *packTarget) pkgfile() string { return t.Package.ImportPath + ".a" }
-
-func (t *packTarget) build() error {
-	t0 := time.Now()
-	ofile := t.pkgfile()
-	pkgdir := filepath.Dir(filepath.Join(t.Pkgdir(), ofile))
-	if err := t.Mkdir(pkgdir); err != nil {
-		return err
-	}
-	err := t.Pack(ofile, t.Pkgdir(), t.objfiles...)
-	t.Record("pack", time.Since(t0))
-	return err
 }
 
 type gcTarget struct {
