@@ -2,6 +2,7 @@ package build
 
 import (
 	"path/filepath"
+	"strings"
 	"time"
 
 	"github.com/davecheney/gogo"
@@ -49,6 +50,31 @@ func (t *gcTarget) build() error {
 	err := t.Gc(t.ImportPath, t.Srcdir, t.Objfile(), t.gofiles)
 	t.Record("gc", time.Since(t0))
 	return err
+}
+
+// ccTarget implements a gogo.Future that represents
+// compiling a .c file.
+type ccTarget struct {
+	target
+	dep   gogo.Future
+	cfile string
+	*gogo.Package
+}
+
+func (t *ccTarget) Objfile() string {
+	return filepath.Join(objdir(t.Context, t.Package), strings.Replace(t.cfile, ".c", ".6", 1))
+}
+
+func (t *ccTarget) execute() {
+	t0 := time.Now()
+	if err := t.dep.Result(); err != nil {
+		t.err <- err
+		return
+	}
+	log.Debugf("cc %q: %s", t.Package.ImportPath, t.cfile)
+	err := t.Cc(t.Srcdir, objdir(t.Context, t.Package), t.Objfile(), filepath.Join(objdir(t.Context, t.Package), t.cfile))
+	t.Record("cc", time.Since(t0))
+	t.err <- err
 }
 
 // asmTarget implements a gogo.Future that represents

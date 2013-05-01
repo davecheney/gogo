@@ -115,13 +115,6 @@ func Cgo(pkg *gogo.Package, deps []gogo.Future, args []string) gogo.Future {
 	return cgo
 }
 
-type ccTarget struct {
-	target
-	dep   gogo.Future
-	cfile string
-	*gogo.Package
-}
-
 // Cc returns a Future representing the result of compiling a
 // .c source file with the Context specified cc compiler.
 func Cc(pkg *gogo.Package, dep gogo.Future, cfile string) ObjFuture {
@@ -135,22 +128,6 @@ func Cc(pkg *gogo.Package, dep gogo.Future, cfile string) ObjFuture {
 	}
 	go cc.execute()
 	return cc
-}
-
-func (t *ccTarget) Objfile() string {
-	return filepath.Join(objdir(t.Context, t.Package), strings.Replace(t.cfile, ".c", ".6", 1))
-}
-
-func (t *ccTarget) execute() {
-	t0 := time.Now()
-	if err := t.dep.Result(); err != nil {
-		t.err <- err
-		return
-	}
-	log.Debugf("cc %q: %s", t.Package.ImportPath, t.cfile)
-	err := t.Cc(t.Srcdir, objdir(t.Context, t.Package), t.Objfile(), filepath.Join(objdir(t.Context, t.Package), t.cfile))
-	t.Record("cc", time.Since(t0))
-	t.err <- err
 }
 
 type gccTarget struct {
