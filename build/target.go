@@ -107,10 +107,11 @@ type asmTarget struct {
 	target
 	sfile string
 	*gogo.Package
+	*gogo.Context
 }
 
 func (t *asmTarget) execute() {
-	log.Debugf("as %q: %s", t.Package.ImportPath, t.sfile)
+	log.Debugf("as %q: %s", t.ImportPath, t.sfile)
 	t.err <- t.build()
 }
 

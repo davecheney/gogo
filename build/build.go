@@ -62,7 +62,7 @@ func Compile(ctx *gogo.Context, pkg *gogo.Package, deps []gogo.Future, includeTe
 	}
 	objs = append(objs, Gc(ctx, pkg, deps, gofiles))
 	for _, sfile := range pkg.SFiles {
-		objs = append(objs, Asm(pkg, sfile))
+		objs = append(objs, Asm(ctx, pkg, sfile))
 	}
 	pack := Pack(ctx, pkg, objs)
 	return pack
@@ -119,13 +119,14 @@ func Gc(ctx *gogo.Context, pkg *gogo.Package, deps []gogo.Future, gofiles []stri
 
 // Asm returns a Future representing the result of assembling
 // sfile with the Context specified asssembler.
-func Asm(pkg *gogo.Package, sfile string) ObjFuture {
+func Asm(ctx *gogo.Context, pkg *gogo.Package, sfile string) ObjFuture {
 	t := &asmTarget{
 		target: target{
 			err: make(chan error, 1),
 		},
 		sfile:   sfile,
 		Package: pkg,
+		Context: ctx,
 	}
 	go t.execute()
 	return t
