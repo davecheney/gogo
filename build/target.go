@@ -77,6 +77,29 @@ func (t *ccTarget) execute() {
 	t.err <- err
 }
 
+// ccTarget implements a gogo.Future that represents the result of
+// invoking the system gcc compiler.
+type gccTarget struct {
+	target
+	deps []gogo.Future
+	args []string
+	*gogo.Package
+}
+
+func (t *gccTarget) execute() {
+	for _, dep := range t.deps {
+		if err := dep.Result(); err != nil {
+			t.err <- err
+			return
+		}
+	}
+	t0 := time.Now()
+	log.Debugf("gcc %q: %s", t.Package.ImportPath, t.args)
+	err := t.Gcc(t.Srcdir, t.args)
+	t.Record("gcc", time.Since(t0))
+	t.err <- err
+}
+
 // asmTarget implements a gogo.Future that represents
 // assembling a .s file.
 type asmTarget struct {

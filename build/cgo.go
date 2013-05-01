@@ -3,10 +3,8 @@ package build
 import (
 	"path/filepath"
 	"strings"
-	"time"
 
 	"github.com/davecheney/gogo"
-	"github.com/davecheney/gogo/log"
 )
 
 // cgo support functions
@@ -130,13 +128,6 @@ func Cc(pkg *gogo.Package, dep gogo.Future, cfile string) ObjFuture {
 	return cc
 }
 
-type gccTarget struct {
-	target
-	deps []gogo.Future
-	args []string
-	*gogo.Package
-}
-
 // Gcc returns a Future representing the result of invoking the
 // system gcc compiler.
 func Gcc(pkg *gogo.Package, deps []gogo.Future, args []string) gogo.Future {
@@ -150,18 +141,4 @@ func Gcc(pkg *gogo.Package, deps []gogo.Future, args []string) gogo.Future {
 	}
 	go gcc.execute()
 	return gcc
-}
-
-func (t *gccTarget) execute() {
-	for _, dep := range t.deps {
-		if err := dep.Result(); err != nil {
-			t.err <- err
-			return
-		}
-	}
-	t0 := time.Now()
-	log.Debugf("gcc %q: %s", t.Package.ImportPath, t.args)
-	err := t.Gcc(t.Srcdir, t.args)
-	t.Record("gcc", time.Since(t0))
-	t.err <- err
 }
