@@ -31,7 +31,7 @@ func testPackage(pkg *gogo.Package) gogo.Future {
 }
 
 type buildTestTarget struct {
-	future
+	target
 	deps []gogo.Future
 	*gogo.Package
 }
@@ -39,11 +39,11 @@ type buildTestTarget struct {
 func (t *buildTestTarget) execute() {
 	for _, dep := range t.deps {
 		if err := dep.Result(); err != nil {
-			t.future.err <- err
+			t.err <- err
 			return
 		}
 	}
-	t.future.err <- t.build()
+	t.err <- t.build()
 }
 
 func (t *buildTestTarget) build() error {
@@ -63,18 +63,18 @@ func (t *buildTestTarget) buildTestMain(_ string) error {
 
 func buildTest(pkg *gogo.Package, deps ...gogo.Future) gogo.Future {
 	t := &buildTestTarget{
-		future: future{
+		target: target{
 			err: make(chan error, 1),
 		},
 		deps:    deps,
 		Package: pkg,
 	}
 	go t.execute()
-	return &t.future
+	return t
 }
 
 type runTestTarget struct {
-	future
+	target
 	deps []gogo.Future
 	*gogo.Package
 }
@@ -82,12 +82,12 @@ type runTestTarget struct {
 func (t *runTestTarget) execute() {
 	for _, dep := range t.deps {
 		if err := dep.Result(); err != nil {
-			t.future.err <- err
+			t.err <- err
 			return
 		}
 	}
 	log.Infof("test %q", t.Package.ImportPath)
-	t.future.err <- t.build()
+	t.err <- t.build()
 }
 
 func (t *runTestTarget) build() error {
@@ -101,14 +101,14 @@ func (t *runTestTarget) build() error {
 
 func runTest(pkg *gogo.Package, deps ...gogo.Future) gogo.Future {
 	t := &runTestTarget{
-		future: future{
+		target: target{
 			err: make(chan error, 1),
 		},
 		deps:    deps,
 		Package: pkg,
 	}
 	go t.execute()
-	return &t.future
+	return t
 }
 
 // testobjdir returns the destination for test object files compiled for this Package.

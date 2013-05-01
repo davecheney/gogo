@@ -74,18 +74,18 @@ func cgo(pkg *gogo.Package, deps []gogo.Future) ([]objFuture, []string) {
 	all := Gcc(pkg, []gogo.Future{cgoimport}, args)
 
 	f := &cgoFuture{
-		future: future{
+		target: target{
 			err: make(chan error, 1),
 		},
 		dep:     all,
 		Package: pkg,
 	}
-	go func() { f.future.err <- f.dep.Result() }()
+	go func() { f.err <- f.dep.Result() }()
 	return []objFuture{f, cgoimport, cgodefun}, gofiles
 }
 
 type cgoFuture struct {
-	future
+	target
 	dep gogo.Future
 	*gogo.Package
 }
@@ -101,7 +101,7 @@ type nilFuture struct{}
 func (*nilFuture) Result() error { return nil }
 
 type cgoTarget struct {
-	future
+	target
 	deps []gogo.Future
 	args []string
 	*gogo.Package
@@ -111,7 +111,7 @@ type cgoTarget struct {
 // cgo command.
 func Cgo(pkg *gogo.Package, deps []gogo.Future, args []string) gogo.Future {
 	cgo := &cgoTarget{
-		future: future{
+		target: target{
 			err: make(chan error, 1),
 		},
 		deps:    deps,
@@ -125,12 +125,12 @@ func Cgo(pkg *gogo.Package, deps []gogo.Future, args []string) gogo.Future {
 func (t *cgoTarget) execute() {
 	for _, dep := range t.deps {
 		if err := dep.Result(); err != nil {
-			t.future.err <- err
+			t.err <- err
 			return
 		}
 	}
 	log.Debugf("cgo %q: %s", t.Package.ImportPath, t.args)
-	t.future.err <- t.build()
+	t.err <- t.build()
 }
 
 func (t *cgoTarget) build() error {
@@ -144,7 +144,7 @@ func (t *cgoTarget) build() error {
 }
 
 type ccTarget struct {
-	future
+	target
 	dep   gogo.Future
 	cfile string
 	*gogo.Package
@@ -154,7 +154,7 @@ type ccTarget struct {
 // .c source file with the Context specified cc compiler.
 func Cc(pkg *gogo.Package, dep gogo.Future, cfile string) objFuture {
 	cc := &ccTarget{
-		future: future{
+		target: target{
 			err: make(chan error, 1),
 		},
 		dep:     dep,
@@ -172,17 +172,17 @@ func (t *ccTarget) objfile() string {
 func (t *ccTarget) execute() {
 	t0 := time.Now()
 	if err := t.dep.Result(); err != nil {
-		t.future.err <- err
+		t.err <- err
 		return
 	}
 	log.Debugf("cc %q: %s", t.Package.ImportPath, t.cfile)
 	err := t.Cc(t.Srcdir, objdir(t.Context, t.Package), t.objfile(), filepath.Join(objdir(t.Context, t.Package), t.cfile))
 	t.Record("cc", time.Since(t0))
-	t.future.err <- err
+	t.err <- err
 }
 
 type gccTarget struct {
-	future
+	target
 	deps []gogo.Future
 	args []string
 	*gogo.Package
@@ -192,7 +192,7 @@ type gccTarget struct {
 // system gcc compiler.
 func Gcc(pkg *gogo.Package, deps []gogo.Future, args []string) gogo.Future {
 	gcc := &gccTarget{
-		future: future{
+		target: target{
 			err: make(chan error, 1),
 		},
 		deps:    deps,
@@ -206,7 +206,7 @@ func Gcc(pkg *gogo.Package, deps []gogo.Future, args []string) gogo.Future {
 func (t *gccTarget) execute() {
 	for _, dep := range t.deps {
 		if err := dep.Result(); err != nil {
-			t.future.err <- err
+			t.err <- err
 			return
 		}
 	}
@@ -214,5 +214,5 @@ func (t *gccTarget) execute() {
 	log.Debugf("gcc %q: %s", t.Package.ImportPath, t.args)
 	err := t.Gcc(t.Srcdir, t.args)
 	t.Record("gcc", time.Since(t0))
-	t.future.err <- err
+	t.err <- err
 }
