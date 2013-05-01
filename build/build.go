@@ -13,32 +13,33 @@ import (
 // If pkg is a command, then the results of build include linking
 // the final binary into pkg.Context.Bindir().
 func Build(pkg *gogo.Package) gogo.Future {
+	ctx := pkg.Context
 	if pkg.Name == "main" {
-		return buildCommand(pkg)
+		return buildCommand(ctx, pkg)
 	}
-	return buildPackage(pkg)
+	return buildPackage(ctx, pkg)
 }
 
 // buildPackage returns a Future repesenting the results of compiling
 // pkg and its dependencies.
-func buildPackage(pkg *gogo.Package) gogo.Future {
+func buildPackage(ctx *gogo.Context, pkg *gogo.Package) gogo.Future {
 	var deps []gogo.Future
 	for _, dep := range pkg.Imports {
-		deps = append(deps, buildPackage(dep))
+		deps = append(deps, buildPackage(ctx, dep))
 	}
-	if _, ok := pkg.Context.Targets[pkg]; !ok {
+	if _, ok := ctx.Targets[pkg]; !ok {
 		Compile := Compile(pkg, deps, false)
-		pkg.Context.Targets[pkg] = Compile
+		ctx.Targets[pkg] = Compile
 	}
-	return pkg.Context.Targets[pkg]
+	return ctx.Targets[pkg]
 }
 
 // buildCommand returns a Future repesenting the results of compiling
 // pkg as a command and linking the result into pkg.Context.Bindir().
-func buildCommand(pkg *gogo.Package) gogo.Future {
+func buildCommand(ctx *gogo.Context, pkg *gogo.Package) gogo.Future {
 	var deps []gogo.Future
 	for _, dep := range pkg.Imports {
-		deps = append(deps, buildPackage(dep))
+		deps = append(deps, buildPackage(ctx, dep))
 	}
 	Compile := Compile(pkg, deps, false)
 	ld := Ld(pkg, Compile)
