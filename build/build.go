@@ -12,8 +12,7 @@ import (
 // package pkg, and its dependencies.
 // If pkg is a command, then the results of build include linking
 // the final binary into pkg.Context.Bindir().
-func Build(pkg *gogo.Package) gogo.Future {
-	ctx := pkg.Context
+func Build(ctx *gogo.Context, pkg *gogo.Package) gogo.Future {
 	if pkg.Name == "main" {
 		return buildCommand(ctx, pkg)
 	}
@@ -52,7 +51,7 @@ func Compile(ctx *gogo.Context, pkg *gogo.Package, deps []gogo.Future, includeTe
 	gofiles = append(gofiles, pkg.GoFiles...)
 	var objs []ObjFuture
 	if len(pkg.CgoFiles) > 0 {
-		cgo, cgofiles := cgo(pkg, deps)
+		cgo, cgofiles := cgo(ctx, pkg, deps)
 		deps = append(deps, cgo[0])
 		objs = append(objs, cgo...)
 		gofiles = append(gofiles, cgofiles...)

@@ -65,7 +65,7 @@ var BuildCmd = &Command{
 			pkgs = append(pkgs, pkg)
 		}
 		for _, pkg := range pkgs {
-			if err := build.Build(pkg).Result(); err != nil {
+			if err := build.Build(ctx, pkg).Result(); err != nil {
 				return err
 			}
 		}

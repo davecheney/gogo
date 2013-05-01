@@ -92,7 +92,7 @@ func TestBuild(t *testing.T) {
 		if err != nil {
 			t.Fatalf("ResolvePackage(): %v", err)
 		}
-		if err := Build(pkg).Result(); err != nil {
+		if err := Build(ctx, pkg).Result(); err != nil {
 			t.Fatalf("build %q: %v", tt.pkg, err)
 		}
 	}

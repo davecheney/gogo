@@ -13,20 +13,20 @@ import (
 // Test returns a Future representing the result of compiling the
 // package pkg, and its dependencies, and linking it with the
 // test runner.
-func Test(pkg *gogo.Package) gogo.Future {
+func Test(ctx *gogo.Context, pkg *gogo.Package) gogo.Future {
 	// commands are built as packages for testing.
-	return testPackage(pkg)
+	return testPackage(ctx, pkg)
 }
 
-func testPackage(pkg *gogo.Package) gogo.Future {
+func testPackage(ctx *gogo.Context, pkg *gogo.Package) gogo.Future {
 	// build dependencies
 	var deps []gogo.Future
 	for _, dep := range pkg.Imports {
-		deps = append(deps, Build(dep))
+		deps = append(deps, Build(ctx, dep))
 	}
-	Compile := Compile(pkg.Context, pkg, deps, true)
-	buildtest := buildTest(pkg, Compile)
-	runtest := runTest(pkg, buildtest)
+	compile := Compile(ctx, pkg, deps, true)
+	buildtest := buildTest(ctx, pkg, compile)
+	runtest := runTest(ctx, pkg, buildtest)
 	return runtest
 }
 
@@ -34,6 +34,7 @@ type buildTestTarget struct {
 	target
 	deps []gogo.Future
 	*gogo.Package
+	*gogo.Context
 }
 
 func (t *buildTestTarget) execute() {
@@ -61,13 +62,14 @@ func (t *buildTestTarget) buildTestMain(_ string) error {
 	return writeTestmain(filepath.Join(objdir(t.Context, t.Package), "_testmain.go"), t.Package)
 }
 
-func buildTest(pkg *gogo.Package, deps ...gogo.Future) gogo.Future {
+func buildTest(ctx *gogo.Context, pkg *gogo.Package, deps ...gogo.Future) gogo.Future {
 	t := &buildTestTarget{
 		target: target{
 			err: make(chan error, 1),
 		},
 		deps:    deps,
 		Package: pkg,
+		Context: ctx,
 	}
 	go t.execute()
 	return t
@@ -77,6 +79,7 @@ type runTestTarget struct {
 	target
 	deps []gogo.Future
 	*gogo.Package
+	*gogo.Context
 }
 
 func (t *runTestTarget) execute() {
@@ -99,13 +102,14 @@ func (t *runTestTarget) build() error {
 	return cmd.Run()
 }
 
-func runTest(pkg *gogo.Package, deps ...gogo.Future) gogo.Future {
+func runTest(ctx *gogo.Context, pkg *gogo.Package, deps ...gogo.Future) gogo.Future {
 	t := &runTestTarget{
 		target: target{
 			err: make(chan error, 1),
 		},
 		deps:    deps,
 		Package: pkg,
+		Context: ctx,
 	}
 	go t.execute()
 	return t

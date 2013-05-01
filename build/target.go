@@ -60,6 +60,7 @@ type ccTarget struct {
 	dep   gogo.Future
 	cfile string
 	*gogo.Package
+	*gogo.Context
 }
 
 func (t *ccTarget) Objfile() string {
@@ -85,6 +86,7 @@ type gccTarget struct {
 	deps []gogo.Future
 	args []string
 	*gogo.Package
+	*gogo.Context
 }
 
 func (t *gccTarget) execute() {
@@ -136,6 +138,7 @@ type cgoTarget struct {
 	deps []gogo.Future
 	args []string
 	*gogo.Package
+	*gogo.Context
 }
 
 func (t *cgoTarget) execute() {
@@ -145,7 +148,7 @@ func (t *cgoTarget) execute() {
 			return
 		}
 	}
-	log.Debugf("cgo %q: %s", t.Package.ImportPath, t.args)
+	log.Debugf("cgo %q: %s", t.ImportPath, t.args)
 	t.err <- t.build()
 }
 

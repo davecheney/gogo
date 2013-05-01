@@ -2,11 +2,16 @@ package gogo
 
 import (
 	"bytes"
+	"fmt"
+	"go/ast"
 	"go/build"
+	"go/parser"
+	"go/token"
 	"io/ioutil"
 	"os"
 	"path/filepath"
 	"runtime"
+	"strconv"
 	"strings"
 	"unicode"
 
@@ -83,8 +88,12 @@ func (c *Context) ResolvePackage(path string) (*Package, error) {
 	if pkg, ok := c.pkgs[path]; ok {
 		return pkg, nil
 	}
-	pkg, err := newPackage(c, filepath.Join(c.SrcPaths[0].Srcdir(), path), path)
-	if err != nil {
+	pkg := &Package{
+		ImportPath: path,
+		//Name: 	filepath.Base(path),
+		Srcdir: filepath.Join(c.SrcPaths[0].Srcdir(), path),
+	}
+	if err := c.scanFiles(pkg); err != nil {
 		return nil, err
 	}
 	c.pkgs[path] = pkg
@@ -294,4 +303,244 @@ func (ctxt *Context) shouldBuild(content []byte) bool {
 		}
 	}
 	return true // everything matches
+}
+
+// scanFiles scans the Package recording all source files relevant to the
+// current Context.
+func (c *Context) scanFiles(pkg *Package) error {
+	files, err := ioutil.ReadDir(pkg.Srcdir)
+	if err != nil {
+		return err
+	}
+	imports := make(map[string]struct{})
+	fset := token.NewFileSet()
+	var firstFile string
+	for _, file := range files {
+		if file.IsDir() {
+			// skip
+			continue
+		}
+		filename := file.Name()
+		if strings.HasPrefix(filename, "_") || strings.HasPrefix(filename, ".") {
+			continue
+		}
+
+		ext := filepath.Ext(filename)
+
+		if !c.goodOSArchFile(filename) {
+			if ext == ".go" {
+				pkg.IgnoredGoFiles = append(pkg.IgnoredGoFiles, filename)
+			}
+			continue
+		}
+
+		switch ext {
+		case ".go", ".c", ".s", ".h", ".S", ".swig", ".swigcxx":
+			// tentatively okay - read to make sure
+		default:
+			// skip
+			continue
+		}
+
+		r, err := pkg.openFile(filename)
+		if err != nil {
+			return err
+		}
+		var data []byte
+		if strings.HasSuffix(filename, ".go") {
+			data, err = readImports(r, false)
+		} else {
+			data, err = readComments(r)
+		}
+		r.Close()
+		if err != nil {
+			return err
+		}
+
+		// Look for +build comments to accept or reject the file.
+		if !c.shouldBuild(data) {
+			if ext == ".go" {
+				pkg.IgnoredGoFiles = append(pkg.IgnoredGoFiles, filename)
+			}
+			continue
+		}
+
+		switch ext {
+		case ".s":
+			pkg.SFiles = append(pkg.SFiles, filename)
+			continue
+		case ".c":
+			pkg.CFiles = append(pkg.CFiles, filename)
+			continue
+		case ".h":
+			pkg.HFiles = append(pkg.HFiles, filename)
+			continue
+		}
+
+		pf, err := parser.ParseFile(fset, filename, data, parser.ImportsOnly|parser.ParseComments)
+		if err != nil {
+			return err
+		}
+
+		n := pf.Name.Name
+		if n == "documentation" {
+			pkg.IgnoredGoFiles = append(pkg.IgnoredGoFiles, filename)
+			continue
+		}
+
+		isTest := strings.HasSuffix(filename, "_test.go")
+		var isXTest bool
+		if isTest && strings.HasSuffix(n, "_test") {
+			isXTest = true
+			n = n[:len(n)-len("_test")]
+		}
+		if pkg.Name == "" {
+			pkg.Name = n
+			firstFile = filename
+		} else if n != pkg.Name {
+			return fmt.Errorf("found packages %s (%s) and %s (%s) in %s", pkg.Name, firstFile, n, filename, pkg.ImportPath)
+		}
+		var isCgo bool
+		for _, decl := range pf.Decls {
+			switch decl := decl.(type) {
+			case *ast.GenDecl:
+				for _, spec := range decl.Specs {
+					switch spec := spec.(type) {
+					case *ast.ImportSpec:
+						quoted := spec.Path.Value
+						path, err := strconv.Unquote(quoted)
+						if err != nil {
+							return err
+						}
+						switch path {
+						case "":
+							return fmt.Errorf("package %q imported blank path: %v", pkg.Name, spec.Pos())
+						case "C":
+							if isTest {
+								return fmt.Errorf("use of cgo in test %s not supported", filename)
+							}
+							cg := spec.Doc
+							if cg == nil && len(decl.Specs) == 1 {
+								cg = decl.Doc
+							}
+							if cg != nil {
+								if err := c.saveCgo(pkg, filename, cg); err != nil {
+									return err
+								}
+							}
+							isCgo = true
+						default:
+							if !isXTest {
+								imports[path] = struct{}{}
+							}
+						}
+					default:
+						// skip
+					}
+				}
+			default:
+				// skip
+
+			}
+		}
+		if isCgo {
+			if c.cgoEnabled {
+				pkg.CgoFiles = append(pkg.CgoFiles, filename)
+			}
+		} else if isXTest {
+			pkg.XTestGoFiles = append(pkg.XTestGoFiles, filename)
+		} else if isTest {
+			pkg.TestGoFiles = append(pkg.TestGoFiles, filename)
+		} else {
+			pkg.GoFiles = append(pkg.GoFiles, filename)
+		}
+	}
+	if pkg.Name == "" {
+		return &build.NoGoError{pkg.ImportPath}
+	}
+	for i := range imports {
+		if stdlib[i] {
+			// skip
+			continue
+		}
+		p, err := c.ResolvePackage(i)
+		if err != nil {
+			return err
+		}
+		pkg.Imports = append(pkg.Imports, p)
+	}
+	return nil
+}
+
+// from $GOROOT/src/pkg/go/build/build.go
+
+// saveCgo saves the information from the #cgo lines in the import "C" comment.
+// These lines set CFLAGS and LDFLAGS and pkg-config directives that affect
+// the way cgo's C code is built.
+//
+// TODO(rsc): This duplicates code in cgo.
+// Once the dust settles, remove this code from cgo.
+func (ctx *Context) saveCgo(pkg *Package, filename string, cg *ast.CommentGroup) error {
+	text := cg.Text()
+	for _, line := range strings.Split(text, "\n") {
+		orig := line
+
+		// Line is
+		//      #cgo [GOOS/GOARCH...] LDFLAGS: stuff
+		//
+		line = strings.TrimSpace(line)
+		if len(line) < 5 || line[:4] != "#cgo" || (line[4] != ' ' && line[4] != '\t') {
+			continue
+		}
+
+		// Split at colon.
+		line = strings.TrimSpace(line[4:])
+		i := strings.Index(line, ":")
+		if i < 0 {
+			return fmt.Errorf("%s: invalid #cgo line: %s", filename, orig)
+		}
+		line, argstr := line[:i], line[i+1:]
+
+		// Parse GOOS/GOARCH stuff.
+		f := strings.Fields(line)
+		if len(f) < 1 {
+			return fmt.Errorf("%s: invalid #cgo line: %s", filename, orig)
+		}
+
+		cond, verb := f[:len(f)-1], f[len(f)-1]
+		if len(cond) > 0 {
+			ok := false
+			for _, c := range cond {
+				if ctx.match(c) {
+					ok = true
+					break
+				}
+			}
+			if !ok {
+				continue
+			}
+		}
+
+		args, err := splitQuoted(argstr)
+		if err != nil {
+			return fmt.Errorf("%s: invalid #cgo line: %s", filename, orig)
+		}
+		for _, arg := range args {
+			if !safeName(arg) {
+				return fmt.Errorf("%s: malformed #cgo argument: %s", filename, arg)
+			}
+		}
+
+		switch verb {
+		case "CFLAGS":
+			pkg.CgoCFLAGS = append(pkg.CgoCFLAGS, args...)
+		case "LDFLAGS":
+			pkg.CgoLDFLAGS = append(pkg.CgoLDFLAGS, args...)
+		case "pkg-config":
+			pkg.CgoPkgConfig = append(pkg.CgoPkgConfig, args...)
+		default:
+			return fmt.Errorf("%s: invalid #cgo verb: %s", filename, orig)
+		}
+	}
+	return nil
 }

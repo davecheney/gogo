@@ -27,7 +27,7 @@ func TestTestPackage(t *testing.T) {
 		if err != nil {
 			t.Fatalf("ResolvePackage(): %v", err)
 		}
-		if err := testPackage(pkg).Result(); err != nil {
+		if err := testPackage(ctx, pkg).Result(); err != nil {
 			t.Fatalf("testPackage %q: %v", tt.pkg, err)
 		}
 	}
@@ -45,7 +45,7 @@ func TestTest(t *testing.T) {
 		if err != nil {
 			t.Fatalf("ResolvePackage(): %v", err)
 		}
-		if err := Test(pkg).Result(); err != nil {
+		if err := Test(ctx, pkg).Result(); err != nil {
 			t.Fatalf("testPackage %q: %v", tt.pkg, err)
 		}
 	}

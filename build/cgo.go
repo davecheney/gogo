@@ -14,9 +14,9 @@ import (
 // which would be produced from the source CgoFiles.
 // These filenames are only valid of the Result of the
 // cgo Future is nil.
-func cgo(pkg *gogo.Package, deps []gogo.Future) ([]ObjFuture, []string) {
+func cgo(ctx *gogo.Context, pkg *gogo.Package, deps []gogo.Future) ([]ObjFuture, []string) {
 	srcdir := pkg.Srcdir
-	objdir := objdir(pkg.Context, pkg)
+	objdir := objdir(ctx, pkg)
 
 	var args = []string{"-objdir", objdir, "--", "-I", srcdir, "-I", objdir}
 	args = append(args, pkg.CgoCFLAGS...)
@@ -30,9 +30,9 @@ func cgo(pkg *gogo.Package, deps []gogo.Future) ([]ObjFuture, []string) {
 	for _, cfile := range pkg.CFiles {
 		gccfiles = append(gccfiles, filepath.Join(srcdir, cfile))
 	}
-	cgo := Cgo(pkg, deps, args)
+	cgo := Cgo(ctx, pkg, deps, args)
 
-	cgodefun := Cc(pkg, cgo, "_cgo_defun.c")
+	cgodefun := Cc(ctx, pkg, cgo, "_cgo_defun.c")
 
 	var ofiles []string
 	var deps2 []gogo.Future
@@ -41,17 +41,17 @@ func cgo(pkg *gogo.Package, deps []gogo.Future) ([]ObjFuture, []string) {
 		args = append(args, pkg.CgoCFLAGS...)
 		ofile := gccfile[:len(gccfile)-2] + ".o"
 		ofiles = append(ofiles, ofile)
-		deps2 = append(deps2, Gcc(pkg, []gogo.Future{cgodefun}, append(args, "-o", ofile, "-c", gccfile)))
+		deps2 = append(deps2, Gcc(ctx, pkg, []gogo.Future{cgodefun}, append(args, "-o", ofile, "-c", gccfile)))
 	}
 
 	args = []string{"-pthread", "-o", filepath.Join(objdir, "_cgo_.o")}
 	args = append(args, ofiles...)
 	args = append(args, pkg.CgoLDFLAGS...)
-	gcc := Gcc(pkg, deps2, args)
+	gcc := Gcc(ctx, pkg, deps2, args)
 
-	cgo = Cgo(pkg, []gogo.Future{gcc}, []string{"-dynimport", filepath.Join(objdir, "_cgo_.o"), "-dynout", filepath.Join(objdir, "_cgo_import.c")})
+	cgo = Cgo(ctx, pkg, []gogo.Future{gcc}, []string{"-dynimport", filepath.Join(objdir, "_cgo_.o"), "-dynout", filepath.Join(objdir, "_cgo_import.c")})
 
-	cgoimport := Cc(pkg, cgo, "_cgo_import.c") // _cgo_import.c is relative to objdir
+	cgoimport := Cc(ctx, pkg, cgo, "_cgo_import.c") // _cgo_import.c is relative to objdir
 
 	args = []string{"-I", srcdir, "-fPIC", "-pthread", "-o", filepath.Join(objdir, "_all.o")}
 	for _, ofile := range ofiles {
@@ -63,13 +63,13 @@ func cgo(pkg *gogo.Package, deps []gogo.Future) ([]ObjFuture, []string) {
 	}
 
 	// more hacking
-	libgcc, err := pkg.Libgcc()
+	libgcc, err := ctx.Libgcc()
 	if err != nil {
 		panic(err)
 	}
 
 	args = append(args, "-Wl,-r", "-nostdlib", libgcc)
-	all := Gcc(pkg, []gogo.Future{cgoimport}, args)
+	all := Gcc(ctx, pkg, []gogo.Future{cgoimport}, args)
 
 	f := &cgoFuture{
 		target: target{
@@ -77,6 +77,7 @@ func cgo(pkg *gogo.Package, deps []gogo.Future) ([]ObjFuture, []string) {
 		},
 		dep:     all,
 		Package: pkg,
+		Context: ctx,
 	}
 	go func() { f.err <- f.dep.Result() }()
 	return []ObjFuture{f, cgoimport, cgodefun}, gofiles
@@ -86,10 +87,11 @@ type cgoFuture struct {
 	target
 	dep gogo.Future
 	*gogo.Package
+	*gogo.Context
 }
 
 func (f *cgoFuture) Objfile() string {
-	return filepath.Join(objdir(f.Package.Context, f.Package), "_all.o")
+	return filepath.Join(objdir(f.Context, f.Package), "_all.o")
 }
 
 // nilFuture represents a future of no work which always
@@ -100,7 +102,7 @@ func (*nilFuture) Result() error { return nil }
 
 // Cgo returns a Future representing the result of running the
 // cgo command.
-func Cgo(pkg *gogo.Package, deps []gogo.Future, args []string) gogo.Future {
+func Cgo(ctx *gogo.Context, pkg *gogo.Package, deps []gogo.Future, args []string) gogo.Future {
 	cgo := &cgoTarget{
 		target: target{
 			err: make(chan error, 1),
@@ -108,6 +110,7 @@ func Cgo(pkg *gogo.Package, deps []gogo.Future, args []string) gogo.Future {
 		deps:    deps,
 		args:    args,
 		Package: pkg,
+		Context: ctx,
 	}
 	go cgo.execute()
 	return cgo
@@ -115,7 +118,7 @@ func Cgo(pkg *gogo.Package, deps []gogo.Future, args []string) gogo.Future {
 
 // Cc returns a Future representing the result of compiling a
 // .c source file with the Context specified cc compiler.
-func Cc(pkg *gogo.Package, dep gogo.Future, cfile string) ObjFuture {
+func Cc(ctx *gogo.Context, pkg *gogo.Package, dep gogo.Future, cfile string) ObjFuture {
 	cc := &ccTarget{
 		target: target{
 			err: make(chan error, 1),
@@ -123,6 +126,7 @@ func Cc(pkg *gogo.Package, dep gogo.Future, cfile string) ObjFuture {
 		dep:     dep,
 		cfile:   cfile,
 		Package: pkg,
+		Context: ctx,
 	}
 	go cc.execute()
 	return cc
@@ -130,7 +134,7 @@ func Cc(pkg *gogo.Package, dep gogo.Future, cfile string) ObjFuture {
 
 // Gcc returns a Future representing the result of invoking the
 // system gcc compiler.
-func Gcc(pkg *gogo.Package, deps []gogo.Future, args []string) gogo.Future {
+func Gcc(ctx *gogo.Context, pkg *gogo.Package, deps []gogo.Future, args []string) gogo.Future {
 	gcc := &gccTarget{
 		target: target{
 			err: make(chan error, 1),
@@ -138,6 +142,7 @@ func Gcc(pkg *gogo.Package, deps []gogo.Future, args []string) gogo.Future {
 		deps:    deps,
 		args:    args,
 		Package: pkg,
+		Context: ctx,
 	}
 	go gcc.execute()
 	return gcc
