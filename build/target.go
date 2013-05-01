@@ -183,7 +183,9 @@ func (t *packTarget) execute() {
 	t.err <- t.build()
 }
 
-func (t *packTarget) pkgfile() string { return t.ImportPath + ".a" }
+func (t *packTarget) pkgfile() string {
+	return filepath.Join(t.Context.Workdir(), filepath.FromSlash(t.Package.ImportPath)) + ".a"
+}
 
 func (t *packTarget) build() error {
 	t0 := time.Now()
@@ -201,21 +203,17 @@ func (t *packTarget) build() error {
 // linking a set .a file into a command.
 type ldTarget struct {
 	target
-	deps []gogo.Future
+	afile pkgFuture
 }
 
 func (t *ldTarget) execute() {
-	for _, dep := range t.deps {
-		if err := dep.Result(); err != nil {
-			t.err <- err
-			return
-		}
+	if err := t.afile.Result(); err != nil {
+		t.err <- err
+		return
 	}
-	log.Infof("ld %q", t.ImportPath)
+	log.Infof("ld %q: %v", t.ImportPath, t.afile.pkgfile())
 	t.err <- t.build()
 }
-
-func (t *ldTarget) pkgfile() string { return filepath.Join(t.Workdir(), t.ImportPath+".a") }
 
 func (t *ldTarget) build() error {
 	t0 := time.Now()
@@ -223,7 +221,7 @@ func (t *ldTarget) build() error {
 	if err := t.Mkdir(bindir); err != nil {
 		return err
 	}
-	err := t.Ld(filepath.Join(bindir, filepath.Base(t.ImportPath)), t.pkgfile())
+	err := t.Ld(filepath.Join(bindir, filepath.Base(t.ImportPath)), t.afile.pkgfile())
 	t.Record("ld", time.Since(t0))
 	return err
 }

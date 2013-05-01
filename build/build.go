@@ -40,13 +40,13 @@ func buildCommand(ctx *gogo.Context, pkg *gogo.Package) gogo.Future {
 	for _, dep := range pkg.Imports {
 		deps = append(deps, buildPackage(ctx, dep))
 	}
-	Compile := Compile(ctx, pkg, deps)
-	ld := Ld(ctx, pkg, Compile)
+	compile := Compile(ctx, pkg, deps)
+	ld := Ld(ctx, pkg, compile)
 	return ld
 }
 
 // Compile returns a Future representing all the steps required to build a go package.
-func Compile(ctx *gogo.Context, pkg *gogo.Package, deps []gogo.Future) gogo.Future {
+func Compile(ctx *gogo.Context, pkg *gogo.Package, deps []gogo.Future) pkgFuture {
 	var gofiles []string
 	gofiles = append(gofiles, pkg.GoFiles...)
 	var objs []ObjFuture
@@ -60,8 +60,7 @@ func Compile(ctx *gogo.Context, pkg *gogo.Package, deps []gogo.Future) gogo.Futu
 	for _, sfile := range pkg.SFiles {
 		objs = append(objs, Asm(ctx, pkg, sfile))
 	}
-	pack := Pack(ctx, pkg, objs)
-	return pack
+	return Pack(ctx, pkg, objs)
 }
 
 // ObjFuture represents a Future that produces an Object file.
@@ -118,10 +117,10 @@ func Asm(ctx *gogo.Context, pkg *gogo.Package, sfile string) ObjFuture {
 
 // Ld returns a Future representing the result of linking a
 // Package into a command with the Context provided linker.
-func Ld(ctx *gogo.Context, pkg *gogo.Package, deps ...gogo.Future) gogo.Future {
+func Ld(ctx *gogo.Context, pkg *gogo.Package, afile pkgFuture) gogo.Future {
 	t := &ldTarget{
 		target: newTarget(ctx, pkg),
-		deps:   deps,
+		afile:  afile,
 	}
 	go t.execute()
 	return t

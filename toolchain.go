@@ -89,7 +89,7 @@ func (t *gcToolchain) Cc(srcdir, objdir, outfile, cfile string) error {
 }
 
 func (t *gcToolchain) Pack(afile, objdir string, ofiles ...string) error {
-	args := []string{"grcP", t.Workdir(), filepath.Join(t.Workdir(), afile)}
+	args := []string{"grcP", t.Workdir(), afile}
 	args = append(args, ofiles...)
 	return run(objdir, t.pack, args...)
 }
