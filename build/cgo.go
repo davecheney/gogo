@@ -16,7 +16,7 @@ import (
 // which would be produced from the source CgoFiles.
 // These filenames are only valid of the Result of the
 // cgo Future is nil.
-func cgo(pkg *gogo.Package, deps []gogo.Future) ([]objFuture, []string) {
+func cgo(pkg *gogo.Package, deps []gogo.Future) ([]ObjFuture, []string) {
 	srcdir := pkg.Srcdir
 	objdir := objdir(pkg.Context, pkg)
 
@@ -81,7 +81,7 @@ func cgo(pkg *gogo.Package, deps []gogo.Future) ([]objFuture, []string) {
 		Package: pkg,
 	}
 	go func() { f.err <- f.dep.Result() }()
-	return []objFuture{f, cgoimport, cgodefun}, gofiles
+	return []ObjFuture{f, cgoimport, cgodefun}, gofiles
 }
 
 type cgoFuture struct {
@@ -90,7 +90,7 @@ type cgoFuture struct {
 	*gogo.Package
 }
 
-func (f *cgoFuture) objfile() string {
+func (f *cgoFuture) Objfile() string {
 	return filepath.Join(objdir(f.Package.Context, f.Package), "_all.o")
 }
 
@@ -152,7 +152,7 @@ type ccTarget struct {
 
 // Cc returns a Future representing the result of compiling a
 // .c source file with the Context specified cc compiler.
-func Cc(pkg *gogo.Package, dep gogo.Future, cfile string) objFuture {
+func Cc(pkg *gogo.Package, dep gogo.Future, cfile string) ObjFuture {
 	cc := &ccTarget{
 		target: target{
 			err: make(chan error, 1),
@@ -165,7 +165,7 @@ func Cc(pkg *gogo.Package, dep gogo.Future, cfile string) objFuture {
 	return cc
 }
 
-func (t *ccTarget) objfile() string {
+func (t *ccTarget) Objfile() string {
 	return filepath.Join(objdir(t.Context, t.Package), strings.Replace(t.cfile, ".c", ".6", 1))
 }
 
@@ -176,7 +176,7 @@ func (t *ccTarget) execute() {
 		return
 	}
 	log.Debugf("cc %q: %s", t.Package.ImportPath, t.cfile)
-	err := t.Cc(t.Srcdir, objdir(t.Context, t.Package), t.objfile(), filepath.Join(objdir(t.Context, t.Package), t.cfile))
+	err := t.Cc(t.Srcdir, objdir(t.Context, t.Package), t.Objfile(), filepath.Join(objdir(t.Context, t.Package), t.cfile))
 	t.Record("cc", time.Since(t0))
 	t.err <- err
 }

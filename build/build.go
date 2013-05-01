@@ -4,10 +4,8 @@ package build
 
 import (
 	"path/filepath"
-	"time"
 
 	"github.com/davecheney/gogo"
-	"github.com/davecheney/gogo/log"
 )
 
 // Build returns a Future representing the result of compiling the
@@ -51,7 +49,7 @@ func buildCommand(pkg *gogo.Package) gogo.Future {
 func Compile(pkg *gogo.Package, deps []gogo.Future, includeTests bool) gogo.Future {
 	var gofiles []string
 	gofiles = append(gofiles, pkg.GoFiles...)
-	var objs []objFuture
+	var objs []ObjFuture
 	if len(pkg.CgoFiles) > 0 {
 		cgo, cgofiles := cgo(pkg, deps)
 		deps = append(deps, cgo[0])
@@ -69,13 +67,13 @@ func Compile(pkg *gogo.Package, deps []gogo.Future, includeTests bool) gogo.Futu
 	return pack
 }
 
-// objFuture represents a Future that produces an object file.
-type objFuture interface {
+// ObjFuture represents a Future that produces an Object file.
+type ObjFuture interface {
 	gogo.Future
 
-	// objfile returns the name of the file that is
+	// Objfile returns the name of the file that is
 	// produced by the Future if successful.
-	objfile() string
+	Objfile() string
 }
 
 // pkgFuture represents a Future that produces a pkg (.a) file.
@@ -89,7 +87,7 @@ type pkgFuture interface {
 
 // Pack returns a Future representing the result of packing a
 // set of Context specific object files into an archive.
-func Pack(pkg *gogo.Package, deps []objFuture) pkgFuture {
+func Pack(pkg *gogo.Package, deps []ObjFuture) pkgFuture {
 	t := &packTarget{
 		target: target{
 			err: make(chan error, 1),
@@ -103,7 +101,7 @@ func Pack(pkg *gogo.Package, deps []objFuture) pkgFuture {
 
 // Gc returns a Future representing the result of compiling a
 // set of gofiles with the Context specified gc Compiler.
-func Gc(pkg *gogo.Package, deps []gogo.Future, gofiles []string) objFuture {
+func Gc(pkg *gogo.Package, deps []gogo.Future, gofiles []string) ObjFuture {
 	t := &gcTarget{
 		target: target{
 			err: make(chan error, 1),
@@ -118,7 +116,7 @@ func Gc(pkg *gogo.Package, deps []gogo.Future, gofiles []string) objFuture {
 
 // Asm returns a Future representing the result of assembling
 // sfile with the Context specified asssembler.
-func Asm(pkg *gogo.Package, sfile string) objFuture {
+func Asm(pkg *gogo.Package, sfile string) ObjFuture {
 	t := &asmTarget{
 		target: target{
 			err: make(chan error, 1),
@@ -128,23 +126,6 @@ func Asm(pkg *gogo.Package, sfile string) objFuture {
 	}
 	go t.execute()
 	return t
-}
-
-type ldTarget struct {
-	target
-	deps []gogo.Future
-	*gogo.Package
-}
-
-func (t *ldTarget) execute() {
-	for _, dep := range t.deps {
-		if err := dep.Result(); err != nil {
-			t.err <- err
-			return
-		}
-	}
-	log.Infof("ld %q", t.Package.ImportPath)
-	t.err <- t.build()
 }
 
 // Ld returns a Future representing the result of linking a
@@ -159,19 +140,6 @@ func Ld(pkg *gogo.Package, deps ...gogo.Future) gogo.Future {
 	}
 	go t.execute()
 	return t
-}
-
-func (t *ldTarget) pkgfile() string { return filepath.Join(t.Workdir(), t.Package.ImportPath+".a") }
-
-func (t *ldTarget) build() error {
-	t0 := time.Now()
-	bindir := t.Package.Context.Bindir()
-	if err := t.Mkdir(bindir); err != nil {
-		return err
-	}
-	err := t.Ld(filepath.Join(bindir, filepath.Base(t.Package.ImportPath)), t.pkgfile())
-	t.Record("ld", time.Since(t0))
-	return err
 }
 
 // objdir returns the destination for object files compiled for this Package.
