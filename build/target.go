@@ -20,6 +20,38 @@ func (t *target) Result() error {
 }
 
 // packTarget implements a gogo.Future that represents
+// compiling a set of Go files.
+type gcTarget struct {
+	target
+	deps    []gogo.Future
+	gofiles []string
+	*gogo.Package
+}
+
+func (t *gcTarget) execute() {
+	for _, dep := range t.deps {
+		if err := dep.Result(); err != nil {
+			t.err <- err
+			return
+		}
+	}
+	log.Debugf("gc %q: %s", t.Package.ImportPath, t.gofiles)
+	t.err <- t.build()
+}
+
+func (t *gcTarget) objfile() string { return filepath.Join(objdir(t.Context, t.Package), "_go_.6") }
+
+func (t *gcTarget) build() error {
+	t0 := time.Now()
+	if err := t.Mkdir(objdir(t.Context, t.Package)); err != nil {
+		return err
+	}
+	err := t.Gc(t.ImportPath, t.Srcdir, t.objfile(), t.gofiles)
+	t.Record("gc", time.Since(t0))
+	return err
+}
+
+// packTarget implements a gogo.Future that represents
 // packing Go object files into a .a archive.
 type packTarget struct {
 	target

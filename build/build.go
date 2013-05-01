@@ -101,24 +101,6 @@ func Pack(pkg *gogo.Package, deps []objFuture) pkgFuture {
 	return t
 }
 
-type gcTarget struct {
-	target
-	deps    []gogo.Future
-	gofiles []string
-	*gogo.Package
-}
-
-func (t *gcTarget) execute() {
-	for _, dep := range t.deps {
-		if err := dep.Result(); err != nil {
-			t.err <- err
-			return
-		}
-	}
-	log.Debugf("gc %q: %s", t.Package.ImportPath, t.gofiles)
-	t.err <- t.build()
-}
-
 // Gc returns a Future representing the result of compiling a
 // set of gofiles with the Context specified gc Compiler.
 func Gc(pkg *gogo.Package, deps []gogo.Future, gofiles []string) objFuture {
@@ -132,18 +114,6 @@ func Gc(pkg *gogo.Package, deps []gogo.Future, gofiles []string) objFuture {
 	}
 	go t.execute()
 	return t
-}
-
-func (t *gcTarget) objfile() string { return filepath.Join(objdir(t.Context, t.Package), "_go_.6") }
-
-func (t *gcTarget) build() error {
-	t0 := time.Now()
-	if err := t.Mkdir(objdir(t.Context, t.Package)); err != nil {
-		return err
-	}
-	err := t.Gc(t.ImportPath, t.Srcdir, t.objfile(), t.gofiles)
-	t.Record("gc", time.Since(t0))
-	return err
 }
 
 type asmTarget struct {
