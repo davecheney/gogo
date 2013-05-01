@@ -42,7 +42,7 @@ func buildCommand(ctx *gogo.Context, pkg *gogo.Package) gogo.Future {
 		deps = append(deps, buildPackage(ctx, dep))
 	}
 	Compile := Compile(ctx, pkg, deps, false)
-	ld := Ld(pkg, Compile)
+	ld := Ld(ctx, pkg, Compile)
 	return ld
 }
 
@@ -134,13 +134,14 @@ func Asm(ctx *gogo.Context, pkg *gogo.Package, sfile string) ObjFuture {
 
 // Ld returns a Future representing the result of linking a
 // Package into a command with the Context provided linker.
-func Ld(pkg *gogo.Package, deps ...gogo.Future) gogo.Future {
+func Ld(ctx *gogo.Context, pkg *gogo.Package, deps ...gogo.Future) gogo.Future {
 	t := &ldTarget{
 		target: target{
 			err: make(chan error, 1),
 		},
 		deps:    deps,
 		Package: pkg,
+		Context: ctx,
 	}
 	go t.execute()
 	return t

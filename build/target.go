@@ -202,6 +202,7 @@ type ldTarget struct {
 	target
 	deps []gogo.Future
 	*gogo.Package
+	*gogo.Context
 }
 
 func (t *ldTarget) execute() {
@@ -211,19 +212,19 @@ func (t *ldTarget) execute() {
 			return
 		}
 	}
-	log.Infof("ld %q", t.Package.ImportPath)
+	log.Infof("ld %q", t.ImportPath)
 	t.err <- t.build()
 }
 
-func (t *ldTarget) pkgfile() string { return filepath.Join(t.Workdir(), t.Package.ImportPath+".a") }
+func (t *ldTarget) pkgfile() string { return filepath.Join(t.Workdir(), t.ImportPath+".a") }
 
 func (t *ldTarget) build() error {
 	t0 := time.Now()
-	bindir := t.Package.Context.Bindir()
+	bindir := t.Context.Bindir()
 	if err := t.Mkdir(bindir); err != nil {
 		return err
 	}
-	err := t.Ld(filepath.Join(bindir, filepath.Base(t.Package.ImportPath)), t.pkgfile())
+	err := t.Ld(filepath.Join(bindir, filepath.Base(t.ImportPath)), t.pkgfile())
 	t.Record("ld", time.Since(t0))
 	return err
 }
