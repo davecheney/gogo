@@ -47,7 +47,7 @@ func (t *buildTestTarget) execute() {
 }
 
 func (t *buildTestTarget) build() error {
-	objdir := t.Objdir()
+	objdir := objdir(t.Context, t.Package)
 	if err := t.buildTestMain(objdir); err != nil {
 		return err
 	}
@@ -57,8 +57,8 @@ func (t *buildTestTarget) build() error {
 	return t.Ld(filepath.Join(objdir, t.Package.Name+".test"), filepath.Join(objdir, t.Package.Name+".6"))
 }
 
-func (t *buildTestTarget) buildTestMain(objdir string) error {
-	return writeTestmain(filepath.Join(t.Objdir(), "_testmain.go"), t.Package)
+func (t *buildTestTarget) buildTestMain(_ string) error {
+	return writeTestmain(filepath.Join(objdir(t.Context, t.Package), "_testmain.go"), t.Package)
 }
 
 func buildTest(pkg *gogo.Package, deps ...gogo.Future) gogo.Future {
@@ -91,7 +91,7 @@ func (t *runTestTarget) execute() {
 }
 
 func (t *runTestTarget) build() error {
-	cmd := exec.Command(filepath.Join(t.Objdir(), t.Package.Name+".test"))
+	cmd := exec.Command(filepath.Join(objdir(t.Context, t.Package), t.Package.Name+".test"))
 	cmd.Dir = t.Package.Srcdir
 	cmd.Stdout = os.Stdout
 	cmd.Stderr = os.Stderr
@@ -109,4 +109,9 @@ func runTest(pkg *gogo.Package, deps ...gogo.Future) gogo.Future {
 	}
 	go t.execute()
 	return &t.future
+}
+
+// testobjdir returns the destination for test object files compiled for this Package.
+func testobjdir(ctx *gogo.Context, pkg *gogo.Package) string {
+	return filepath.Join(ctx.Workdir(), filepath.FromSlash(pkg.ImportPath), "_test")
 }

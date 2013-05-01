@@ -18,7 +18,7 @@ import (
 // cgo Future is nil.
 func cgo(pkg *gogo.Package, deps []gogo.Future) ([]objFuture, []string) {
 	srcdir := pkg.Srcdir
-	objdir := pkg.Objdir()
+	objdir := objdir(pkg.Context, pkg)
 
 	var args = []string{"-objdir", objdir, "--", "-I", srcdir, "-I", objdir}
 	args = append(args, pkg.CgoCFLAGS...)
@@ -91,7 +91,7 @@ type cgoFuture struct {
 }
 
 func (f *cgoFuture) objfile() string {
-	return filepath.Join(f.Objdir(), "_all.o")
+	return filepath.Join(objdir(f.Package.Context, f.Package), "_all.o")
 }
 
 // nilFuture represents a future of no work which always
@@ -135,7 +135,7 @@ func (t *cgoTarget) execute() {
 
 func (t *cgoTarget) build() error {
 	t0 := time.Now()
-	if err := t.Mkdir(t.Objdir()); err != nil {
+	if err := t.Mkdir(objdir(t.Context, t.Package)); err != nil {
 		return err
 	}
 	err := t.Cgo(t.Srcdir, t.args)
@@ -166,7 +166,7 @@ func Cc(pkg *gogo.Package, dep gogo.Future, cfile string) objFuture {
 }
 
 func (t *ccTarget) objfile() string {
-	return filepath.Join(t.Objdir(), strings.Replace(t.cfile, ".c", ".6", 1))
+	return filepath.Join(objdir(t.Context, t.Package), strings.Replace(t.cfile, ".c", ".6", 1))
 }
 
 func (t *ccTarget) execute() {
@@ -176,7 +176,7 @@ func (t *ccTarget) execute() {
 		return
 	}
 	log.Debugf("cc %q: %s", t.Package.ImportPath, t.cfile)
-	err := t.Cc(t.Srcdir, t.Objdir(), t.objfile(), filepath.Join(t.Objdir(), t.cfile))
+	err := t.Cc(t.Srcdir, objdir(t.Context, t.Package), t.objfile(), filepath.Join(objdir(t.Context, t.Package), t.cfile))
 	t.Record("cc", time.Since(t0))
 	t.future.err <- err
 }

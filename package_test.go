@@ -87,30 +87,6 @@ func TestNewPackage(t *testing.T) {
 	}
 }
 
-func TestPackageObjdir(t *testing.T) {
-	ctx := newTestContext(t)
-	defer ctx.Destroy()
-	pkg, err := ctx.ResolvePackage("a")
-	if err != nil {
-		t.Fatalf("project.ResolvePackage(): %v", err)
-	}
-	if objdir := pkg.Objdir(); objdir != filepath.Join(ctx.Workdir(), pkg.ImportPath, "_obj") {
-		t.Fatalf("pkg.Objdir(): expected %q, got %q", filepath.Join(ctx.Workdir(), pkg.ImportPath, "_obj"), objdir)
-	}
-}
-
-func TestPackageTestObjdir(t *testing.T) {
-	ctx := newTestContext(t)
-	defer ctx.Destroy()
-	pkg, err := ctx.ResolvePackage("a")
-	if err != nil {
-		t.Fatalf("project.ResolvePackage(): %v", err)
-	}
-	if testdir := pkg.TestObjdir(); testdir != filepath.Join(ctx.Workdir(), pkg.ImportPath, "_test") {
-		t.Fatalf("pkg.Objdir(): expected %q, got %q", filepath.Join(ctx.Workdir(), pkg.ImportPath, "_test"), testdir)
-	}
-}
-
 var scanFilesTests = []struct {
 	path           string
 	gofiles        []string

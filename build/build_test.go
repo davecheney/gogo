@@ -1,6 +1,7 @@
 package build
 
 import (
+	"path/filepath"
 	"testing"
 
 	"github.com/davecheney/gogo"
@@ -94,5 +95,38 @@ func TestBuild(t *testing.T) {
 		if err := Build(pkg).Result(); err != nil {
 			t.Fatalf("build %q: %v", tt.pkg, err)
 		}
+	}
+}
+
+func newTestContext(t *testing.T) *gogo.Context {
+	proj := newProject(t)
+	ctx, err := gogo.NewDefaultContext(proj)
+	if err != nil {
+		t.Fatalf("unable to create context: %v", err)
+	}
+	return ctx
+}
+
+func TestPackageObjdir(t *testing.T) {
+	ctx := newTestContext(t)
+	defer ctx.Destroy()
+	pkg, err := ctx.ResolvePackage("a")
+	if err != nil {
+		t.Fatalf("project.ResolvePackage(): %v", err)
+	}
+	if objdir := objdir(ctx, pkg); objdir != filepath.Join(ctx.Workdir(), pkg.ImportPath, "_obj") {
+		t.Fatalf("pkg.Objdir(): expected %q, got %q", filepath.Join(ctx.Workdir(), pkg.ImportPath, "_obj"), objdir)
+	}
+}
+
+func TestPackageTestObjdir(t *testing.T) {
+	ctx := newTestContext(t)
+	defer ctx.Destroy()
+	pkg, err := ctx.ResolvePackage("a")
+	if err != nil {
+		t.Fatalf("project.ResolvePackage(): %v", err)
+	}
+	if testdir := testobjdir(ctx, pkg); testdir != filepath.Join(ctx.Workdir(), pkg.ImportPath, "_test") {
+		t.Fatalf("pkg.Objdir(): expected %q, got %q", filepath.Join(ctx.Workdir(), pkg.ImportPath, "_test"), testdir)
 	}
 }

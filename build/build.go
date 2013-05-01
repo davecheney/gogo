@@ -179,11 +179,11 @@ func Gc(pkg *gogo.Package, deps []gogo.Future, gofiles []string) objFuture {
 	return t
 }
 
-func (t *gcTarget) objfile() string { return filepath.Join(t.Objdir(), "_go_.6") }
+func (t *gcTarget) objfile() string { return filepath.Join(objdir(t.Context, t.Package), "_go_.6") }
 
 func (t *gcTarget) build() error {
 	t0 := time.Now()
-	if err := t.Mkdir(t.Objdir()); err != nil {
+	if err := t.Mkdir(objdir(t.Context, t.Package)); err != nil {
 		return err
 	}
 	err := t.Gc(t.ImportPath, t.Srcdir, t.objfile(), t.gofiles)
@@ -217,12 +217,12 @@ func Asm(pkg *gogo.Package, sfile string) objFuture {
 }
 
 func (t *asmTarget) objfile() string {
-	return filepath.Join(t.Objdir(), t.sfile[:len(t.sfile)-len(".s")]+".6")
+	return filepath.Join(objdir(t.Context, t.Package), t.sfile[:len(t.sfile)-len(".s")]+".6")
 }
 
 func (t *asmTarget) build() error {
 	t0 := time.Now()
-	if err := t.Mkdir(t.Objdir()); err != nil {
+	if err := t.Mkdir(objdir(t.Context, t.Package)); err != nil {
 		return err
 	}
 	err := t.Asm(t.Srcdir, t.objfile(), t.sfile)
@@ -272,4 +272,9 @@ func (t *ldTarget) build() error {
 	err := t.Ld(filepath.Join(bindir, filepath.Base(t.Package.ImportPath)), t.pkgfile())
 	t.Record("ld", time.Since(t0))
 	return err
+}
+
+// objdir returns the destination for object files compiled for this Package.
+func objdir(ctx *gogo.Context, pkg *gogo.Package) string {
+	return filepath.Join(ctx.Workdir(), filepath.FromSlash(pkg.ImportPath), "_obj")
 }

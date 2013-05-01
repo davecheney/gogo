@@ -303,13 +303,3 @@ func (p *Package) saveCgo(filename string, cg *ast.CommentGroup) error {
 	}
 	return nil
 }
-
-// Objdir returns the destination for object files compiled for this Package.
-func (p *Package) Objdir() string {
-	return filepath.Join(p.Context.workdir, filepath.FromSlash(p.ImportPath), "_obj")
-}
-
-// TestObjDir returns the destination for test object files compiled for this Package.
-func (p *Package) TestObjdir() string {
-	return filepath.Join(p.Context.workdir, filepath.FromSlash(p.ImportPath), "_test")
-}
