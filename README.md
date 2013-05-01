@@ -73,6 +73,10 @@ Inside your `gogo` project, you should arrange your Go source, and its dependenc
 
 A mailing list for `gogo`, `gogo-users` has been created, [https://groups.google.com/d/forum/gogo-users](https://groups.google.com/d/forum/gogo-users)
 
+## changelog
+
+[http://starlogs.net/#davecheney/gogo](changelog)
+
 ## faq
 
  * Q. Can `gogo` build to Go standard library ? A. No.
