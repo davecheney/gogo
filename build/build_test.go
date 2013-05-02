@@ -50,7 +50,7 @@ var buildCommandTests = []struct {
 }{
 	{"b"},
 	{"helloworld"}, // links in a stdlib pkg
-	//	{"hellocgo"},	// imports a cgo pkg
+	{"hellocgo"},   // imports a cgo pkg
 }
 
 func TestBuildCommand(t *testing.T) {
