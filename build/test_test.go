@@ -12,8 +12,8 @@ var testPackageTests = []struct {
 }{
 	{"a"},
 	// 	{"stdlib/bytes"}, // includes asm files, disabled needs go 1.1 features
-	// 	{"extdata"}, external tests are not supported
-	{"stdio"}, // imports "C"
+	{"extdata"}, // external tests are not supported
+	{"stdio"},   // imports "C"
 }
 
 func TestTestPackage(t *testing.T) {
