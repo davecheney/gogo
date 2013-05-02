@@ -36,7 +36,8 @@ type Package struct {
 	TestGoFiles  []string // _test.go files in package
 	XTestGoFiles []string // _test.go files outside package
 
-	Imports []*Package
+	Imports     []*Package
+	TestImports []*Package
 }
 
 func (p *Package) openFile(name string) (io.ReadCloser, error) {

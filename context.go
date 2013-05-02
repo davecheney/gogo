@@ -313,6 +313,7 @@ func (c *Context) scanFiles(pkg *Package) error {
 		return err
 	}
 	imports := make(map[string]struct{})
+	testimports := make(map[string]struct{})
 	fset := token.NewFileSet()
 	var firstFile string
 	for _, file := range files {
@@ -430,7 +431,11 @@ func (c *Context) scanFiles(pkg *Package) error {
 							}
 							isCgo = true
 						default:
-							if !isXTest {
+							if isXTest {
+								// ignore
+							} else if isTest {
+								testimports[path] = struct{}{}
+							} else {
 								imports[path] = struct{}{}
 							}
 						}
@@ -468,6 +473,18 @@ func (c *Context) scanFiles(pkg *Package) error {
 			return err
 		}
 		pkg.Imports = append(pkg.Imports, p)
+	}
+
+	for i := range testimports {
+		if stdlib[i] {
+			// skip
+			continue
+		}
+		p, err := c.ResolvePackage(i)
+		if err != nil {
+			return err
+		}
+		pkg.TestImports = append(pkg.TestImports, p)
 	}
 	return nil
 }

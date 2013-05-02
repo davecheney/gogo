@@ -32,15 +32,17 @@ func TestPackageImports(t *testing.T) {
 	}
 }
 
-var newPackageTests = []struct {
-	importpath string
-	expected   map[string]struct{ name, srcdir string }
+var resolvePackageTests = []struct {
+	importpath  string
+	imports     map[string]struct{ name, srcdir string }
+	testimports map[string]struct{ name, srcdir string }
 }{
 	{
 		"a",
 		map[string]struct{ name, srcdir string }{
 			"a": {"a", "src/a"},
 		},
+		nil,
 	},
 	{
 		"a/b",
@@ -48,40 +50,47 @@ var newPackageTests = []struct {
 			"a":   {"a", "src/a"},
 			"a/b": {"b", "src/a/b"},
 		},
+		nil,
 	},
-	// TODO(dfc) fix this test
-	/**
 	{
 		// d imports d/e, d should not import d/f as that is a test dep
 		"d",
-		map[string]struct { name, srcdir string }{
+		map[string]struct{ name, srcdir string }{
 			"a":   {"a", "src/a"},
 			"a/b": {"b", "src/a/b"},
-			"d":	{ "d", "src/d"},
-			"d/e":	{ "e", "src/d/e"},
+			"d":   {"d", "src/d"},
+			"d/e": {"e", "src/d/e"},
+		},
+		map[string]struct{ name, srcdir string }{
+			"d/f": {"f", "src/d/f"},
 		},
 	},
-	**/
 }
 
-func TestNewPackage(t *testing.T) {
+func TestResolvePackage(t *testing.T) {
 	ctx := newTestContext(t)
 	defer ctx.Destroy()
-	for _, tt := range newPackageTests {
-		_, err := ctx.ResolvePackage(tt.importpath)
-		if err != nil {
+	for _, tt := range resolvePackageTests {
+		if _, err := ctx.ResolvePackage(tt.importpath); err != nil {
 			t.Fatal(err)
 		}
 		for importpath, pkg := range ctx.pkgs {
-			if expected, ok := tt.expected[importpath]; ok {
+			if expected, ok := tt.imports[importpath]; ok {
 				if pkg.Name != expected.name {
 					t.Fatalf("pkg.Name: expected %q, got %q", expected.name, pkg.Name)
 				}
 				if expected := abs(t, filepath.Join(ctx.Project.Root(), expected.srcdir)); expected != pkg.Srcdir {
 					t.Fatalf("pkg.Srcdir(): expected %q, got %q", expected, pkg.Srcdir)
 				}
-			} else {
-				t.Fatalf("pkg cache was missing %q", importpath)
+			} else if expected, ok := tt.testimports[importpath]; ok {
+				if pkg.Name != expected.name {
+					t.Fatalf("pkg.Name: expected %q, got %q", expected.name, pkg.Name)
+				}
+				if expected := abs(t, filepath.Join(ctx.Project.Root(), expected.srcdir)); expected != pkg.Srcdir {
+					t.Fatalf("pkg.Srcdir(): expected %q, got %q", expected, pkg.Srcdir)
+				}
+			} else { // if _, ok := stdlib[importpath]; !ok {
+				t.Fatalf("pkg cache was missing testimports %q", importpath)
 			}
 		}
 	}

@@ -32,6 +32,10 @@ func testPackage(ctx *gogo.Context, pkg *gogo.Package) gogo.Future {
 	var cgofiles []string
 	cgofiles = append(cgofiles, pkg.CgoFiles...)
 
+	var imports []*gogo.Package
+	imports = append(imports, pkg.Imports...)
+	imports = append(imports, pkg.TestImports...)
+
 	testpkg := &gogo.Package{
 		Name:       pkg.Name,
 		ImportPath: pkg.ImportPath,
@@ -40,7 +44,7 @@ func testPackage(ctx *gogo.Context, pkg *gogo.Package) gogo.Future {
 		GoFiles:  gofiles,
 		CgoFiles: cgofiles,
 
-		Imports: pkg.Imports, // TODO
+		Imports: imports,
 	}
 	compile := Compile(ctx, testpkg, deps)
 	buildtest := buildTest(ctx, testpkg, compile)

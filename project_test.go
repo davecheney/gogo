@@ -31,7 +31,7 @@ func TestProjectBindir(t *testing.T) {
 	}
 }
 
-var resolvePackageTests = []struct {
+var resolvePackageNameTests = []struct {
 	path, name string
 }{
 	{"a", "a"},
@@ -39,9 +39,9 @@ var resolvePackageTests = []struct {
 	{"a/a", "a"},
 }
 
-func TestResolvePackage(t *testing.T) {
+func TestResolvePackageName(t *testing.T) {
 	ctx := newTestContext(t)
-	for _, tt := range resolvePackageTests {
+	for _, tt := range resolvePackageNameTests {
 		pkg, err := ctx.ResolvePackage(tt.path)
 		if err != nil {
 			t.Fatalf("Project.ResolvePackage(): %v", err)
