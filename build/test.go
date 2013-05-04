@@ -45,8 +45,9 @@ func testPackage(ctx *gogo.Context, pkg *gogo.Package) gogo.Future {
 		ImportPath: pkg.ImportPath,
 		Srcdir:     pkg.Srcdir,
 
-		GoFiles:  gofiles,
-		CgoFiles: cgofiles,
+		GoFiles:     gofiles,
+		CgoFiles:    cgofiles,
+		TestGoFiles: pkg.TestGoFiles, // passed directly to buildTestMain
 
 		Imports: imports,
 	}

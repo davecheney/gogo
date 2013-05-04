@@ -43,7 +43,7 @@ var TestCmd = &Command{
 				return err
 			}
 		}
-		return nil //		return ctx.Destroy()
+		return ctx.Destroy()
 	},
 	AddFlags: addBuildFlags,
 }
