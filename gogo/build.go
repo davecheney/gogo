@@ -64,8 +64,15 @@ var BuildCmd = &Command{
 			}
 			pkgs = append(pkgs, pkg)
 		}
-		for _, pkg := range pkgs {
-			if err := build.Build(ctx, pkg).Result(); err != nil {
+		results := make(chan gogo.Future, len(pkgs))
+		go func() {
+			defer close(results)
+			for _, pkg := range pkgs {
+				results <- build.Build(ctx, pkg)
+			}
+		}()
+		for result := range results {
+			if err := result.Result(); err != nil {
 				return err
 			}
 		}
