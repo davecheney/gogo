@@ -13,6 +13,7 @@ import (
 	"runtime"
 	"strconv"
 	"strings"
+	"time"
 	"unicode"
 
 	"github.com/davecheney/gogo/log"
@@ -298,6 +299,10 @@ func (ctxt *Context) shouldBuild(content []byte) bool {
 // scanFiles scans the Package recording all source files relevant to the
 // current Context.
 func (c *Context) scanFiles(pkg *Package) error {
+	t0 := time.Now()
+	defer func() {
+		c.Record("scanFiles", time.Since(t0))
+	}()
 	files, err := ioutil.ReadDir(pkg.Srcdir)
 	if err != nil {
 		return err

@@ -19,16 +19,6 @@ func Test(ctx *gogo.Context, pkg *gogo.Package) gogo.Future {
 }
 
 func testPackage(ctx *gogo.Context, pkg *gogo.Package) gogo.Future {
-	// build dependencies
-	var deps []gogo.Future
-	for _, dep := range pkg.Imports {
-		pkg, err := ctx.ResolvePackage(dep)
-		if err != nil {
-			return &errFuture{err}
-		}
-		deps = append(deps, Build(ctx, pkg))
-	}
-
 	var gofiles []string
 	gofiles = append(gofiles, pkg.GoFiles...)
 	gofiles = append(gofiles, pkg.TestGoFiles...)
@@ -39,6 +29,16 @@ func testPackage(ctx *gogo.Context, pkg *gogo.Package) gogo.Future {
 	var imports []string
 	imports = append(imports, pkg.Imports...)
 	imports = append(imports, pkg.TestImports...)
+
+	// build dependencies
+	var deps []gogo.Future
+	for _, dep := range imports {
+		pkg, err := ctx.ResolvePackage(dep)
+		if err != nil {
+			return &errFuture{err}
+		}
+		deps = append(deps, Build(ctx, pkg))
+	}
 
 	testpkg := &gogo.Package{
 		Name:       pkg.Name,
