@@ -92,7 +92,11 @@ func main() {
 
 	// must be below fs.Parse because the -q and -v flags will log.Infof
 	log.Infof("project root %q", root)
-	if err := cmd.Run(project, fs.Args()); err != nil {
+	args = fs.Args()
+	if len(args) == 0 {
+		args = []string{"."}
+	}
+	if err := cmd.Run(project, args); err != nil {
 		log.Fatalf("command %q failed: %v", args[1], err)
 	}
 }

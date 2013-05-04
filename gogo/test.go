@@ -3,6 +3,7 @@ package main
 import (
 	"fmt"
 	stdbuild "go/build"
+	"path/filepath"
 
 	"github.com/davecheney/gogo"
 	"github.com/davecheney/gogo/build"
@@ -28,6 +29,13 @@ var TestCmd = &Command{
 			}
 		}
 		for _, arg := range args {
+			if arg == "." {
+				var err error
+				arg, err = filepath.Rel(project.SrcPaths[0].Srcdir(), mustGetwd())
+				if err != nil {
+					return err
+				}
+			}
 			pkg, err := ctx.ResolvePackage(arg)
 			if err != nil {
 				if _, ok := err.(*stdbuild.NoGoError); ok {

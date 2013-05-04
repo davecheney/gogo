@@ -4,6 +4,7 @@ import (
 	"flag"
 	"fmt"
 	stdbuild "go/build"
+	"path/filepath"
 	"time"
 
 	"github.com/davecheney/gogo"
@@ -54,6 +55,13 @@ var BuildCmd = &Command{
 			}
 		}
 		for _, arg := range args {
+			if arg == "." {
+				var err error
+				arg, err = filepath.Rel(project.SrcPaths[0].Srcdir(), mustGetwd())
+				if err != nil {
+					return err
+				}
+			}
 			pkg, err := ctx.ResolvePackage(arg)
 			if err != nil {
 				if _, ok := err.(*stdbuild.NoGoError); ok {
