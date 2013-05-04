@@ -36,14 +36,12 @@ type Context struct {
 	BuildTags   []string
 	ReleaseTags []string
 
-	// pkgs is a map of import paths to resolved Packages within
-	// the scope of this context.
-	pkgs map[string]*Package
 	Toolchain
-	SearchPaths []string
-	cgoEnabled  bool
+	cgoEnabled bool
 
 	Statistics
+
+	resolver
 }
 
 // NewDefaultContext returns a Context that represents the version
@@ -71,33 +69,18 @@ func NewContext(p *Project, goroot, goos, goarch string) (*Context, error) {
 		workdir:    workdir,
 		archchar:   archchar,
 		Targets:    make(map[*Package]Future),
-		pkgs:       make(map[string]*Package),
 		cgoEnabled: true,
+		resolver: resolver{
+			pkgs: make(map[string]PkgFuture),
+		},
 	}
 	tc, err := newGcToolchain(ctx)
 	if err != nil {
 		return nil, err
 	}
 	ctx.Toolchain = tc
-	ctx.SearchPaths = []string{ctx.stdlib(), workdir}
+	ctx.resolver.SearchPaths = []string{ctx.stdlib(), workdir}
 	return ctx, nil
-}
-
-// ResolvePackage resolves the import path to a Package.
-func (c *Context) ResolvePackage(path string) (*Package, error) {
-	if pkg, ok := c.pkgs[path]; ok {
-		return pkg, nil
-	}
-	pkg := &Package{
-		ImportPath: path,
-		//Name: 	filepath.Base(path),
-		Srcdir: filepath.Join(c.SrcPaths[0].Srcdir(), path),
-	}
-	if err := c.scanFiles(pkg); err != nil {
-		return nil, err
-	}
-	c.pkgs[path] = pkg
-	return pkg, nil
 }
 
 // Destroy removes any temporary files associated with this Context.
@@ -128,6 +111,13 @@ func (c *Context) Mkdir(path string) error {
 	// TODO(dfc) insert cache
 	log.Debugf("mkdir %q", path)
 	return os.MkdirAll(path, 0777)
+}
+
+// ResolvePackage returns a Package representing the first occurence
+// of an import path.
+func (c *Context) ResolvePackage(importpath string) (*Package, error) {
+	r := c.resolvePackage(c, importpath).Result()
+	return r.Package, r.error
 }
 
 // from $GOROOT/src/pkg/go/build/build.go
@@ -314,6 +304,7 @@ func (c *Context) scanFiles(pkg *Package) error {
 	}
 	imports := make(map[string]struct{})
 	testimports := make(map[string]struct{})
+	xtestimports := make(map[string]struct{})
 	fset := token.NewFileSet()
 	var firstFile string
 	for _, file := range files {
@@ -432,7 +423,7 @@ func (c *Context) scanFiles(pkg *Package) error {
 							isCgo = true
 						default:
 							if isXTest {
-								// ignore
+								xtestimports[path] = struct{}{}
 							} else if isTest {
 								testimports[path] = struct{}{}
 							} else {
@@ -445,7 +436,6 @@ func (c *Context) scanFiles(pkg *Package) error {
 				}
 			default:
 				// skip
-
 			}
 		}
 		if isCgo {
@@ -465,26 +455,23 @@ func (c *Context) scanFiles(pkg *Package) error {
 	}
 	for i := range imports {
 		if stdlib[i] {
-			// skip
 			continue
 		}
-		p, err := c.ResolvePackage(i)
-		if err != nil {
-			return err
-		}
-		pkg.Imports = append(pkg.Imports, p)
+		pkg.Imports = append(pkg.Imports, i)
 	}
 
 	for i := range testimports {
 		if stdlib[i] {
-			// skip
 			continue
 		}
-		p, err := c.ResolvePackage(i)
-		if err != nil {
-			return err
+		pkg.TestImports = append(pkg.TestImports, i)
+	}
+
+	for i := range xtestimports {
+		if stdlib[i] {
+			continue
 		}
-		pkg.TestImports = append(pkg.TestImports, p)
+		pkg.XTestImports = append(pkg.XTestImports, i)
 	}
 	return nil
 }

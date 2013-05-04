@@ -8,6 +8,12 @@ import (
 	"github.com/davecheney/gogo"
 )
 
+type errFuture struct {
+	err error
+}
+
+func (e *errFuture) Result() error { return e.err }
+
 // Build returns a Future representing the result of compiling the
 // package pkg, and its dependencies.
 // If pkg is a command, then the results of build include linking
@@ -24,7 +30,11 @@ func Build(ctx *gogo.Context, pkg *gogo.Package) gogo.Future {
 func buildPackage(ctx *gogo.Context, pkg *gogo.Package) gogo.Future {
 	var deps []gogo.Future
 	for _, dep := range pkg.Imports {
-		deps = append(deps, buildPackage(ctx, dep))
+		pkg, err := ctx.ResolvePackage(dep)
+		if err != nil {
+			return &errFuture{err}
+		}
+		deps = append(deps, buildPackage(ctx, pkg))
 	}
 	if _, ok := ctx.Targets[pkg]; !ok {
 		Compile := Compile(ctx, pkg, deps)
@@ -38,7 +48,11 @@ func buildPackage(ctx *gogo.Context, pkg *gogo.Package) gogo.Future {
 func buildCommand(ctx *gogo.Context, pkg *gogo.Package) gogo.Future {
 	var deps []gogo.Future
 	for _, dep := range pkg.Imports {
-		deps = append(deps, buildPackage(ctx, dep))
+		pkg, err := ctx.ResolvePackage(dep)
+		if err != nil {
+			return &errFuture{err}
+		}
+		deps = append(deps, buildPackage(ctx, pkg))
 	}
 	compile := Compile(ctx, pkg, deps)
 	ld := Ld(ctx, pkg, compile)

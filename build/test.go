@@ -22,7 +22,11 @@ func testPackage(ctx *gogo.Context, pkg *gogo.Package) gogo.Future {
 	// build dependencies
 	var deps []gogo.Future
 	for _, dep := range pkg.Imports {
-		deps = append(deps, Build(ctx, dep))
+		pkg, err := ctx.ResolvePackage(dep)
+		if err != nil {
+			return &errFuture{err}
+		}
+		deps = append(deps, Build(ctx, pkg))
 	}
 
 	var gofiles []string
@@ -32,7 +36,7 @@ func testPackage(ctx *gogo.Context, pkg *gogo.Package) gogo.Future {
 	var cgofiles []string
 	cgofiles = append(cgofiles, pkg.CgoFiles...)
 
-	var imports []*gogo.Package
+	var imports []string
 	imports = append(imports, pkg.Imports...)
 	imports = append(imports, pkg.TestImports...)
 
