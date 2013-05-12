@@ -39,6 +39,7 @@ func findProjectRoot(path string) (string, error) {
 			if os.IsNotExist(err) {
 				for _, gopath := range gopaths {
 					if gopath == path {
+						log.Warnf("project directory not found, falling back to $GOPATH value %q", gopath)
 						return gopath, nil
 					}
 				}
