@@ -21,11 +21,17 @@ The `gogo` command is `go get`able
 
 ## usage
 
-`gogo` is not ready for use, you'd be mad to use it. In the case that you _are_ mad, create a project workspace and a `.gogo` subdirectory. The `.gogo` subdirectory is used by the `gogo` tool to locate the root of your project.
+Create a project workspace and a `.gogo` subdirectory. The `.gogo` subdirectory is used by the `gogo` tool to locate the root of your project.
 
     mkdir -p $PROJECT/.gogo
 
-Inside your `gogo` project, you should arrange your Go source, and its dependencies into the usual `$PROJECT/src` subfolder. You can also use your existing $GOPATH directory as a project location, just `mkdir -p $GOPATH/.gogo`. `gogo` will not overwrite the output of the `go` tool.
+Inside your `gogo` project, you should arrange your Go source, and its dependencies into the usual `$PROJECT/src` subfolder. 
+
+### GOPATH integration
+
+As a aide to `go` tool users, if the current working directory falls within an existing $GOPATH, `gogo` will use that $GOPATH entry as its project root. Some features like incremental builds will be disabled in this mode. 
+
+You can also use your existing $GOPATH directory as a project location, just `mkdir -p $GOPATH/.gogo`. `gogo` will not overwrite the output of the `go` tool.
 
 ### common flags
 

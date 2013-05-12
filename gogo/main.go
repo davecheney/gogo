@@ -28,9 +28,15 @@ func mustGetwd() string {
 
 // findProjectRoot works upwards from path seaching for the
 // .gogo directory which identifies the project root.
+// If path is within GOPATH, the project root will be set to the
+// matching element of GOPATH
 func findProjectRoot(path string) (string, error) {
+	gopaths := filepath.SplitList(os.Getenv("GOPATH"))
 	start := path
 	for path != "/" {
+		for _, gopath := range gopaths {
+			return gopath, nil
+		}
 		root := filepath.Join(path, projectdir)
 		if _, err := os.Stat(root); err != nil {
 			if os.IsNotExist(err) {
@@ -65,6 +71,11 @@ func registerCommand(name string, command *Command) {
 }
 
 func main() {
+	args := os.Args
+	if len(args) < 2 {
+		log.Fatalf("no command supplied")
+	}
+
 	root, err := findProjectRoot(mustGetwd())
 	if err != nil {
 		log.Fatalf("could not locate project root: %v", err)
@@ -75,10 +86,6 @@ func main() {
 		log.Fatalf("unable to construct project: %v", err)
 	}
 
-	args := os.Args
-	if len(args) < 2 {
-		log.Fatalf("no command supplied")
-	}
 	cmd, ok := commands[args[1]]
 	if !ok {
 		log.Errorf("unknown command %q", args[1])

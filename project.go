@@ -30,8 +30,10 @@ func NewProject(root string) (*Project, error) {
 		return nil, err
 	}
 	if _, err := os.Stat(filepath.Join(root, ".gogo")); err != nil {
-		return nil, err
+		// temporarily disabled to enable easier GOPATH integration
+		// return nil, err
 	}
+		
 	p := &Project{
 		root: root,
 	}
