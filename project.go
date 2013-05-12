@@ -33,7 +33,7 @@ func NewProject(root string) (*Project, error) {
 		// temporarily disabled to enable easier GOPATH integration
 		// return nil, err
 	}
-		
+
 	p := &Project{
 		root: root,
 	}

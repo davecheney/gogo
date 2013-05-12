@@ -34,12 +34,14 @@ func findProjectRoot(path string) (string, error) {
 	gopaths := filepath.SplitList(os.Getenv("GOPATH"))
 	start := path
 	for path != "/" {
-		for _, gopath := range gopaths {
-			return gopath, nil
-		}
 		root := filepath.Join(path, projectdir)
 		if _, err := os.Stat(root); err != nil {
 			if os.IsNotExist(err) {
+				for _, gopath := range gopaths {
+					if gopath == path {
+						return gopath, nil
+					}
+				}
 				path = filepath.Dir(path)
 				continue
 			}
