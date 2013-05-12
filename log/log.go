@@ -24,6 +24,10 @@ func Errorf(format string, args ...interface{}) {
 	Logger.Printf("ERROR "+format, args...)
 }
 
+func Warnf(format string, args ...interface{}) {
+	Logger.Printf("WARNING "+format, args...)
+}
+
 func Infof(format string, args ...interface{}) {
 	if !Quiet {
 		Logger.Printf("INFO "+format, args...)
