@@ -90,7 +90,8 @@ func main() {
 		log.Fatalf("unable to construct project: %v", err)
 	}
 
-	cmd, ok := commands[args[1]]
+	name := args[1]
+	cmd, ok := commands[name]
 	if !ok {
 		log.Errorf("unknown command %q", args[1])
 		fs.PrintDefaults()
@@ -108,6 +109,6 @@ func main() {
 		args = []string{"."}
 	}
 	if err := cmd.Run(project, args); err != nil {
-		log.Fatalf("command %q failed: %v", args[1], err)
+		log.Fatalf("command %q failed: %v", name, err)
 	}
 }
