@@ -10,7 +10,10 @@
 package gogo
 
 import (
+	"os/exec"
 	"strings"
+
+	"log"
 )
 
 // A Future represents some work to be performed.
@@ -61,5 +64,22 @@ func (t *toolchain) Libgcc() (string, error) {
 }
 
 var toolchains = map[string]func(*Context) (Toolchain, error){
-	"gc": newGcToolchain,
+	"gc":    newGcToolchain,
+	"gccgo": newGccgoToolchain,
+}
+
+func run(dir, command string, args ...string) error {
+	_, err := runOut(dir, command, args...)
+	return err
+}
+
+func runOut(dir, command string, args ...string) ([]byte, error) {
+	cmd := exec.Command(command, args...)
+	cmd.Dir = dir
+	output, err := cmd.CombinedOutput()
+	if err != nil {
+		log.Printf("cd %s; %s %s", dir, command, strings.Join(args, " "))
+		log.Printf("%s", output)
+	}
+	return output, err
 }

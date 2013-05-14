@@ -3,12 +3,8 @@ package gogo
 // gc toolchain
 
 import (
-	"log"
-	"os/exec"
-	"path/filepath"
-	"strings"
-
 	"go/build"
+	"path/filepath"
 )
 
 type gcToolchain struct {
@@ -73,20 +69,4 @@ func (t *gcToolchain) Ld(outfile, afile string) error {
 	}
 	args = append(args, afile)
 	return run(t.Workdir(), t.ld, args...)
-}
-
-func run(dir, command string, args ...string) error {
-	_, err := runOut(dir, command, args...)
-	return err
-}
-
-func runOut(dir, command string, args ...string) ([]byte, error) {
-	cmd := exec.Command(command, args...)
-	cmd.Dir = dir
-	output, err := cmd.CombinedOutput()
-	if err != nil {
-		log.Printf("cd %s; %s %s", dir, command, strings.Join(args, " "))
-		log.Printf("%s", output)
-	}
-	return output, err
 }
