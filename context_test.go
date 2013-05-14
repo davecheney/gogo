@@ -36,8 +36,8 @@ func newTestContext(t *testing.T) *Context {
 func TestContextPkgdir(t *testing.T) {
 	ctx := newTestContext(t)
 	defer ctx.Destroy()
-	if pkgdir := ctx.Pkgdir(); pkgdir != filepath.Join(ctx.Workdir(), "pkg", ctx.goos, ctx.goarch) {
-		t.Fatalf("ctx.Objdir(): expected %q, got %q", filepath.Join(ctx.Workdir(), "pkg", ctx.goos, ctx.goarch), pkgdir)
+	if pkgdir := ctx.Pkgdir(); pkgdir != filepath.Join(ctx.Workdir(), "pkg", ctx.Toolchain.name(), ctx.goos, ctx.goarch) {
+		t.Fatalf("ctx.Objdir(): expected %q, got %q", filepath.Join(ctx.Workdir(), "pkg", ctx.Toolchain.name(), ctx.goos, ctx.goarch), pkgdir)
 	}
 }
 

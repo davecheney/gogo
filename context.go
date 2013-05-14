@@ -48,12 +48,12 @@ type Context struct {
 // NewDefaultContext returns a Context that represents the version
 // of Go that compiled gogo.
 func NewDefaultContext(p *Project) (*Context, error) {
-	return NewContext(p, runtime.GOROOT(), runtime.GOOS, runtime.GOARCH)
+	return NewContext(p, "gc", runtime.GOROOT(), runtime.GOOS, runtime.GOARCH)
 }
 
 // NewContext returns a Context that can be used to build *Project
 // using the specified goroot, goos, and goarch.
-func NewContext(p *Project, goroot, goos, goarch string) (*Context, error) {
+func NewContext(p *Project, toolchain, goroot, goos, goarch string) (*Context, error) {
 	workdir, err := ioutil.TempDir("", "gogo")
 	if err != nil {
 		return nil, err
@@ -75,7 +75,11 @@ func NewContext(p *Project, goroot, goos, goarch string) (*Context, error) {
 			pkgs: make(map[string]PkgFuture),
 		},
 	}
-	tc, err := newGcToolchain(ctx)
+	f, ok := toolchains[toolchain]
+	if !ok {
+		return nil, fmt.Errorf("no toolchain %q registered", toolchain)
+	}
+	tc, err := f(ctx)
 	if err != nil {
 		return nil, err
 	}

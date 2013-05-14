@@ -39,7 +39,7 @@ var BuildCmd = &Command{
 		defer func() {
 			log.Infof("build duration: %v", time.Since(t0))
 		}()
-		ctx, err := gogo.NewContext(project, *goroot, *goos, *goarch)
+		ctx, err := gogo.NewContext(project, *toolchain, *goroot, *goos, *goarch)
 		if err != nil {
 			return err
 		}

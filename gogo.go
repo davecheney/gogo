@@ -59,3 +59,7 @@ func (t *toolchain) Libgcc() (string, error) {
 	libgcc, err := runOut(".", t.gcc, "-print-libgcc-file-name")
 	return strings.Trim(string(libgcc), "\r\n"), err
 }
+
+var toolchains = map[string]func(*Context) (Toolchain, error){
+	"gc": newGcToolchain,
+}

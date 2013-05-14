@@ -54,10 +54,11 @@ func findProjectRoot(path string) (string, error) {
 }
 
 var (
-	fs     = flag.NewFlagSet("gogo", flag.ExitOnError)
-	goos   = fs.String("goos", runtime.GOOS, "override GOOS")
-	goarch = fs.String("goarch", runtime.GOARCH, "override GOARCH")
-	goroot = fs.String("goroot", runtime.GOROOT(), "override GOROOT")
+	fs        = flag.NewFlagSet("gogo", flag.ExitOnError)
+	goos      = fs.String("goos", runtime.GOOS, "override GOOS")
+	goarch    = fs.String("goarch", runtime.GOARCH, "override GOARCH")
+	goroot    = fs.String("goroot", runtime.GOROOT(), "override GOROOT")
+	toolchain = fs.String("toolchain", "gc", "choose go compiler toolchain")
 )
 
 func init() {

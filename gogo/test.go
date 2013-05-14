@@ -16,7 +16,7 @@ func init() {
 
 var TestCmd = &Command{
 	Run: func(project *gogo.Project, args []string) error {
-		ctx, err := gogo.NewContext(project, *goroot, *goos, *goarch)
+		ctx, err := gogo.NewContext(project, *toolchain, *goroot, *goos, *goarch)
 		if err != nil {
 			return err
 		}
