@@ -95,7 +95,9 @@ func (ctx *Context) Workdir() string { return ctx.workdir }
 
 // Pkgdir returns the path to the temporary location where intermediary packages
 // are created during build and test phases.
-func (ctx *Context) Pkgdir() string { return filepath.Join(ctx.workdir, "pkg", ctx.goos, ctx.goarch) }
+func (ctx *Context) Pkgdir() string {
+	return filepath.Join(ctx.workdir, "pkg", ctx.Toolchain.name(), ctx.goos, ctx.goarch)
+}
 
 // Bindir returns the path when final binary executables will be stored.
 func (ctx *Context) Bindir() string {
