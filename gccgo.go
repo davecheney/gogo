@@ -26,8 +26,6 @@ func newGccgoToolchain(c *Context) (Toolchain, error) {
 func (t *gccgoToolchain) name() string { return "gc" }
 
 func (t *gccgoToolchain) Gc(importpath, srcdir, outfile string, files []string) error {
-	// gccgo -I $WORK -c -g -m64 -fgo-pkgpath=github.com/davecheney/gogo/log -fgo-relative-import-path=_/home/dfc/src/github.com/davecheney/gogo/log -o $WORK/github.com/davecheney/gogo/log/_obj/log.o ./log.go
-
 	args := []string{"-c", "-g", "-m64"}
 	for _, d := range t.SearchPaths {
 		args = append(args, "-I", d)
@@ -47,7 +45,9 @@ func (t *gccgoToolchain) Cc(srcdir, objdir, outfile, cfile string) error {
 }
 
 func (t *gccgoToolchain) Pack(afile, objdir string, ofiles ...string) error {
-	args := []string{"cru", t.Workdir(), afile}
+	// hack afile
+	dir, file := filepath.Split(afile)
+	args := []string{"cru", filepath.Join(dir, "lib"+file)}
 	args = append(args, ofiles...)
 	return run(objdir, "ar", args...)
 }

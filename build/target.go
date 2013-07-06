@@ -184,17 +184,16 @@ func (t *packTarget) execute() {
 }
 
 func (t *packTarget) pkgfile() string {
-	return filepath.Join(t.Context.Workdir(), filepath.FromSlash(t.Package.ImportPath)) + ".a"
+	return t.Pkgpath(t.Package)
 }
 
 func (t *packTarget) build() error {
 	t0 := time.Now()
-	ofile := t.pkgfile()
 	pkgdir := filepath.Dir(filepath.Join(t.Pkgdir(), ofile))
 	if err := t.Mkdir(pkgdir); err != nil {
 		return err
 	}
-	err := t.Pack(ofile, t.Pkgdir(), t.objfiles...)
+	err := t.Pack(t.Package, t.objfiles...)
 	t.Record("pack", time.Since(t0))
 	return err
 }

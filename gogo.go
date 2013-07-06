@@ -33,7 +33,7 @@ type Future interface {
 type Toolchain interface {
 	Gc(importpath, srcdir, outfile string, files []string) error
 	Asm(srcdir, ofile, sfile string) error
-	Pack(string, string, ...string) error
+	Pack(*Package, ...string) error
 	Ld(string, string) error
 	Cc(srcdir, objdir, ofile, cfile string) error
 
@@ -77,6 +77,7 @@ func runOut(dir, command string, args ...string) ([]byte, error) {
 	cmd := exec.Command(command, args...)
 	cmd.Dir = dir
 	output, err := cmd.CombinedOutput()
+	log.Printf("cd %s; %s %s", dir, command, strings.Join(args, " "))
 	if err != nil {
 		log.Printf("cd %s; %s %s", dir, command, strings.Join(args, " "))
 		log.Printf("%s", output)
