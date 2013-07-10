@@ -1,39 +1,38 @@
 package project
 
 import (
+	"os"
 	"path/filepath"
-	"testing"
-        "os"
 	"reflect"
 	"sort"
+	"testing"
 )
 
 const root = "../testdata"
 
 func newProject(t *testing.T) *Project {
-        p, err := NewProject(root)
-        if err != nil {
-                t.Fatalf("could not resolve project root %q: %v", root, err)
-        }
-        return p
+	p, err := NewProject(root)
+	if err != nil {
+		t.Fatalf("could not resolve project root %q: %v", root, err)
+	}
+	return p
 }
 
 func getwd(t *testing.T) string {
-        cwd, err := os.Getwd() // assumes that tests run in the directory they were built from
-        if err != nil {
-                t.Fatalf("could not determine current working directory: %v", err)
-        }
-        return cwd
+	cwd, err := os.Getwd() // assumes that tests run in the directory they were built from
+	if err != nil {
+		t.Fatalf("could not determine current working directory: %v", err)
+	}
+	return cwd
 }
 
 func abs(t *testing.T, path string) string {
-        p, err := filepath.Abs(path)
-        if err != nil {
-                t.Fatalf("could not resolve absolute path of %q: %v", path, err)
-        }
-        return p
+	p, err := filepath.Abs(path)
+	if err != nil {
+		t.Fatalf("could not resolve absolute path of %q: %v", path, err)
+	}
+	return p
 }
-
 
 func TestNewProject(t *testing.T) {
 	p := newProject(t)
@@ -63,13 +62,33 @@ func TestProjectBindir(t *testing.T) {
 func TestSrcDirFindAll(t *testing.T) {
 	p := newProject(t)
 	s := &SrcDir{p, "src"}
-	expected := []string{"empty","a","a/a","a/b","hellocgo","k","scanfiles","b","cgotest","doublepkg","stdlib","stdlib/bytes","blankimport","c","empty2","empty2/empty3","helloworld","d","d/f","d/e","extdata","stdio"}
-	actual, err := s.FindAll();
-	if err != nil { t.Fatal(err) }
+	expected := []string{"empty", "a", "a/a", "a/b", "hellocgo", "k", "scanfiles", "b", "cgotest", "doublepkg", "stdlib", "stdlib/bytes", "blankimport", "c", "empty2", "empty2/empty3", "helloworld", "d", "d/f", "d/e", "extdata", "stdio"}
+	actual, err := s.FindAll()
+	if err != nil {
+		t.Fatal(err)
+	}
 	sort.StringSlice(actual).Sort()
 	sort.StringSlice(expected).Sort()
 	if !reflect.DeepEqual(expected, actual) {
 		t.Fatalf("SrcDir.FindAll: expected %q, got %q", expected, actual)
 	}
 }
-	
+
+var srcDirFindTests = []struct {
+	path string
+	dir  string
+	err  error
+}{
+	{"a", filepath.Join(root, "src", "a"), nil},
+}
+
+func TestSrcDirFind(t *testing.T) {
+	p := newProject(t)
+	s := &SrcDir{p, "src"}
+	for _, tt := range srcDirFindTests {
+		actual, err := s.Find(tt.path)
+		if err != tt.err || actual != abs(t, tt.dir) {
+			t.Fatalf("StcDir.Find(%q): expected %v, %v, got %v, %v", tt.path, abs(t, tt.dir), tt.err, actual, err)
+		}
+	}
+}

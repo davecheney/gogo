@@ -19,8 +19,7 @@ import (
 type Project struct {
 	root string
 
-	// SrcDirs represents the location of package sources.
-	SrcDirs []SrcDir
+	srcdirs []SrcDir
 }
 
 // NewProject returns a *Project if root represents a valid gogo project.
@@ -37,7 +36,7 @@ func NewProject(root string) (*Project, error) {
 	p := &Project{
 		root: root,
 	}
-	p.SrcDirs = []SrcDir{{p, "src"}}
+	p.srcdirs = []SrcDir{{p, "src"}}
 	return p, nil
 }
 
@@ -51,10 +50,17 @@ func (p *Project) Bindir() string { return filepath.Join(p.root, "bin") }
 // SrcDir represents a directory containing some Go source packages.
 type SrcDir struct {
 	project *Project
-	path string
+	path    string
 }
 
 func (s *SrcDir) srcdir() string { return filepath.Join(s.project.root, s.path) }
+
+// Find resolves an import path to a source directory
+func (s *SrcDir) Find(path string) (string, error) {
+	dir := filepath.Join(s.srcdir(), path)
+	_, err := os.Stat(dir)
+	return dir, err
+}
 
 // FindAdd returns the import paths of all the packages inside this SrcPath.
 func (s *SrcDir) FindAll() ([]string, error) {
