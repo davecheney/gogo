@@ -33,6 +33,7 @@ type targetCache struct {
 
 func (c *targetCache) addTargetIfMissing(pkg *project.Package, f func() Future) Future {
 	c.Lock()
+	defer c.Unlock()
 	if c.m == nil {
 		c.m = make(map[*project.Package]Future)
 	}
