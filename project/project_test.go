@@ -3,8 +3,6 @@ package project
 import (
 	"os"
 	"path/filepath"
-	"reflect"
-	"sort"
 	"testing"
 )
 
@@ -32,63 +30,4 @@ func abs(t *testing.T, path string) string {
 		t.Fatalf("could not resolve absolute path of %q: %v", path, err)
 	}
 	return p
-}
-
-func TestNewProject(t *testing.T) {
-	p := newProject(t)
-	cwd := getwd(t)
-	if expected := abs(t, filepath.Join(cwd, root)); expected != p.Root() {
-		t.Fatalf("Project.Root(): expected %q, got %q", expected, p.Root())
-	}
-}
-
-// disabled to enable better GOPATH support
-func testProjectError(t *testing.T) {
-	cwd := getwd(t)
-	// assumes $CWD/missing is missing
-	if _, err := NewProject(filepath.Join(cwd, "missing")); err == nil {
-		t.Fatalf("Opening project on non existant directory, expected error, got %v", err)
-	}
-}
-
-func TestProjectBindir(t *testing.T) {
-	p := newProject(t)
-	cwd := getwd(t)
-	if expected := abs(t, filepath.Join(cwd, root, "bin")); expected != p.Bindir() {
-		t.Fatalf("Project.Bindir(): expected %q, got %q", expected, p.Bindir())
-	}
-}
-
-func TestSrcDirFindAll(t *testing.T) {
-	p := newProject(t)
-	s := &SrcDir{p, "src"}
-	expected := []string{"empty", "a", "a/a", "a/b", "hellocgo", "k", "scanfiles", "b", "cgotest", "doublepkg", "stdlib", "stdlib/bytes", "blankimport", "c", "empty2", "empty2/empty3", "helloworld", "d", "d/f", "d/e", "extdata", "stdio"}
-	actual, err := s.FindAll()
-	if err != nil {
-		t.Fatal(err)
-	}
-	sort.StringSlice(actual).Sort()
-	sort.StringSlice(expected).Sort()
-	if !reflect.DeepEqual(expected, actual) {
-		t.Fatalf("SrcDir.FindAll: expected %q, got %q", expected, actual)
-	}
-}
-
-var srcDirFindTests = []struct {
-	path string
-	dir  string
-	err  error
-}{
-	{"a", filepath.Join(root, "src", "a"), nil},
-}
-
-func TestSrcDirFind(t *testing.T) {
-	p := newProject(t)
-	s := &SrcDir{p, "src"}
-	for _, tt := range srcDirFindTests {
-		actual, err := s.Find(tt.path)
-		if err != tt.err || actual != abs(t, tt.dir) {
-			t.Fatalf("StcDir.Find(%q): expected %v, %v, got %v, %v", tt.path, abs(t, tt.dir), tt.err, actual, err)
-		}
-	}
 }

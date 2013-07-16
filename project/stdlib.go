@@ -1,4 +1,7 @@
-package gogo
+package project
+
+// packages from the standard lib. They are excluded
+// from the package map.
 
 var stdlib = map[string]bool{
 	"archive/tar":         true,

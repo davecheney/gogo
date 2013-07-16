@@ -1,4 +1,4 @@
-package gogo
+package build
 
 // gccgo toolchain
 
@@ -44,12 +44,12 @@ func (t *gccgoToolchain) Cc(srcdir, objdir, outfile, cfile string) error {
 	return run(srcdir, t.gccgo, args...)
 }
 
-func (t *gccgoToolchain) Pack(afile, objdir string, ofiles ...string) error {
+func (t *gccgoToolchain) Pack(afile string, ofiles ...string) error {
 	// hack afile
 	dir, file := filepath.Split(afile)
 	args := []string{"cru", filepath.Join(dir, "lib"+file)}
 	args = append(args, ofiles...)
-	return run(objdir, "ar", args...)
+	return run(filepath.Dir(afile), "ar", args...)
 }
 
 func (t *gccgoToolchain) Asm(srcdir, ofile, sfile string) error {

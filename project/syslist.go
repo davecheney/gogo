@@ -2,9 +2,7 @@
 // Use of this source code is governed by a BSD-style
 // license that can be found in the LICENSE file.
 
-package main
-
-// from $GOROOT/src/go/pkg/go/syslist.go
+package project
 
 const goosList = "darwin freebsd linux netbsd openbsd plan9 windows "
 const goarchList = "386 amd64 arm "

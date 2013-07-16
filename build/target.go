@@ -5,15 +5,15 @@ import (
 	"strings"
 	"time"
 
-	"github.com/davecheney/gogo"
+	"github.com/davecheney/gogo/project"
 	"github.com/davecheney/gogo/log"
 )
 
-// target implements a gogo.Future
+// target implements a Future
 type target struct {
 	err chan error
-	*gogo.Package
-	*gogo.Context
+	*project.Package
+	*Context
 }
 
 func (t *target) Result() error {
@@ -22,7 +22,7 @@ func (t *target) Result() error {
 	return result
 }
 
-func newTarget(ctx *gogo.Context, pkg *gogo.Package) target {
+func newTarget(ctx *Context, pkg *project.Package) target {
 	return target{
 		err:     make(chan error, 1),
 		Context: ctx,
@@ -30,11 +30,10 @@ func newTarget(ctx *gogo.Context, pkg *gogo.Package) target {
 	}
 }
 
-// gcTarget implements a gogo.Future that represents
-// compiling a set of Go files.
+// gcTarget implements a Future that represents compiling a set of Go files.
 type gcTarget struct {
 	target
-	deps    []gogo.Future
+	deps    []Future
 	gofiles []string
 }
 
@@ -61,11 +60,10 @@ func (t *gcTarget) build() error {
 	return err
 }
 
-// ccTarget implements a gogo.Future that represents
-// compiling a .c file.
+// ccTarget implements a Future that represents compiling a .c file.
 type ccTarget struct {
 	target
-	dep   gogo.Future
+	dep   Future
 	cfile string
 }
 
@@ -89,7 +87,7 @@ func (t *ccTarget) execute() {
 // invoking the system gcc compiler.
 type gccTarget struct {
 	target
-	deps []gogo.Future
+	deps []Future
 	args []string
 }
 
@@ -107,8 +105,7 @@ func (t *gccTarget) execute() {
 	t.err <- err
 }
 
-// asmTarget implements a gogo.Future that represents
-// assembling a .s file.
+// asmTarget implements a Future that represents assembling a .s file.
 type asmTarget struct {
 	target
 	sfile string
@@ -133,11 +130,10 @@ func (t *asmTarget) build() error {
 	return err
 }
 
-// cgoTarget implements a gogo.Future that represents
-// invoking the cgo command.
+// cgoTarget implements a Future that represents invoking the cgo command.
 type cgoTarget struct {
 	target
-	deps []gogo.Future
+	deps []Future
 	args []string
 }
 
@@ -162,8 +158,7 @@ func (t *cgoTarget) build() error {
 	return err
 }
 
-// packTarget implements a gogo.Future that represents
-// packing Go object files into a .a archive.
+// packTarget implements a Future that represents packing Go object files into a .a archive.
 type packTarget struct {
 	target
 	deps     []ObjFuture
@@ -184,25 +179,26 @@ func (t *packTarget) execute() {
 }
 
 func (t *packTarget) pkgfile() string {
-	return t.Pkgpath(t.Package)
+	return filepath.Join(t.Pkgdir(), t.Package.ImportPath+".a")
 }
 
 func (t *packTarget) build() error {
 	t0 := time.Now()
-	pkgdir := filepath.Dir(filepath.Join(t.Pkgdir(), ofile))
+	afile := t.pkgfile()
+	pkgdir := filepath.Dir(afile)
 	if err := t.Mkdir(pkgdir); err != nil {
 		return err
 	}
-	err := t.Pack(t.Package, t.objfiles...)
+	err := t.Pack(afile, t.objfiles...)
 	t.Record("pack", time.Since(t0))
 	return err
 }
 
-// ldTarget implements a gogo.Future that represents
+// ldTarget implements a Future that represents
 // linking a set .a file into a command.
 type ldTarget struct {
 	target
-	afile pkgFuture
+	afile PkgFuture
 }
 
 func (t *ldTarget) execute() {

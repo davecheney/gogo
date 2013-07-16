@@ -1,4 +1,4 @@
-package gogo
+package build
 
 // gc toolchain
 
@@ -51,10 +51,10 @@ func (t *gcToolchain) Cc(srcdir, objdir, outfile, cfile string) error {
 	return run(srcdir, t.cc, args...)
 }
 
-func (t *gcToolchain) Pack(pkg *Package, ofiles ...string) error {
+func (t *gcToolchain) Pack(afile string, ofiles ...string) error {
 	args := []string{"grcP", t.Workdir(), afile}
 	args = append(args, ofiles...)
-	return run(objdir, t.pack, args...)
+	return run(filepath.Dir(afile), t.pack, args...)
 }
 
 func (t *gcToolchain) Asm(srcdir, ofile, sfile string) error {

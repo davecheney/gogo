@@ -1,7 +1,6 @@
-package gogo
+package project
 
 import (
-	//	"path/filepath"
 	"reflect"
 	"runtime"
 	"testing"
@@ -16,13 +15,17 @@ var packageImportTests = []struct {
 	{"c", []string{"a/b"}},
 }
 
+const (
+	GOOS   = "linux"
+	GOARCH = "amd64"
+)
+
 func TestPackageImports(t *testing.T) {
-	ctx := newTestContext(t)
-	defer ctx.Destroy()
+	p := newProject(t)
 	for _, tt := range packageImportTests {
-		pkg, err := ctx.ResolvePackage(tt.path)
+		pkg, err := p.ResolvePackage(GOOS, GOARCH, tt.path).Result()
 		if err != nil {
-			t.Fatalf("Project.ResolvePackage(): %v", err)
+			t.Fatalf("Project.ResolvePackage(%q, %q, %q): %v", GOOS, GOARCH, tt.path, err)
 		}
 		if !reflect.DeepEqual(pkg.Imports, tt.imports) {
 			t.Fatalf("Package %q: expecting import %q, got %q", tt.path, tt.imports, pkg.Imports)
@@ -120,10 +123,9 @@ var scanFilesTests = []struct {
 }
 
 func TestPackageScanFiles(t *testing.T) {
-	ctx := newTestContext(t)
-	defer ctx.Destroy()
+	prj := newProject(t)
 	for _, tt := range scanFilesTests {
-		p, err := ctx.ResolvePackage(tt.path)
+		p, err := prj.ResolvePackage(GOOS, GOARCH, tt.path).Result()
 		if err != nil {
 			t.Fatalf("resolvepackage: %v", err)
 		}
@@ -157,10 +159,9 @@ var resolvePackageErrorTests = []struct {
 }
 
 func TestResolvePackageError(t *testing.T) {
-	ctx := newTestContext(t)
-	defer ctx.Destroy()
+	p := newProject(t)
 	for _, tt := range resolvePackageErrorTests {
-		_, err := ctx.ResolvePackage(tt.path)
+		_, err := p.ResolvePackage(GOOS, GOARCH, tt.path).Result()
 		if err == nil {
 			t.Fatalf("expected %q, got %v", tt.err, err)
 		}

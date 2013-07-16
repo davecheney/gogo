@@ -1,88 +1,90 @@
-// Copyright 2012 The Go Authors.  All rights reserved.
-// Use of this source code is governed by a BSD-style
-// license that can be found in the LICENSE file.
-
-package gogo
+package main
 
 import (
-	"bytes"
-	"errors"
-	"unicode"
+	"flag"
+	"fmt"
+	stdbuild "go/build"
+	"path/filepath"
+	"time"
+
+	"github.com/davecheney/gogo/build"
+	"github.com/davecheney/gogo/project"
+	"github.com/davecheney/gogo/log"
 )
 
-// from $GOROOT/src/pkg/go/build/build.go
-
-// splitQuoted splits the string s around each instance of one or more consecutive
-// white space characters while taking into account quotes and escaping, and
-// returns an array of substrings of s or an empty list if s contains only white space.
-// Single quotes and double quotes are recognized to prevent splitting within the
-// quoted region, and are removed from the resulting substrings. If a quote in s
-// isn't closed err will be set and r will have the unclosed argument as the
-// last element.  The backslash is used for escaping.
-//
-// For example, the following string:
-//
-//     a b:"c d" 'e''f'  "g\""
-//
-// Would be parsed as:
-//
-//     []string{"a", "b:c d", "ef", `g"`}
-//
-func splitQuoted(s string) ([]string, error) {
-	var args []string
-	arg := make([]rune, len(s))
-	escaped := false
-	quoted := false
-	quote := '\x00'
-	i := 0
-	for _, rune := range s {
-		switch {
-		case escaped:
-			escaped = false
-		case rune == '\\':
-			escaped = true
-			continue
-		case quote != '\x00':
-			if rune == quote {
-				quote = '\x00'
-				continue
-			}
-		case rune == '"' || rune == '\'':
-			quoted = true
-			quote = rune
-			continue
-		case unicode.IsSpace(rune):
-			if quoted || i > 0 {
-				quoted = false
-				args = append(args, string(arg[:i]))
-				i = 0
-			}
-			continue
-		}
-		arg[i] = rune
-		i++
-	}
-	if quoted || i > 0 {
-		args = append(args, string(arg[:i]))
-	}
-	if quote != 0 {
-		return nil, errors.New("unclosed quote")
-	} else if escaped {
-		return nil, errors.New("unfinished escaping")
-	}
-	return args, nil
+func init() {
+	registerCommand("build", BuildCmd)
 }
 
-var safeBytes = []byte("+-.,/0123456789=ABCDEFGHIJKLMNOPQRSTUVWXYZ_abcdefghijklmnopqrstuvwxyz:")
+var (
+	// build flags
 
-func safeName(s string) bool {
-	if s == "" {
-		return false
-	}
-	for i := 0; i < len(s); i++ {
-		if c := s[i]; c < 0x80 && bytes.IndexByte(safeBytes, c) < 0 {
-			return false
+	// should we build all packages in this project.
+	// defaults to true when build is invoked from the project root.
+	A bool
+
+	// should we perform a release build +release tag ?
+	// defaults to false, +debug.
+	R bool
+)
+
+func addBuildFlags(fs *flag.FlagSet) {
+	fs.BoolVar(&A, "a", false, "build all packages in this project")
+	fs.BoolVar(&R, "r", false, "perform a release build")
+}
+
+var BuildCmd = &Command{
+	Run: func(proj *project.Project, args []string) error {
+		t0 := time.Now()
+		defer func() {
+			log.Infof("build duration: %v", time.Since(t0))
+		}()
+		ctx, err := build.NewContext(proj, *toolchain, *goroot, *goos, *goarch)
+		if err != nil {
+			return err
 		}
-	}
-	return true
+		defer func() {
+			log.Debugf("build statistics: %v", ctx.Statistics.String())
+		}()
+		var pkgs []*project.Package
+		if A {
+			var err error
+			args, err = proj.SrcDirs[0].FindAll()
+			if err != nil {
+				return fmt.Errorf("could not fetch packages in srcpath %v: %v", proj.SrcDirs[0], err)
+			}
+		}
+		for _, arg := range args {
+			if arg == "." {
+				var err error
+				arg, err = filepath.Rel(proj.SrcDirs[0].SrcDir(), mustGetwd())
+				if err != nil {
+					return err
+				}
+			}
+			pkg, err := ctx.ResolvePackage("linux", "amd64", arg).Result()
+			if err != nil {
+				if _, ok := err.(*stdbuild.NoGoError); ok {
+					log.Debugf("skipping %q", arg)
+					continue
+				}
+				return fmt.Errorf("failed to resolve package %q: %v", arg, err)
+			}
+			pkgs = append(pkgs, pkg)
+		}
+		results := make(chan build.Future, len(pkgs))
+		go func() {
+			defer close(results)
+			for _, pkg := range pkgs {
+				results <- build.Build(ctx, pkg)
+			}
+		}()
+		for result := range results {
+			if err := result.Result(); err != nil {
+				return err
+			}
+		}
+		return ctx.Destroy()
+	},
+	AddFlags: addBuildFlags,
 }

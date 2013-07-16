@@ -1,4 +1,5 @@
-package build
+// Package gogo/test provides functions for testing Go packages.
+package test
 
 import (
 	"os"
@@ -6,19 +7,20 @@ import (
 	"path/filepath"
 	"strings"
 
-	"github.com/davecheney/gogo"
+	"github.com/davecheney/gogo/build"
+	"github.com/davecheney/gogo/project"
 	"github.com/davecheney/gogo/log"
 )
 
-// Test returns a Future representing the result of compiling the
+// Test returns a Target representing the result of compiling the
 // package pkg, and its dependencies, and linking it with the
 // test runner.
-func Test(ctx *gogo.Context, pkg *gogo.Package) gogo.Future {
+func Test(ctx *build.Context, pkg *project.Package) build.Target {
 	// commands are built as packages for testing.
 	return testPackage(ctx, pkg)
 }
 
-func testPackage(ctx *gogo.Context, pkg *gogo.Package) gogo.Future {
+func testPackage(ctx *build.Context, pkg *project.Package) build.Target {
 	var gofiles []string
 	gofiles = append(gofiles, pkg.GoFiles...)
 	gofiles = append(gofiles, pkg.TestGoFiles...)
@@ -31,7 +33,7 @@ func testPackage(ctx *gogo.Context, pkg *gogo.Package) gogo.Future {
 	imports = append(imports, pkg.TestImports...)
 
 	// build dependencies
-	var deps []gogo.Future
+	var deps []build.Target
 	for _, dep := range imports {
 		pkg, err := ctx.ResolvePackage(dep)
 		if err != nil {
@@ -40,7 +42,7 @@ func testPackage(ctx *gogo.Context, pkg *gogo.Package) gogo.Future {
 		deps = append(deps, Build(ctx, pkg))
 	}
 
-	testpkg := &gogo.Package{
+	testpkg := &project.Package{
 		Name:       pkg.Name,
 		ImportPath: pkg.ImportPath,
 		Srcdir:     pkg.Srcdir,
@@ -59,7 +61,7 @@ func testPackage(ctx *gogo.Context, pkg *gogo.Package) gogo.Future {
 
 type buildTestTarget struct {
 	target
-	deps []gogo.Future
+	deps []build.Target
 }
 
 func (t *buildTestTarget) execute() {
@@ -87,7 +89,7 @@ func (t *buildTestTarget) buildTestMain(_ string) error {
 	return writeTestmain(filepath.Join(objdir(t.Context, t.Package), "_testmain.go"), t.Package)
 }
 
-func buildTest(ctx *gogo.Context, pkg *gogo.Package, deps ...gogo.Future) gogo.Future {
+func buildTest(ctx *build.Context, pkg *project.Package, deps ...build.Target) build.Target {
 	t := &buildTestTarget{
 		target: newTarget(ctx, pkg),
 		deps:   deps,
@@ -121,7 +123,7 @@ func (t *runTestTarget) build() error {
 	return cmd.Run()
 }
 
-func runTest(ctx *gogo.Context, pkg *gogo.Package, deps ...gogo.Future) gogo.Future {
+func runTest(ctx *build.Context, pkg *project.Package, deps ...build.Target) build.Target {
 	t := &runTestTarget{
 		target: newTarget(ctx, pkg),
 		deps:   deps,
