@@ -200,7 +200,6 @@ func runOut(dir, command string, args ...string) ([]byte, error) {
 	output, err := cmd.CombinedOutput()
 	log.Debugf("cd %s; %s %s", dir, command, strings.Join(args, " "))
 	if err != nil {
-		log.Errorf("cd %s; %s %s", dir, command, strings.Join(args, " "))
 		log.Errorf("%s", output)
 	}
 	return output, err

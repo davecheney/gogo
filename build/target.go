@@ -179,7 +179,7 @@ func (t *packTarget) execute() {
 }
 
 func (t *packTarget) pkgfile() string {
-	return filepath.Join(t.Pkgdir(), t.Package.ImportPath+".a")
+	return filepath.Join(t.Workdir(), filepath.FromSlash(t.ImportPath+".a"))
 }
 
 func (t *packTarget) build() error {

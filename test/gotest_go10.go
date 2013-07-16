@@ -4,7 +4,7 @@
 
 // +build !go1.1
 
-package build
+package test
 
 // imported from $GOROOT/src/cmd/go/test.go
 
@@ -20,7 +20,7 @@ import (
 	"unicode"
 	"unicode/utf8"
 
-	"github.com/davecheney/gogo"
+	"github.com/davecheney/gogo/project"
 )
 
 // isTest tells whether name looks like a test (or benchmark, according to prefix).
@@ -39,7 +39,7 @@ func isTest(name, prefix string) bool {
 
 // writeTestmain writes the _testmain.go file for package p to
 // the file named out.
-func writeTestmain(out string, p *gogo.Package) error {
+func writeTestmain(out string, p *project.Package) error {
 	t := &testFuncs{
 		Package: p,
 	}
