@@ -28,14 +28,14 @@ type Context struct {
 
 type targetCache struct {
 	sync.Mutex
-	m map[*project.Package]Future
+	m map[*build.Package]Future
 }
 
-func (c *targetCache) addTargetIfMissing(pkg *project.Package, f func() Future) Future {
+func (c *targetCache) addTargetIfMissing(pkg *build.Package, f func() Future) Future {
 	c.Lock()
 	defer c.Unlock()
 	if c.m == nil {
-		c.m = make(map[*project.Package]Future)
+		c.m = make(map[*build.Package]Future)
 	}
 	target, ok := c.m[pkg]
 	if !ok {

@@ -2,13 +2,13 @@
 package build
 
 import (
+	"go/build"
 	"os/exec"
 	"path/filepath"
 	"runtime"
 	"strings"
 
 	"github.com/davecheney/gogo/log"
-	"github.com/davecheney/gogo/project"
 )
 
 // A Future represents the result of a build operation.
@@ -29,7 +29,7 @@ func (e errFuture) Result() error { return e.error }
 // Build returns a Future representing the result of compiling the package pkg
 // and its dependencies. If pkg is a command, then the results of build include
 // linking the final binary into pkg.Context.Bindir().
-func Build(ctx *Context, pkg *project.Package) Future {
+func Build(ctx *Context, pkg *build.Package) Future {
 	if pkg.Name == "main" {
 		return buildCommand(ctx, pkg)
 	}
@@ -38,7 +38,7 @@ func Build(ctx *Context, pkg *project.Package) Future {
 
 // buildPackage returns a Future repesenting the results of compiling
 // pkg and its dependencies.
-func buildPackage(ctx *Context, pkg *project.Package) Future {
+func buildPackage(ctx *Context, pkg *build.Package) Future {
 	var deps []Future
 	for _, dep := range pkg.Imports {
 		// TODO(dfc) use project.Spec
@@ -53,7 +53,7 @@ func buildPackage(ctx *Context, pkg *project.Package) Future {
 
 // buildCommand returns a Future repesenting the results of compiling
 // pkg as a command and linking the result into pkg.Context.Bindir().
-func buildCommand(ctx *Context, pkg *project.Package) Future {
+func buildCommand(ctx *Context, pkg *build.Package) Future {
 	var deps []Future
 	for _, dep := range pkg.Imports {
 		// TODO(dfc) use project.Spec
@@ -69,7 +69,7 @@ func buildCommand(ctx *Context, pkg *project.Package) Future {
 }
 
 // Compile returns a Future representing all the steps required to build a go package.
-func Compile(ctx *Context, pkg *project.Package, deps []Future) PkgFuture {
+func Compile(ctx *Context, pkg *build.Package, deps []Future) PkgFuture {
 	var gofiles []string
 	gofiles = append(gofiles, pkg.GoFiles...)
 	var objs []ObjFuture
@@ -106,7 +106,7 @@ type PkgFuture interface {
 
 // Pack returns a Future representing the result of packing a
 // set of Context specific object files into an archive.
-func Pack(ctx *Context, pkg *project.Package, deps []ObjFuture) PkgFuture {
+func Pack(ctx *Context, pkg *build.Package, deps []ObjFuture) PkgFuture {
 	t := &packTarget{
 		target: newTarget(ctx, pkg),
 		deps:   deps,
@@ -117,7 +117,7 @@ func Pack(ctx *Context, pkg *project.Package, deps []ObjFuture) PkgFuture {
 
 // Gc returns a Future representing the result of compiling a
 // set of gofiles with the Context specified gc Compiler.
-func Gc(ctx *Context, pkg *project.Package, deps []Future, gofiles []string) ObjFuture {
+func Gc(ctx *Context, pkg *build.Package, deps []Future, gofiles []string) ObjFuture {
 	t := &gcTarget{
 		target:  newTarget(ctx, pkg),
 		deps:    deps,
@@ -129,7 +129,7 @@ func Gc(ctx *Context, pkg *project.Package, deps []Future, gofiles []string) Obj
 
 // Asm returns a Future representing the result of assembling
 // sfile with the Context specified asssembler.
-func Asm(ctx *Context, pkg *project.Package, sfile string) ObjFuture {
+func Asm(ctx *Context, pkg *build.Package, sfile string) ObjFuture {
 	t := &asmTarget{
 		target: newTarget(ctx, pkg),
 		sfile:  sfile,
@@ -140,7 +140,7 @@ func Asm(ctx *Context, pkg *project.Package, sfile string) ObjFuture {
 
 // Ld returns a Future representing the result of linking a
 // Package into a command with the Context provided linker.
-func Ld(ctx *Context, pkg *project.Package, afile PkgFuture) Future {
+func Ld(ctx *Context, pkg *build.Package, afile PkgFuture) Future {
 	t := &ldTarget{
 		target: newTarget(ctx, pkg),
 		afile:  afile,
@@ -150,7 +150,7 @@ func Ld(ctx *Context, pkg *project.Package, afile PkgFuture) Future {
 }
 
 // objdir returns the destination for object files compiled for this Package.
-func objdir(ctx *Context, pkg *project.Package) string {
+func objdir(ctx *Context, pkg *build.Package) string {
 	return filepath.Join(ctx.Workdir(), filepath.FromSlash(pkg.ImportPath), "_obj")
 }
 

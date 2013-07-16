@@ -6,6 +6,7 @@ import (
 	"go/build"
 	"go/parser"
 	"go/token"
+	"io"
 	"io/ioutil"
 	"os"
 	"path"
@@ -16,7 +17,7 @@ import (
 )
 
 type result struct {
-	*Package
+	*build.Package
 	err error
 }
 
@@ -26,7 +27,7 @@ type pkgFuture struct {
 	result chan result
 }
 
-func (t *pkgFuture) Result() (*Package, error) {
+func (t *pkgFuture) Result() (*build.Package, error) {
 	result := <-t.result
 	t.result <- result
 	return result.Package, result.err
@@ -140,9 +141,9 @@ func (p *Project) ResolvePackage(goos, goarch, path string) *pkgFuture {
 	if f, ok := p.pkgs[path]; ok {
 		return f
 	}
-	pkg := &Package{
+	pkg := &build.Package{
 		ImportPath: path,
-		Srcdir:     filepath.Join(p.Root(), "src", path),
+		SrcRoot:    filepath.Join(p.Root(), "src"),
 	}
 	f := &pkgFuture{
 		result: make(chan result, 1),
@@ -157,12 +158,12 @@ func (p *Project) ResolvePackage(goos, goarch, path string) *pkgFuture {
 
 // scanFiles scans the Package recording all source files relevant to the
 // current Spec.
-func scanFiles(spec Spec, pkg *Package) error {
+func scanFiles(spec Spec, pkg *build.Package) error {
 	//	t0 := time.Now()
 	//	defer func() {
 	//		c.Record("scanFiles", time.Since(t0))
 	//	}()
-	files, err := ioutil.ReadDir(pkg.Srcdir)
+	files, err := ioutil.ReadDir(filepath.Join(pkg.SrcRoot, pkg.ImportPath))
 	if err != nil {
 		return err
 	}
@@ -198,7 +199,7 @@ func scanFiles(spec Spec, pkg *Package) error {
 			continue
 		}
 
-		r, err := pkg.openFile(filename)
+		r, err := openFile(pkg, filename)
 		if err != nil {
 			return err
 		}
@@ -338,4 +339,8 @@ func scanFiles(spec Spec, pkg *Package) error {
 		pkg.XTestImports = append(pkg.XTestImports, i)
 	}
 	return nil
+}
+
+func openFile(pkg *build.Package, name string) (io.ReadCloser, error) {
+	return os.Open(filepath.Join(pkg.SrcRoot, pkg.ImportPath, name))
 }

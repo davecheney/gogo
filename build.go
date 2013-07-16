@@ -3,7 +3,7 @@ package main
 import (
 	"flag"
 	"fmt"
-	stdbuild "go/build"
+	gobuild "go/build"
 	"path/filepath"
 	"time"
 
@@ -46,7 +46,7 @@ var BuildCmd = &Command{
 		defer func() {
 			log.Debugf("build statistics: %v", ctx.Statistics.String())
 		}()
-		var pkgs []*project.Package
+		var pkgs []*gobuild.Package
 		if A {
 			var err error
 			args, err = proj.SrcDirs[0].FindAll()
@@ -64,7 +64,7 @@ var BuildCmd = &Command{
 			}
 			pkg, err := ctx.ResolvePackage("linux", "amd64", arg).Result()
 			if err != nil {
-				if _, ok := err.(*stdbuild.NoGoError); ok {
+				if _, ok := err.(*gobuild.NoGoError); ok {
 					log.Debugf("skipping %q", arg)
 					continue
 				}

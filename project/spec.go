@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"fmt"
 	"go/ast"
+	"go/build"
 	"runtime"
 	"strings"
 	"unicode"
@@ -204,7 +205,7 @@ func (ctxt *Spec) shouldBuild(content []byte) bool {
 //
 // TODO(rsc): This duplicates code in cgo.
 // Once the dust settles, remove this code from cgo.
-func (ctx *Spec) saveCgo(pkg *Package, filename string, cg *ast.CommentGroup) error {
+func (ctx *Spec) saveCgo(pkg *build.Package, filename string, cg *ast.CommentGroup) error {
 	text := cg.Text()
 	for _, line := range strings.Split(text, "\n") {
 		orig := line

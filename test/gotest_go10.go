@@ -10,6 +10,7 @@ package test
 
 import (
 	"go/ast"
+	"go/build"
 	"go/doc"
 	"go/parser"
 	"go/token"
@@ -19,8 +20,6 @@ import (
 	"text/template"
 	"unicode"
 	"unicode/utf8"
-
-	"github.com/davecheney/gogo/project"
 )
 
 // isTest tells whether name looks like a test (or benchmark, according to prefix).
@@ -39,17 +38,17 @@ func isTest(name, prefix string) bool {
 
 // writeTestmain writes the _testmain.go file for package p to
 // the file named out.
-func writeTestmain(out string, p *project.Package) error {
+func writeTestmain(out string, p *build.Package) error {
 	t := &testFuncs{
 		Package: p,
 	}
 	for _, file := range p.TestGoFiles {
-		if err := t.load(filepath.Join(p.Srcdir, file), "_test", &t.NeedTest); err != nil {
+		if err := t.load(filepath.Join(p.SrcRoot, p.ImportPath, file), "_test", &t.NeedTest); err != nil {
 			return err
 		}
 	}
 	for _, file := range p.XTestGoFiles {
-		if err := t.load(filepath.Join(p.Srcdir, file), "_xtest", &t.NeedXtest); err != nil {
+		if err := t.load(filepath.Join(p.SrcRoot, p.ImportPath, file), "_xtest", &t.NeedXtest); err != nil {
 			return err
 		}
 	}
@@ -71,7 +70,7 @@ type testFuncs struct {
 	Tests      []testFunc
 	Benchmarks []testFunc
 	Examples   []testFunc
-	*project.Package
+	*build.Package
 	NeedTest  bool
 	NeedXtest bool
 }

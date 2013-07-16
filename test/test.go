@@ -2,6 +2,7 @@
 package test
 
 import (
+	gobuild "go/build"
 	"os"
 	"os/exec"
 	"path/filepath"
@@ -9,7 +10,6 @@ import (
 
 	"github.com/davecheney/gogo/build"
 	"github.com/davecheney/gogo/log"
-	"github.com/davecheney/gogo/project"
 )
 
 type errFuture struct{ error }
@@ -19,12 +19,12 @@ func (e errFuture) Result() error { return e.error }
 // Test returns a Future representing the result of compiling the
 // package pkg, and its dependencies, and linking it with the
 // test runner.
-func Test(ctx *build.Context, pkg *project.Package) build.Future {
+func Test(ctx *build.Context, pkg *gobuild.Package) build.Future {
 	// commands are built as packages for testing.
 	return testPackage(ctx, pkg)
 }
 
-func testPackage(ctx *build.Context, pkg *project.Package) build.Future {
+func testPackage(ctx *build.Context, pkg *gobuild.Package) build.Future {
 	var gofiles []string
 	gofiles = append(gofiles, pkg.GoFiles...)
 	gofiles = append(gofiles, pkg.TestGoFiles...)
@@ -46,10 +46,10 @@ func testPackage(ctx *build.Context, pkg *project.Package) build.Future {
 		deps = append(deps, build.Build(ctx, pkg))
 	}
 
-	testpkg := &project.Package{
+	testpkg := &gobuild.Package{
 		Name:       pkg.Name,
 		ImportPath: pkg.ImportPath,
-		Srcdir:     pkg.Srcdir,
+		// Srcdir:     pkg.Srcdir,
 
 		GoFiles:     gofiles,
 		CgoFiles:    cgofiles,
@@ -93,7 +93,7 @@ func (t *buildTestTarget) buildTestMain(_ string) error {
 	return writeTestmain(filepath.Join(objdir(t.Context, t.Package), "_testmain.go"), t.Package)
 }
 
-func buildTest(ctx *build.Context, pkg *project.Package, deps ...build.Future) build.Future {
+func buildTest(ctx *build.Context, pkg *gobuild.Package, deps ...build.Future) build.Future {
 	t := &buildTestTarget{
 		target: newTarget(ctx, pkg),
 		deps:   deps,
@@ -120,14 +120,14 @@ func (t *runTestTarget) execute() {
 
 func (t *runTestTarget) build() error {
 	cmd := exec.Command(filepath.Join(objdir(t.Context, t.Package), t.Package.Name+".test"))
-	cmd.Dir = t.Package.Srcdir
+	cmd.Dir = t.Srcdir()
 	cmd.Stdout = os.Stdout
 	cmd.Stderr = os.Stderr
 	log.Infof("cd %s; %s", cmd.Dir, strings.Join(cmd.Args, " "))
 	return cmd.Run()
 }
 
-func runTest(ctx *build.Context, pkg *project.Package, deps ...build.Future) build.Future {
+func runTest(ctx *build.Context, pkg *gobuild.Package, deps ...build.Future) build.Future {
 	t := &runTestTarget{
 		target: newTarget(ctx, pkg),
 		deps:   deps,
@@ -137,11 +137,11 @@ func runTest(ctx *build.Context, pkg *project.Package, deps ...build.Future) bui
 }
 
 // testobjdir returns the destination for test object files compiled for this Package.
-func testobjdir(ctx *build.Context, pkg *project.Package) string {
+func testobjdir(ctx *build.Context, pkg *gobuild.Package) string {
 	return filepath.Join(ctx.Workdir(), filepath.FromSlash(pkg.ImportPath), "_test")
 }
 
 // objdir returns the destination for object files compiled for this Package.
-func objdir(ctx *build.Context, pkg *project.Package) string {
+func objdir(ctx *build.Context, pkg *gobuild.Package) string {
 	return filepath.Join(ctx.Workdir(), filepath.FromSlash(pkg.ImportPath), "_obj")
 }

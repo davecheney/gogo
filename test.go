@@ -2,7 +2,7 @@ package main
 
 import (
 	"fmt"
-	stdbuild "go/build"
+	gobuild "go/build"
 	"path/filepath"
 
 	"github.com/davecheney/gogo/build"
@@ -21,7 +21,7 @@ var TestCmd = &Command{
 		if err != nil {
 			return err
 		}
-		var pkgs []*project.Package
+		var pkgs []*gobuild.Package
 		if A {
 			var err error
 			args, err = proj.SrcDirs[0].FindAll()
@@ -39,7 +39,7 @@ var TestCmd = &Command{
 			}
 			pkg, err := ctx.ResolvePackage("linux", "amd64", arg).Result()
 			if err != nil {
-				if _, ok := err.(*stdbuild.NoGoError); ok {
+				if _, ok := err.(*gobuild.NoGoError); ok {
 					log.Debugf("skipping %q", arg)
 					continue
 				}

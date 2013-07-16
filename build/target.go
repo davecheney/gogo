@@ -1,18 +1,18 @@
 package build
 
 import (
+	"go/build"
 	"path/filepath"
 	"strings"
 	"time"
 
 	"github.com/davecheney/gogo/log"
-	"github.com/davecheney/gogo/project"
 )
 
 // target implements a Future
 type target struct {
 	err chan error
-	*project.Package
+	*build.Package
 	*Context
 }
 
@@ -22,7 +22,11 @@ func (t *target) Result() error {
 	return result
 }
 
-func newTarget(ctx *Context, pkg *project.Package) target {
+func (t *target) Srcdir() string {
+	return filepath.Join(t.SrcRoot, t.ImportPath)
+}
+
+func newTarget(ctx *Context, pkg *build.Package) target {
 	return target{
 		err:     make(chan error, 1),
 		Context: ctx,
@@ -55,7 +59,7 @@ func (t *gcTarget) build() error {
 	if err := t.Mkdir(objdir(t.Context, t.Package)); err != nil {
 		return err
 	}
-	err := t.Gc(t.ImportPath, t.Srcdir, t.Objfile(), t.gofiles)
+	err := t.Gc(t.ImportPath, t.Srcdir(), t.Objfile(), t.gofiles)
 	t.Record("gc", time.Since(t0))
 	return err
 }
@@ -78,7 +82,7 @@ func (t *ccTarget) execute() {
 		return
 	}
 	log.Debugf("cc %q: %s", t.Package.ImportPath, t.cfile)
-	err := t.Cc(t.Srcdir, objdir(t.Context, t.Package), t.Objfile(), filepath.Join(objdir(t.Context, t.Package), t.cfile))
+	err := t.Cc(t.Srcdir(), objdir(t.Context, t.Package), t.Objfile(), filepath.Join(objdir(t.Context, t.Package), t.cfile))
 	t.Record("cc", time.Since(t0))
 	t.err <- err
 }
@@ -100,7 +104,7 @@ func (t *gccTarget) execute() {
 	}
 	t0 := time.Now()
 	log.Debugf("gcc %q: %s", t.Package.ImportPath, t.args)
-	err := t.Gcc(t.Srcdir, t.args)
+	err := t.Gcc(t.Srcdir(), t.args)
 	t.Record("gcc", time.Since(t0))
 	t.err <- err
 }
@@ -125,7 +129,7 @@ func (t *asmTarget) build() error {
 	if err := t.Mkdir(objdir(t.Context, t.Package)); err != nil {
 		return err
 	}
-	err := t.Asm(t.Srcdir, t.Objfile(), t.sfile)
+	err := t.Asm(t.Srcdir(), t.Objfile(), t.sfile)
 	t.Record("asm", time.Since(t0))
 	return err
 }
@@ -153,7 +157,7 @@ func (t *cgoTarget) build() error {
 	if err := t.Mkdir(objdir(t.Context, t.Package)); err != nil {
 		return err
 	}
-	err := t.Cgo(t.Srcdir, t.args)
+	err := t.Cgo(t.Srcdir(), t.args)
 	t.Record("cgo", time.Since(t0))
 	return err
 }

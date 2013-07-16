@@ -1,10 +1,9 @@
 package build
 
 import (
+	"go/build"
 	"path/filepath"
 	"strings"
-
-	"github.com/davecheney/gogo/project"
 )
 
 // cgo support functions
@@ -14,8 +13,8 @@ import (
 // which would be produced from the source CgoFiles.
 // These filenames are only valid of the Result of the
 // cgo Future is nil.
-func cgo(ctx *Context, pkg *project.Package, deps []Future) ([]ObjFuture, []string) {
-	srcdir := pkg.Srcdir
+func cgo(ctx *Context, pkg *build.Package, deps []Future) ([]ObjFuture, []string) {
+	srcdir := filepath.Join(pkg.SrcRoot, pkg.ImportPath)
 	objdir := objdir(ctx, pkg)
 
 	var args = []string{"-objdir", objdir, "--", "-I", srcdir, "-I", objdir}
@@ -96,7 +95,7 @@ func (*nilFuture) Result() error { return nil }
 
 // Cgo returns a Future representing the result of running the
 // cgo command.
-func Cgo(ctx *Context, pkg *project.Package, deps []Future, args []string) Future {
+func Cgo(ctx *Context, pkg *build.Package, deps []Future, args []string) Future {
 	cgo := &cgoTarget{
 		target: newTarget(ctx, pkg),
 		deps:   deps,
@@ -108,7 +107,7 @@ func Cgo(ctx *Context, pkg *project.Package, deps []Future, args []string) Futur
 
 // Cc returns a Future representing the result of compiling a
 // .c source file with the Context specified cc compiler.
-func Cc(ctx *Context, pkg *project.Package, dep Future, cfile string) ObjFuture {
+func Cc(ctx *Context, pkg *build.Package, dep Future, cfile string) ObjFuture {
 	cc := &ccTarget{
 		target: newTarget(ctx, pkg),
 		dep:    dep,
@@ -120,7 +119,7 @@ func Cc(ctx *Context, pkg *project.Package, dep Future, cfile string) ObjFuture 
 
 // Gcc returns a Future representing the result of invoking the
 // system gcc compiler.
-func Gcc(ctx *Context, pkg *project.Package, deps []Future, args []string) Future {
+func Gcc(ctx *Context, pkg *build.Package, deps []Future, args []string) Future {
 	gcc := &gccTarget{
 		target: newTarget(ctx, pkg),
 		deps:   deps,
