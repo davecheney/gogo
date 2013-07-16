@@ -5,8 +5,8 @@ import (
 	"strings"
 	"time"
 
-	"github.com/davecheney/gogo/project"
 	"github.com/davecheney/gogo/log"
+	"github.com/davecheney/gogo/project"
 )
 
 // target implements a Future

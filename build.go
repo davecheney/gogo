@@ -8,8 +8,8 @@ import (
 	"time"
 
 	"github.com/davecheney/gogo/build"
-	"github.com/davecheney/gogo/project"
 	"github.com/davecheney/gogo/log"
+	"github.com/davecheney/gogo/project"
 )
 
 func init() {

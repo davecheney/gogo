@@ -1,6 +1,6 @@
 package build
 
 var toolchains = map[string]func(*Context) (Toolchain, error){
-        "gc":    newGcToolchain,
-        "gccgo": newGccgoToolchain,
+	"gc":    newGcToolchain,
+	"gccgo": newGccgoToolchain,
 }

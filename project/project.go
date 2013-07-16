@@ -149,7 +149,7 @@ func (p *Project) ResolvePackage(goos, goarch, path string) *pkgFuture {
 	}
 	go func() {
 		err := scanFiles(DefaultSpec(), pkg)
-		f.result <- result{ pkg, err}
+		f.result <- result{pkg, err}
 	}()
 	p.pkgs[path] = f
 	return f
