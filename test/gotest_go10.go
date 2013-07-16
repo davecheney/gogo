@@ -71,7 +71,7 @@ type testFuncs struct {
 	Tests      []testFunc
 	Benchmarks []testFunc
 	Examples   []testFunc
-	*gogo.Package
+	*project.Package
 	NeedTest  bool
 	NeedXtest bool
 }
